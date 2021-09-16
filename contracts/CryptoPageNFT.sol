@@ -6,22 +6,44 @@ import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 // Import other contracts
+import "./interfaces/IMINTER.sol";
+
 import "./CryptoPageComment.sol";
-import './CryptoPageMinter.sol';
+import "./CryptoPageNFTBank.sol";
 
 contract PageMinterNFT is ERC721, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     using Strings for uint256;
 
     Counters.Counter private _tokenIdCounter;
-    PageMinter MINTER = PageMinter(address(0));
 
-    // account => stakingId[]
-    // mapping(address => EnumerableSet.UintSet) private stakingIdsOf;
+    IERC20 public PAGE_TOKEN;
+    IMINTER public PAGE_MINTER;
 
-    // TOKENS DEPOSIT
-    // getStakingToken.transferFrom(msg.sender, address(this), COIN);
+    // FIX IT
+    address public BANK_ADDRESS;
+    
+    PageNFTBank public PAGE_NFT_BANK;
+
+    constructor(address _PAGE_TOKEN, address _PAGE_MINTER) ERC721("Crypto Page NFT", "PAGE-NFT")  {
+        PAGE_TOKEN = IERC20(_PAGE_TOKEN);
+        PAGE_MINTER = IMINTER(_PAGE_MINTER);
+        PAGE_NFT_BANK = new PageNFTBank(_PAGE_TOKEN, _PAGE_MINTER);
+    }
+    /**
+     *
+     * - approved for NFT BANK
+     *
+     */
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool)  {
+        require(_exists(tokenId), "ERC721: operator query for nonexistent token");
+        address owner = ERC721.ownerOf(tokenId);
+        return (spender == owner || getApproved(tokenId) == spender || isApprovedForAll(owner, spender) || spender == BANK_ADDRESS);
+    }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
@@ -34,7 +56,6 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, Ownable {
     {
         return super.tokenURI(tokenId);
     }
-
     function totalSupply()
         public
         view
@@ -42,10 +63,6 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, Ownable {
     {
         return _tokenIdCounter.current();
     }
-
-    constructor() ERC721("Crypto Page NFT", "PAGE-NFT")  {}
-
-
     function tokenComments(uint256 _tokenId) public view returns(
         uint256 id,
         uint256 comments,
@@ -63,8 +80,6 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, Ownable {
         _contract = Contract;
     }
     mapping(uint256 => address) private commentsById;
-
-
     function safeMint(string memory _tokenURI, bool _comment) public {
         uint256 tokenId = _tokenIdCounter.current();
         if (_comment) {
@@ -91,9 +106,4 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, Ownable {
         commentsById[_tokenId] = address(newComment); 
     }
 
-    // RECOVER FUNCTIONS
-    function withdrawAll() public payable onlyOwner {
-        uint256 _each = address(this).balance;
-        require(payable(msg.sender).send(_each));        
-    }
 }

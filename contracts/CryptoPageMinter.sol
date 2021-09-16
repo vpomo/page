@@ -2,48 +2,71 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./PageToken.sol";
 
+import "./interfaces/IMINTER.sol";
+import "./interfaces/IERCMINT.sol";
+import "./interfaces/INFTMINT.sol";
+import "./interfaces/ISAFE.sol";
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract PageMinter is AccessControl{
+contract PageMinter is IMINTER, ISAFE {
     using SafeMath for uint256;
     using Counters for Counters.Counter;
 
-    Counters.Counter public minterCount;
+    IERCMINT public PAGE;
+    INFTMINT public NFTPAGE;
 
-
-
-    CryptoPageToken public PAGE;
     address public TreasuryAddress = address(0);
+    address public AdminAddress = address(0);
     uint256 public TreasuryFee = 1500; // 100 is 1% || 10000 is 100%
 
-    constructor(address _page, address _treasury, address _admin) {   
-        // setAdminRole
-        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+    // MINTERS
+    Counters.Counter private _totalMinters;
+    Counters.Counter private _minterId;
+    string[] public _listMinters;
+
+    struct Minters {
+        uint256 id;
+        address author;
+        uint256 amount;
+        bool xmint;
+    }
+    mapping(string => Minters) public _minters;
+    mapping(string => bool) private _keytank;
+
+    /* INIT */
+    constructor(address _page, address _treasury, address _admin) {        
         TreasuryAddress = _treasury; // setTreasuryAddress
-        PAGE = CryptoPageToken(_page); // PAGE ADDRESS
+        PAGE = IERCMINT(_page); // PAGE ADDRESS
+        AdminAddress = _admin;
     }
 
-    mapping(string => uint256) private _addresses;
-    function addMinter(string memory _key, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
 
-        _addresses[_key] = amount;
+    function _amount_mint(string memory _key, uint256 _address_count) public view override returns (uint256 amount_each, uint256 fee) {
+        require(_keytank[_key], "removeMinter: _key doesn't exists");
+        
+        require(_address_count < 5, "address count > 4");
+        require(_address_count > 0, "address count is zero");
+
+        // (address author, uint256 amount) = _minters[_key];
+        Minters storage minter = _minters[_key];
+        fee = minter.amount.mul(TreasuryFee).div(10000);
+        amount_each = (minter.amount - fee).div(_address_count);
     }
+    function mint(string memory _key, address [] memory _to) public override{
+        require(_keytank[_key], "removeMinter: _key doesn't exists");
 
-// minterCount
+        // MINTER ONLY
+        Minters storage minter =  _minters[_key];        
+        require(minter.amount > 0, "mint: minter.amount can't be 0");
+        require(minter.author == msg.sender, "mint: not minter");        
 
-    function _amount_mint(string memory _key, uint256 _address_count) public view returns (uint256 amount_each, uint256 fee) {
-        fee = _addresses[_key].mul(TreasuryFee).div(10000);
-        amount_each = (_addresses[_key] - fee) / _address_count;
-    }
-    function mint(string memory _key, address [] memory _to) public onlyMinter() {
         uint256 address_count = _to.length;
-        require(_addresses[_key] != 0, "Address Amount is 0");
-        require(address_count < 5, "address count >= 5");
-        require(address_count != 0, "address count is zero");
+        // require(_addresses[_key] != 0, "Address Amount is 0");
+        require(address_count < 5, "address count > 4");
+        require(address_count > 0, "address count is zero");
 
         (uint256 amount_each, uint256 fee) = _amount_mint(_key, address_count);
 
@@ -56,26 +79,104 @@ contract PageMinter is AccessControl{
         PAGE.mint(TreasuryAddress, fee);
     }
 
+    function mintX(string memory _key, address [] memory _to, uint _multiplier) public override{
+        require(_keytank[_key], "removeMinter: _key doesn't exists");
 
+        // MINTER ONLY
+        Minters storage minter =  _minters[_key];        
+        require(minter.amount > 0, "mint: minter.amount can't be 0");
+        require(minter.author == msg.sender, "mint: not minter");
+        require(minter.xmint, "xmint: not active");
 
+        uint256 address_count = _to.length;
+        // require(_addresses[_key] != 0, "Address Amount is 0");
+        require(address_count < 5, "address count > 4");
+        require(address_count > 0, "address count is zero");
 
-    modifier onlyMinter() {        
-        // require(_minters[msg.sender], "onlyMinter: caller is not the minter");
+        (uint256 amount_each, uint256 fee) = _amount_mint(_key, address_count);
+
+        // MINT TO ADDRESS
+        for(uint256 i; i < address_count; i++){
+            PAGE.mint(_to[i], amount_each.mul(_multiplier));
+        }
+
+        // FEE TO ADDRESS
+        PAGE.mint(TreasuryAddress, fee.mul(_multiplier));
+    }
+
+    // > > > onlyPageToken < < <  
+    modifier onlyPageToken() {        
+        require(msg.sender == AdminAddress, "onlyAdmin: caller is not the admin");
         _;
     }
+    function removeMinter(string memory _key) public onlyPageToken() override {
+        require(_keytank[_key], "removeMinter: _key doesn't exists");
+        _keytank[_key] = false;
+        Minters memory toRemove = _minters[_key];
+        delete _listMinters[toRemove.id];
+        delete _minters[_key];
+        _totalMinters.decrement();
+    }
+    function setMinter(string memory _key, address _account, uint256 _pageamount, bool _xmint) public onlyPageToken() override {
+        if (_keytank[_key]) {
+            Minters memory update = _minters[_key];
+            update.amount = _pageamount;
+            update.author = _account;
+            update.xmint = _xmint;
+        } else {
+            _keytank[_key] = true;
+            _minters[_key] = Minters({
+                author: _account,
+                amount: _pageamount,
+                id: _minterId.current(),
+                xmint: _xmint
+            });
+            _listMinters[_minterId.current()] = _key;
+            _minterId.increment();
+            _totalMinters.increment();
+        }
+    }
+    function setTreasuryFee(uint256 _percent) public onlyPageToken() {
+        require(_percent >= 10, "setTreasuryFee: minimum treasury fee percent is 0.1%");
+        require(_percent <= 3000, "setTreasuryFee: maximum treasury fee percent is 30%");
+        TreasuryFee = _percent;
+    }
+    function setTreasuryAddress(address _treasury) public onlyPageToken() {
+        require(_treasury != address(0), "setTreasuryAddress: is zero address");
+        TreasuryAddress = _treasury;
+    }
 
-    /*
-    mapping (address => bool) public _minters;
-    modifier onlyMinter() {        
-        require(_minters[msg.sender], "onlyMinter: caller is not the minter");
-        _;
+    // GET FUNCTIONS
+    function getMinter(string memory _key) public view override returns (
+        uint256 id,
+        address author,
+        uint256 amount,
+        bool xmint) {
+        require(_keytank[_key], "getMinter: _key doesn't exists");
+        Minters memory minter = _minters[_key];
+        id = minter.id;
+        author = minter.author;
+        amount = minter.amount;
+        xmint = minter.xmint;
     }
-    function addMinter(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
-      _minters[account] = true;
+
+    // PROXY
+    function burn( uint256 amount ) public override {
+        // require(_keytank[_key], "getMinter: _key doesn't exists");
+        PAGE.burn(amount);
     }
-    function removeMinter(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
-      _minters[account] = false;
+
+
+    // ISAFE
+    mapping(address => bool) private safeList;
+    function isSafe( address _safe ) public override view returns (bool) {
+        
     }
-    */
+    function addSafe( address _safe ) public override onlyPageToken() {
+
+    }
+    function removeSafe( address _safe ) public override onlyPageToken() {
+        
+    }
 
 }

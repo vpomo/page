@@ -4,7 +4,8 @@ pragma solidity ^0.8.4;
 import "./interfaces/IERCMINT.sol";
 import "./interfaces/IMINTER.sol";
 
-contract PageProfile {
+// import './CryptoPageMinter.sol';
+contract PageNFTMarket {
     IERCMINT public PAGE_TOKEN;
     IMINTER public PAGE_MINTER;
     constructor (address _PAGE_TOKEN, address _PAGE_MINTER) {

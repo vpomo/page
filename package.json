@@ -1,12 +1,17 @@
 {
-  "name": "twitter-contract",
+  "name": "combined-lending",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
     "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
     "watch": "npx hardhat watch compilation",
-    "deploy:rinkeby": "npx hardhat run --network rinkeby scripts/deploy.js"
+    "deploy:test": "npx hardhat run --network rinkeby scripts/deploy-main.js",
+    "deploy:twitter": "npx hardhat run --network rinkeby scripts/deploy-twitter.js",
+    "deploy:wizard": "npx hardhat run --network rinkeby scripts/deploy-wizard.js",
+    "deploy:cats": "npx hardhat run --network rinkeby scripts/deploy-cats.js",
+    "verify": "npx hardhat verify --network rinkeby MyCollectibleTest"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
