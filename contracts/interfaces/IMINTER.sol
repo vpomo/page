@@ -6,7 +6,7 @@ interface IMINTER {
     function _amount_mint(string memory _key, uint256 _address_count) external view returns (uint256 amount_each, uint256 fee);
     function mint(string memory _key, address [] memory _to) external;
     function mintX(string memory _key, address [] memory _to, uint _multiplier) external;
-    function burn( uint256 amount ) external ;
+    function burn( address from, uint256 amount  ) external ;
     function removeMinter(string memory _key) external;
     function setMinter(string memory _key, address _account, uint256 _pageamount, bool _xmint) external;
     function getMinter(string memory _key) external view returns (
@@ -14,4 +14,9 @@ interface IMINTER {
         address author,
         uint256 amount,
         bool xmint);
+    // Burn NFT PRICE
+    function setBurnNFT(uint256 _cost) external;
+    function getBurnNFT() external view returns (uint256);
+    function getAdmin() external view returns (address);
+    function getPageToken() external view returns (address);
 }
