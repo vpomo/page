@@ -21,12 +21,9 @@ contract PageAdmin is Ownable {
 
     PageMinter public PAGE_MINTER;
     PageToken public PAGE_TOKEN;
-
     PageNFTBank public PAGE_NFT_BANK;
     PageNFTMarket public PAGE_NFT_MARKET;
     PageProfile public PAGE_PROFILE;
-
-
     INFTMINT public PAGE_NFT;
 
     constructor() {
@@ -54,7 +51,7 @@ contract PageAdmin is Ownable {
         PAGE_NFT_MARKET = new PageNFTMarket(_PAGE_NFT,_PAGE_MINTER);
 
         // SETUP PAGE_TOKEN
-        PAGE_MINTER.init(address(PAGE_TOKEN));
+        PAGE_MINTER.init(address(PAGE_TOKEN), address(PAGE_NFT));
 
         // SET SAFE ADDRESSES
         safeAddresses.push(address(PAGE_NFT_BANK));
@@ -102,8 +99,8 @@ contract PageAdmin is Ownable {
         require(!one_time, "INIT FUNCTION NOT CALLED");
         PAGE_MINTER.setTreasuryAddress(_treasury);
     }
-    /* 
-    REMOVE FOR SAFETY REASON
+
+    // ++++
     function addSafe( address[] memory _safe ) public onlyOwner() {
         require(!one_time, "INIT FUNCTION NOT CALLED");
         PAGE_MINTER.addSafe(_safe); // memory
@@ -116,7 +113,7 @@ contract PageAdmin is Ownable {
         require(!one_time, "INIT FUNCTION NOT CALLED");
         PAGE_MINTER.changeSafe(_from, _to);
     }
-    */
+
     function setBurnNFTcost( uint256 _pageamount ) public onlyOwner() {
         PAGE_MINTER.setBurnNFT(_pageamount);
     }

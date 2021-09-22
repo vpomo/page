@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Import other contracts
@@ -23,19 +24,19 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
 
     IERC20 public PAGE_TOKEN;
     IMINTER public PAGE_MINTER;
-    ISAFE public PAGE_SAFE;
+    ISAFE private PAGE_SAFE;
 
-    constructor(address _PAGE_TOKEN, address _PAGE_MINTER) ERC721("Crypto Page NFT", "PAGE-NFT")  {
-        PAGE_TOKEN = IERC20(_PAGE_TOKEN);
+    constructor(address _PAGE_MINTER, address _PAGE_TOKEN) ERC721("Crypto Page NFT", "PAGE-NFT")  {
         PAGE_MINTER = IMINTER(_PAGE_MINTER);
         PAGE_SAFE = ISAFE(_PAGE_MINTER);
+        PAGE_TOKEN = IERC20(_PAGE_TOKEN);
     }
 
     /**
      *
      * - approved for NFT BANK
      *
-     */
+     **/
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool)  {
         require(_exists(tokenId), "ERC721: operator query for nonexistent token");
         address owner = ERC721.ownerOf(tokenId);

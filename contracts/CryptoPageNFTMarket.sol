@@ -13,7 +13,5 @@ contract PageNFTMarket {
         PAGE_NFT = INFTMINT(_PAGE_NFT);
         PAGE_MINTER = IMINTER(_PAGE_MINTER);
     }
-
     // DEPOSIT
-        
 }

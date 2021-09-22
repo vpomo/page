@@ -40,7 +40,7 @@ contract PageMinter is IMINTER, ISAFE {
     }
 
     bool private is_init = false;
-    function init(address _page) public onlyAdmin() {
+    function init(address _page,address _nft) public onlyAdmin() {
         require(!is_init, "can be call only once");
         PAGE = IERCMINT(_page); // PAGE ADDRESS
 
@@ -50,6 +50,8 @@ contract PageMinter is IMINTER, ISAFE {
         PAGE_MINTER.addSafe(address(PAGE_NFT_MARKET));
         PAGE_MINTER.addSafe(address(PAGE_PROFILE));
         */
+
+        setMinter("NFTBANK", address(_nft), 1 ** 18, true);
 
         /*
         PAGE_TOKEN = IERCMINT(_PAGE_TOKEN);

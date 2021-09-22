@@ -7,10 +7,8 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "watch": "npx hardhat watch compilation",
-    "deploy:test": "npx hardhat run --network rinkeby scripts/deploy-main.js",
     "deploy:all": "npx hardhat run --network rinkeby scripts/deploy.js",
-    "deploy:wizard": "npx hardhat run --network rinkeby scripts/deploy-wizard.js",
-    "deploy:cats": "npx hardhat run --network rinkeby scripts/deploy-cats.js",
+    "deploy:test": "npx hardhat run --network rinkeby scripts/test.js",
     "verify": "npx hardhat verify --network rinkeby MyCollectibleTest"
   },
   "devDependencies": {
