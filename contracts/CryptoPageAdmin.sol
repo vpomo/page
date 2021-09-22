@@ -11,7 +11,7 @@ import "./CryptoPageNFTMarket.sol";
 import "./CryptoPageProfile.sol";
 
 // TOKEN
-import "./CryptoPageToken.sol";
+// import "./CryptoPageToken.sol";
 
 import "./interfaces/INFTMINT.sol";
 
@@ -20,43 +20,46 @@ import "./interfaces/INFTMINT.sol";
 contract PageAdmin is Ownable {
 
     PageMinter public PAGE_MINTER;
-    PageToken public PAGE_TOKEN;
+    address public PAGE_TOKEN;
     // PageNFTBank public PAGE_NFT_BANK;
     PageNFTMarket public PAGE_NFT_MARKET;
     PageProfile public PAGE_PROFILE;
     INFTMINT public PAGE_NFT;
 
-    constructor() {
-        // LAUNCH ADMIN
-        PAGE_MINTER = new PageMinter(address(this),msg.sender);
-        PAGE_TOKEN = new PageToken();
+    address public TreasuryAddress;
 
+    constructor(address _TreasuryAddress) {
+        TreasuryAddress = _TreasuryAddress;
+        // LAUNCH ADMIN
+        PAGE_MINTER = new PageMinter(address(this),_TreasuryAddress);
+        // PAGE_TOKEN = new PageToken();
         // OTHERS
 
+        // FOR TEST: -> transfer ownership
     }
-
 
     // INIT
     bool one_time = true;
     address[] private safeAddresses;
-    function init( address _PAGE_NFT ) public onlyOwner() {
+    function init( address _PAGE_NFT, address _PAGE_TOKEN ) public onlyOwner() {
         require(one_time, "CAN BE CALL ONLY ONCE");
-
-        address _PAGE_MINTER = address(PAGE_MINTER);
-
         PAGE_NFT = INFTMINT(_PAGE_NFT);
+        PAGE_TOKEN = _PAGE_TOKEN;
 
-        PAGE_PROFILE = new PageProfile(_PAGE_MINTER);
+        // address _PAGE_MINTER = address(PAGE_MINTER);
+        // PAGE_PROFILE = new PageProfile(_PAGE_MINTER);
         // PAGE_NFT_BANK = new PageNFTBank(_PAGE_NFT,_PAGE_MINTER);
-        PAGE_NFT_MARKET = new PageNFTMarket(_PAGE_NFT,_PAGE_MINTER);
-
+        // PAGE_NFT_MARKET = new PageNFTMarket(_PAGE_NFT,_PAGE_MINTER);
         // SETUP PAGE_TOKEN
-        PAGE_MINTER.init(address(PAGE_TOKEN), address(PAGE_NFT));
+        // STOP INIT ...
+
+        PAGE_MINTER.init(_PAGE_TOKEN);
+        // transferOwnership(0x73837Fd1188B7200f2c116cf475aC3D71928D26B);
 
         // SET SAFE ADDRESSES
         // safeAddresses.push(address(PAGE_NFT_BANK));
-        safeAddresses.push(address(PAGE_NFT_MARKET));        
-        PAGE_MINTER.addSafe(safeAddresses);
+        // safeAddresses.push(address(PAGE_NFT_MARKET));        
+        // PAGE_MINTER.addSafe(safeAddresses);
 
         /*
         PAGE_MINTER.addSafe(address(PAGE_MINTER));

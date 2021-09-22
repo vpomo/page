@@ -3,13 +3,10 @@
 
 
 const saveContracts = async (contracts) => {
-  const fs = require('fs');
-  let fileName = './contracts.json';     
-  fs.writeFile(fileName, JSON.stringify(contracts), function writeJSON(err) {
-    if (err) return console.log(err);
-    console.log(JSON.stringify(contracts));
-    console.log('writing to ' + fileName);
-  });
+  console.log(contracts)
+  const fs = require('fs')
+  let fileName = './contracts.json'
+  fs.writeFileSync(fileName, JSON.stringify(contracts));
 }
 
 
@@ -33,7 +30,7 @@ const verifyContracts = async (contracts, network) => {
     const timer = setInterval(() => {
       bar.tick();
       if (bar.complete) {
-        clearInterval(timer);
+        clearInterval(timer)
       }
     }, 2300);
 
@@ -65,50 +62,80 @@ const verifyContracts = async (contracts, network) => {
 
 
 async function deploy(ContractName, construct) {
-  const _Contract = await ethers.getContractFactory(ContractName);
+  const _Contract = await ethers.getContractFactory(ContractName)
   // DEPLOYING
-  
-  const Contract = await _Contract.deploy(construct);
-  console.log(`${ContractName} is deploying...`);
+
+  const Contract = await _Contract.deploy(construct)
+  console.log(`${ContractName} is deploying...`)
   // AWAIT FOR DEPLOYED
-  await Contract.deployed();
-  console.log(`${ContractName} deployed to:`, Contract.address);
-  return Contract;
+  await Contract.deployed()
+  console.log(`${ContractName} deployed to:`, Contract.address)
+  return Contract
 }
+async function deploy2(ContractName, construct1, construct2) {
+  const _Contract = await ethers.getContractFactory(ContractName)
+  // DEPLOYING
+
+  const Contract = await _Contract.deploy(construct1, construct2)
+  console.log(`${ContractName} is deploying...`)
+  // AWAIT FOR DEPLOYED
+  await Contract.deployed()
+  console.log(`${ContractName} deployed to:`, Contract.address)
+  return Contract
+}
+
+
 
 async function main() {
 
-    /*
-      PageAdmin is deploying...
-      PageAdmin deployed to: 0xEe4423dA45667537ce6579913182522e8ce28F2c
-      PAGE_MINTER =  0x9
-    */
+    let TreasuryAddress = "0x09d6a2224c62ec977bc29e438c3cf0df16d4775a"
 
     // STEP 1
-    let PageAdmin = await deploy('PageAdmin', null);
-    let PAGE_MINTER = await PageAdmin.PAGE_MINTER();
-    let PAGE_TOKEN = await PageAdmin.PAGE_TOKEN();
+    let PageAdmin = await deploy('PageAdmin', TreasuryAddress)
+    let PAGE_MINTER = await PageAdmin.PAGE_MINTER()
+
+    // STEP 1.1
+    let PageToken = await deploy('PageToken', PAGE_MINTER)
+    let PAGE_TOKEN = PageToken.address
 
     // STEP 2
-    let PageMinterNFT = await deploy('PageMinterNFT', PAGE_MINTER, PAGE_TOKEN);
+    let PageMinterNFT = await deploy2('PageMinterNFT', PAGE_MINTER, PAGE_TOKEN)
+    let PAGE_NFT = PageMinterNFT.address
 
     // STEP 3
-    await PageAdmin.init(PageMinterNFT.address);
+    await PageAdmin.init(PAGE_NFT, PAGE_TOKEN)
+
+    // STEP 4
+    /*
+    console.log("setMinter: NFT_CREATE")
+    await PageAdmin.setMinter("NFT_CREATE", PAGE_NFT, "1000000000000000000")
+
+    console.log("setMinter: NFT_CREATE_WITH_COMMENT")
+    await PageAdmin.setMinter("NFT_CREATE_WITH_COMMENT", PAGE_NFT, "1000000000000000000")
+
+    console.log("setMinter: NFT_CREATE_ADD_COMMENT")
+    await PageAdmin.setMinter("NFT_CREATE_ADD_COMMENT", PAGE_NFT, "1000000000000000000")
+
+    console.log("setMinter: NFT_ADD_COMMENT")
+    await PageAdmin.setMinter("NFT_ADD_COMMENT", PAGE_NFT, "1000000000000000000")
+    */
+
+    console.log("CHANGE OWNER SHIP:")
+    await PageAdmin.transferOwnership("0x73837Fd1188B7200f2c116cf475aC3D71928D26B")
     
-    console.log();
-    console.log("DEPLOYED TO:");
+    console.log()
+    console.log("DEPLOYED TO:")
 
     // LIST OF CONTRACTS:
-    console.log('LIST OF CONTRACTS:');
+    console.log('LIST OF CONTRACTS:')
 
-    let PAGE_ADMIN = PageAdmin.address;
-    console.log("|- PAGE_ADMIN = ", PageAdmin.address );
-    console.log("|- PAGE_TOKEN = ", PAGE_TOKEN );
+    let PAGE_ADMIN = PageAdmin.address
+    console.log("|- PAGE_ADMIN = ", PageAdmin.address )
+    console.log("|- PAGE_TOKEN = ", PAGE_TOKEN )
+    console.log("|- PAGE_NFT = ", PAGE_NFT )
+    console.log("|- PAGE_MINTER = ", PAGE_MINTER )
 
-    let PAGE_NFT = PageMinterNFT.address
-    console.log("|- PAGE_NFT = ", PAGE_NFT );
-    console.log("|- PAGE_MINTER = ", PAGE_MINTER );
-
+    /*
     let PAGE_NFT_BANK = await PageAdmin.PAGE_NFT_BANK();
     console.log("|- PAGE_NFT_BANK = ", PAGE_NFT_BANK );
 
@@ -117,15 +144,16 @@ async function main() {
 
     let PAGE_PROFILE = await PageAdmin.PAGE_PROFILE();
     console.log("|- PAGE_PROFILE = ", PAGE_PROFILE );
+    */
 
-    await saveContracts(contracts = {
+    await saveContracts({
       PAGE_ADMIN:  PAGE_ADMIN,
       PAGE_TOKEN:  PAGE_TOKEN,
       PAGE_NFT:  PAGE_NFT,
       PAGE_MINTER:  PAGE_MINTER,
-      PAGE_NFT_BANK:  PAGE_NFT_BANK,
-      PAGE_NFT_MARKET:  PAGE_NFT_MARKET,
-      PAGE_PROFILE:  PAGE_PROFILE
+      // PAGE_NFT_BANK:  PAGE_NFT_BANK,
+      // PAGE_NFT_MARKET:  PAGE_NFT_MARKET,
+      // PAGE_PROFILE:  PAGE_PROFILE
     });
   
     // TEST ADMIN VERIFICATION

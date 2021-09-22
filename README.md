@@ -1,5 +1,9 @@
 # page
 
+yarn deploy:all
+./verify.sh
+
+# NOTES
 
 PAGE_ADMIN
 npx hardhat verify --network rinkeby --contract contracts/CryptoPageAdmin.sol:PageAdmin 0x59B3160d6F46d759F791A0a658056854bA3B4aB7
@@ -21,8 +25,6 @@ npx hardhat verify --network rinkeby --contract contracts/CryptoPageMinterNFT.so
 +++++
 
 https://rinkeby.etherscan.io/address/0xf9D158B5583b5183570722818AF4C8C1B2F7255e#code
-
-
 
 
 PAGE_MINTER_NFT ???

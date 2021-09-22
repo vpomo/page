@@ -9,9 +9,9 @@ import './interfaces/ISAFE.sol';
 contract PageToken is ERC20, IERCMINT {
 
     ISAFE private PAGE_MINTER;
-    constructor() ERC20("Crypto Page", "PAGE") {
+    constructor(address _PAGE_MINTER) ERC20("Crypto Page", "PAGE") {
         // address _IMINTER
-        PAGE_MINTER = ISAFE(msg.sender);
+        PAGE_MINTER = ISAFE(_PAGE_MINTER);
     }
 
     // OPEN

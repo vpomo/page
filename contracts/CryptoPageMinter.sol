@@ -16,12 +16,12 @@ contract PageMinter is IMINTER, ISAFE {
     IERCMINT private PAGE;
 
     address public TreasuryAddress = address(0);
-    address public AdminAddress = address(0);
+    address private AdminAddress = address(0);
     uint256 public TreasuryFee = 1000; // 100 is 1% || 10000 is 100%
 
     // MINTERS
-    Counters.Counter private _totalMinters;
-    Counters.Counter private _minterId;
+    Counters.Counter public _totalMinters;
+    Counters.Counter public _minterId;
     string[] public _listMinters;
 
     struct Minters {
@@ -40,7 +40,7 @@ contract PageMinter is IMINTER, ISAFE {
     }
 
     bool private is_init = false;
-    function init(address _page, address _nft) public onlyAdmin() {
+    function init(address _page) public onlyAdmin() {
         require(!is_init, "can be call only once");
         PAGE = IERCMINT(_page); // PAGE ADDRESS
 
@@ -53,10 +53,12 @@ contract PageMinter is IMINTER, ISAFE {
 
         // setMinter("NFTBANK", address(_nft), 1 ** 18, true);
 
-        setMinter("NFT_CREATE", address(_nft), 10 ** 18, false);
-        setMinter("NFT_CREATE_WITH_COMMENT", address(_nft), 50 ** 18, false);
-        setMinter("NFT_CREATE_ADD_COMMENT", address(_nft), 40 ** 18, false);
-        setMinter("NFT_ADD_COMMENT", address(_nft), 10 ** 18, false);
+        /***
+        setMinter("NFT_CREATE", _nft, 10 ** 18, false);
+        setMinter("NFT_CREATE_WITH_COMMENT", _nft, 50 ** 18, false);
+        setMinter("NFT_CREATE_ADD_COMMENT", _nft, 40 ** 18, false);
+        setMinter("NFT_ADD_COMMENT", _nft, 10 ** 18, false);
+        ***/
 
         /*
         PAGE_TOKEN = IERCMINT(_PAGE_TOKEN);
