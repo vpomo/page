@@ -61,6 +61,13 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
     {
         return string(abi.encodePacked(getBaseURL(), super.tokenURI(tokenId)));
     }
+    
+
+    function creatorOf( uint256 tokenId ) public view override returns (address){
+        return creatorById[tokenId];
+    }
+
+
     function totalSupply()
         public
         view
@@ -85,12 +92,17 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
         _contract = Contract;
     }
     mapping(uint256 => address) private commentsById;
+    mapping(uint256 => address) private creatorById;
     function safeMint(string memory _tokenURI, bool _comment) public returns (uint256) {
         uint256 tokenId = _tokenIdCounter.current();
         if (_comment) {
+            PAGE_MINTER.mint1("NFT_CREATE_WITH_COMMENT", msg.sender); // MINT
             PageComment newComment = new PageComment();
             commentsById[tokenId] = address(newComment);
+        } else {
+            PAGE_MINTER.mint1("NFT_CREATE", msg.sender); // MINT
         }
+        creatorById[tokenId] = msg.sender;
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, _tokenURI);
         _tokenIdCounter.increment();
@@ -102,6 +114,7 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
         require(commentsById[_tokenId] != address(0), "No comment functionaly for this nft");
         PageComment newComment = PageComment(commentsById[_tokenId]);
         newComment._comment(_comment_text, _like, msg.sender);
+        PAGE_MINTER.mint3("NFT_ADD_COMMENT", msg.sender, ownerOf(_tokenId), creatorOf(_tokenId)); // MINT
     }
 
     function commentActivate(uint256 _tokenId) public {
@@ -109,7 +122,8 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
         require(commentsById[_tokenId] == address(0), "Comments alredy setup");
         require(ownerOf(_tokenId) == msg.sender, "It's possible only for owner");
         PageComment newComment = new PageComment();           
-        commentsById[_tokenId] = address(newComment); 
+        commentsById[_tokenId] = address(newComment);
+        PAGE_MINTER.mint1("NFT_CREATE_ADD_COMMENT", msg.sender); // MINT
     }
 
     string private BaseURL = "https://ipfs.io/ipfs/";

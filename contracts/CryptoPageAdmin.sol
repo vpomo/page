@@ -21,7 +21,7 @@ contract PageAdmin is Ownable {
 
     PageMinter public PAGE_MINTER;
     PageToken public PAGE_TOKEN;
-    PageNFTBank public PAGE_NFT_BANK;
+    // PageNFTBank public PAGE_NFT_BANK;
     PageNFTMarket public PAGE_NFT_MARKET;
     PageProfile public PAGE_PROFILE;
     INFTMINT public PAGE_NFT;
@@ -47,14 +47,14 @@ contract PageAdmin is Ownable {
         PAGE_NFT = INFTMINT(_PAGE_NFT);
 
         PAGE_PROFILE = new PageProfile(_PAGE_MINTER);
-        PAGE_NFT_BANK = new PageNFTBank(_PAGE_NFT,_PAGE_MINTER);
+        // PAGE_NFT_BANK = new PageNFTBank(_PAGE_NFT,_PAGE_MINTER);
         PAGE_NFT_MARKET = new PageNFTMarket(_PAGE_NFT,_PAGE_MINTER);
 
         // SETUP PAGE_TOKEN
         PAGE_MINTER.init(address(PAGE_TOKEN), address(PAGE_NFT));
 
         // SET SAFE ADDRESSES
-        safeAddresses.push(address(PAGE_NFT_BANK));
+        // safeAddresses.push(address(PAGE_NFT_BANK));
         safeAddresses.push(address(PAGE_NFT_MARKET));        
         PAGE_MINTER.addSafe(safeAddresses);
 
@@ -78,7 +78,6 @@ contract PageAdmin is Ownable {
         // PAGE_MINTER.setMinter("BANK_SELL", PAGE_NFT.BANK_ADDRESS, 1 ** 18, true); // On the price effect amount of comments
         // PAGE_MINTER.setMinter("PROFILE_UPDATE", address(PAGE_NFT), 3 ** 18, false);
         */
-
         one_time = false;
     }
 

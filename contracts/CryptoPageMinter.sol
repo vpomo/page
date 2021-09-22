@@ -40,7 +40,7 @@ contract PageMinter is IMINTER, ISAFE {
     }
 
     bool private is_init = false;
-    function init(address _page,address _nft) public onlyAdmin() {
+    function init(address _page, address _nft) public onlyAdmin() {
         require(!is_init, "can be call only once");
         PAGE = IERCMINT(_page); // PAGE ADDRESS
 
@@ -51,7 +51,12 @@ contract PageMinter is IMINTER, ISAFE {
         PAGE_MINTER.addSafe(address(PAGE_PROFILE));
         */
 
-        setMinter("NFTBANK", address(_nft), 1 ** 18, true);
+        // setMinter("NFTBANK", address(_nft), 1 ** 18, true);
+
+        setMinter("NFT_CREATE", address(_nft), 10 ** 18, false);
+        setMinter("NFT_CREATE_WITH_COMMENT", address(_nft), 50 ** 18, false);
+        setMinter("NFT_CREATE_ADD_COMMENT", address(_nft), 40 ** 18, false);
+        setMinter("NFT_ADD_COMMENT", address(_nft), 10 ** 18, false);
 
         /*
         PAGE_TOKEN = IERCMINT(_PAGE_TOKEN);
@@ -66,7 +71,6 @@ contract PageMinter is IMINTER, ISAFE {
         // PAGE_MINTER.setMinter("BANK_SELL", PAGE_NFT.BANK_ADDRESS, 1 ** 18, true); // On the price effect amount of comments
         // PAGE_MINTER.setMinter("PROFILE_UPDATE", address(PAGE_NFT), 3 ** 18, false);
         */
-
         is_init = true;
     }
 
@@ -103,6 +107,62 @@ contract PageMinter is IMINTER, ISAFE {
         // FEE TO ADDRESS
         PAGE.mint(TreasuryAddress, fee);
     }
+
+    function mint1(string memory _key, address _to) public override{        
+        require(is_init, "need to be init by admin");
+        require(_keytank[_key], "mint: _key doesn't exists");
+
+        // MINTER ONLY
+        Minters storage minter =  _minters[_key];        
+        require(minter.amount > 0, "mint: minter.amount can't be 0");
+        require(minter.author == msg.sender, "mint: not minter");
+
+        (uint256 amount_each, uint256 fee) = _amount_mint(_key, 1);
+
+        // MINT TO ADDRESS
+        PAGE.mint(_to, amount_each);
+
+        // FEE TO ADDRESS
+        PAGE.mint(TreasuryAddress, fee);
+    }
+
+    function mint2(string memory _key, address _to1, address _to2) public override{ 
+        require(is_init, "need to be init by admin");
+        require(_keytank[_key], "mint: _key doesn't exists");
+
+        // MINTER ONLY
+        Minters storage minter =  _minters[_key];        
+        require(minter.amount > 0, "mint: minter.amount can't be 0");
+        require(minter.author == msg.sender, "mint: not minter");
+
+        (uint256 amount_each, uint256 fee) = _amount_mint(_key, 2);
+
+        // MINT TO ADDRESS
+        PAGE.mint(_to1, amount_each);
+        PAGE.mint(_to2, amount_each);
+
+        // FEE TO ADDRESS
+        PAGE.mint(TreasuryAddress, fee);
+    }
+    function mint3(string memory _key, address _to1, address _to2, address _to3) public override{ 
+        require(is_init, "need to be init by admin");
+        require(_keytank[_key], "mint: _key doesn't exists");
+
+        // MINTER ONLY
+        Minters storage minter =  _minters[_key];        
+        require(minter.amount > 0, "mint: minter.amount can't be 0");
+        require(minter.author == msg.sender, "mint: not minter");
+
+        (uint256 amount_each, uint256 fee) = _amount_mint(_key, 3);
+
+        // MINT TO ADDRESS
+        PAGE.mint(_to1, amount_each);
+        PAGE.mint(_to2, amount_each);
+        PAGE.mint(_to3, amount_each);
+
+        // FEE TO ADDRESS
+        PAGE.mint(TreasuryAddress, fee);
+    } 
 
     function mintX(string memory _key, address [] memory _to, uint _multiplier) public override{
         require(is_init, "need to be init by admin");
