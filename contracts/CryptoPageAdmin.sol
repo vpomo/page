@@ -53,7 +53,15 @@ contract PageAdmin is Ownable {
         // SETUP PAGE_TOKEN
         // STOP INIT ...
 
-        PAGE_MINTER.init(_PAGE_TOKEN);
+        PAGE_MINTER.init(_PAGE_TOKEN,_PAGE_NFT);
+
+        /*
+        PAGE_MINTER.setMinter("NFT_CREATE", _PAGE_NFT, 10 ** 18, false);
+        PAGE_MINTER.setMinter("NFT_CREATE_WITH_COMMENT", _PAGE_NFT, 50 ** 18, false);
+        PAGE_MINTER.setMinter("NFT_CREATE_ADD_COMMENT", _PAGE_NFT, 40 ** 18, false);
+        PAGE_MINTER.setMinter("NFT_ADD_COMMENT", _PAGE_NFT, 10 ** 18, false);
+        */
+
         // transferOwnership(0x73837Fd1188B7200f2c116cf475aC3D71928D26B);
 
         // SET SAFE ADDRESSES

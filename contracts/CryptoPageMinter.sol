@@ -22,7 +22,7 @@ contract PageMinter is IMINTER, ISAFE {
     // MINTERS
     Counters.Counter public _totalMinters;
     Counters.Counter public _minterId;
-    string[] public _listMinters;
+    // string[] public _listMinters;
 
     struct Minters {
         uint256 id;
@@ -40,11 +40,11 @@ contract PageMinter is IMINTER, ISAFE {
     }
 
     bool private is_init = false;
-    function init(address _page) public onlyAdmin() {
+    function init(address _page, address _nft) public onlyAdmin() {
         require(!is_init, "can be call only once");
         PAGE = IERCMINT(_page); // PAGE ADDRESS
 
-        /*
+        /* 
         PAGE_MINTER.addSafe(address(PAGE_MINTER));
         PAGE_MINTER.addSafe(address(PAGE_NFT_BANK));
         PAGE_MINTER.addSafe(address(PAGE_NFT_MARKET));
@@ -53,12 +53,11 @@ contract PageMinter is IMINTER, ISAFE {
 
         // setMinter("NFTBANK", address(_nft), 1 ** 18, true);
 
-        /***
-        setMinter("NFT_CREATE", _nft, 10 ** 18, false);
-        setMinter("NFT_CREATE_WITH_COMMENT", _nft, 50 ** 18, false);
-        setMinter("NFT_CREATE_ADD_COMMENT", _nft, 40 ** 18, false);
-        setMinter("NFT_ADD_COMMENT", _nft, 10 ** 18, false);
-        ***/
+        /*** ***/
+        setMinter("NFT_CREATE", _nft, 10000000000000000000, false);
+        setMinter("NFT_CREATE_WITH_COMMENT", _nft, 10000000000000000000, false);
+        setMinter("NFT_CREATE_ADD_COMMENT", _nft, 10000000000000000000, false);
+        setMinter("NFT_ADD_COMMENT", _nft, 10000000000000000000, false);
 
         /*
         PAGE_TOKEN = IERCMINT(_PAGE_TOKEN);
@@ -200,12 +199,12 @@ contract PageMinter is IMINTER, ISAFE {
     function removeMinter(string memory _key) public onlyAdmin() override {
         require(_keytank[_key], "removeMinter: _key doesn't exists");
         _keytank[_key] = false;
-        Minters memory toRemove = _minters[_key];
-        delete _listMinters[toRemove.id];
+        // Minters memory toRemove = _minters[_key];
+        // delete _listMinters[toRemove.id];
         delete _minters[_key];
         _totalMinters.decrement();
     }
-    function setMinter(string memory _key, address _account, uint256 _pageamount, bool _xmint) public onlyAdmin() override {
+    function setMinter(string memory _key, address _account, uint256 _pageamount, bool _xmint) public  onlyAdmin() override {
         if (_keytank[_key]) {
             Minters memory update = _minters[_key];
             update.amount = _pageamount;
@@ -219,10 +218,16 @@ contract PageMinter is IMINTER, ISAFE {
                 id: _minterId.current(),
                 xmint: _xmint
             });
-            _listMinters[_minterId.current()] = _key;
+            // _listMinters[_minterId.current()] = _key;
             _minterId.increment();
             _totalMinters.increment();
         }
+    }
+
+
+
+    function testLastinterID() public view returns (uint256) {
+        return _minterId.current();
     }
     function setTreasuryFee(uint256 _percent) public onlyAdmin() {
         require(_percent >= 10, "setTreasuryFee: minimum treasury fee percent is 0.1%");

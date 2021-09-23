@@ -106,7 +106,7 @@ async function main() {
     await PageAdmin.init(PAGE_NFT, PAGE_TOKEN)
 
     // STEP 4
-    /*
+    /*    
     console.log("setMinter: NFT_CREATE")
     await PageAdmin.setMinter("NFT_CREATE", PAGE_NFT, "1000000000000000000")
 
@@ -120,11 +120,10 @@ async function main() {
     await PageAdmin.setMinter("NFT_ADD_COMMENT", PAGE_NFT, "1000000000000000000")
     */
 
-    console.log("CHANGE OWNER SHIP:")
+    console.log("CHANGE OWNER SHIP")
     await PageAdmin.transferOwnership("0x73837Fd1188B7200f2c116cf475aC3D71928D26B")
     
-    console.log()
-    console.log("DEPLOYED TO:")
+    console.log("DEPLOYED")
 
     // LIST OF CONTRACTS:
     console.log('LIST OF CONTRACTS:')
