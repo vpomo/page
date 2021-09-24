@@ -4,38 +4,20 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 
 // MINTER
 import "./CryptoPageMinter.sol";
-
-// NFT MARKETS
-import "./CryptoPageNFTBank.sol";
-import "./CryptoPageNFTMarket.sol";
-import "./CryptoPageProfile.sol";
-
-// TOKEN
-// import "./CryptoPageToken.sol";
-
 import "./interfaces/INFTMINT.sol";
-
-
 
 contract PageAdmin is Ownable {
 
     PageMinter public PAGE_MINTER;
     address public PAGE_TOKEN;
     // PageNFTBank public PAGE_NFT_BANK;
-    PageNFTMarket public PAGE_NFT_MARKET;
-    PageProfile public PAGE_PROFILE;
     INFTMINT public PAGE_NFT;
 
     address public TreasuryAddress;
 
     constructor(address _TreasuryAddress) {
         TreasuryAddress = _TreasuryAddress;
-        // LAUNCH ADMIN
         PAGE_MINTER = new PageMinter(address(this),_TreasuryAddress);
-        // PAGE_TOKEN = new PageToken();
-        // OTHERS
-
-        // FOR TEST: -> transfer ownership
     }
 
     // INIT
@@ -45,50 +27,7 @@ contract PageAdmin is Ownable {
         require(one_time, "CAN BE CALL ONLY ONCE");
         PAGE_NFT = INFTMINT(_PAGE_NFT);
         PAGE_TOKEN = _PAGE_TOKEN;
-
-        // address _PAGE_MINTER = address(PAGE_MINTER);
-        // PAGE_PROFILE = new PageProfile(_PAGE_MINTER);
-        // PAGE_NFT_BANK = new PageNFTBank(_PAGE_NFT,_PAGE_MINTER);
-        // PAGE_NFT_MARKET = new PageNFTMarket(_PAGE_NFT,_PAGE_MINTER);
-        // SETUP PAGE_TOKEN
-        // STOP INIT ...
-
         PAGE_MINTER.init(_PAGE_TOKEN,_PAGE_NFT);
-
-        /*
-        PAGE_MINTER.setMinter("NFT_CREATE", _PAGE_NFT, 10 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_CREATE_WITH_COMMENT", _PAGE_NFT, 50 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_CREATE_ADD_COMMENT", _PAGE_NFT, 40 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_ADD_COMMENT", _PAGE_NFT, 10 ** 18, false);
-        */
-
-        // transferOwnership(0x73837Fd1188B7200f2c116cf475aC3D71928D26B);
-
-        // SET SAFE ADDRESSES
-        // safeAddresses.push(address(PAGE_NFT_BANK));
-        // safeAddresses.push(address(PAGE_NFT_MARKET));        
-        // PAGE_MINTER.addSafe(safeAddresses);
-
-        /*
-        PAGE_MINTER.addSafe(address(PAGE_MINTER));
-        PAGE_MINTER.addSafe(address(PAGE_NFT_BANK));
-        PAGE_MINTER.addSafe(address(PAGE_NFT_MARKET));
-        PAGE_MINTER.addSafe(address(PAGE_PROFILE));
-        */
-
-        /*
-        PAGE_TOKEN = IERCMINT(_PAGE_TOKEN);
-        PAGE_NFT = INFTMINT(_PAGE_NFT);
-
-        // PAGE
-        PAGE_MINTER.setMinter("NFT_CREATE", address(PAGE_NFT), 20 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_CREATE_WITH_COMMENT", address(PAGE_NFT), 100 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_CREATE_ADD_COMMENT", address(PAGE_NFT), 80 ** 18, false); // if create without comments, it can be add by this function
-        PAGE_MINTER.setMinter("NFT_FIRST_COMMENT", address(PAGE_NFT), 10 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_SECOND_COMMENT", address(PAGE_NFT), 3 ** 18, false);
-        // PAGE_MINTER.setMinter("BANK_SELL", PAGE_NFT.BANK_ADDRESS, 1 ** 18, true); // On the price effect amount of comments
-        // PAGE_MINTER.setMinter("PROFILE_UPDATE", address(PAGE_NFT), 3 ** 18, false);
-        */
         one_time = false;
     }
 

@@ -52,26 +52,10 @@ contract PageMinter is IMINTER, ISAFE {
         */
 
         // setMinter("NFTBANK", address(_nft), 1 ** 18, true);
-
-        /*** ***/
         setMinter("NFT_CREATE", _nft, 10000000000000000000, false);
         setMinter("NFT_CREATE_WITH_COMMENT", _nft, 10000000000000000000, false);
         setMinter("NFT_CREATE_ADD_COMMENT", _nft, 10000000000000000000, false);
         setMinter("NFT_ADD_COMMENT", _nft, 10000000000000000000, false);
-
-        /*
-        PAGE_TOKEN = IERCMINT(_PAGE_TOKEN);
-        PAGE_NFT = INFTMINT(_PAGE_NFT);
-        
-        // PAGE
-        PAGE_MINTER.setMinter("NFT_CREATE", address(PAGE_NFT), 20 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_CREATE_WITH_COMMENT", address(PAGE_NFT), 100 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_CREATE_ADD_COMMENT", address(PAGE_NFT), 80 ** 18, false); // if create without comments, it can be add by this function
-        PAGE_MINTER.setMinter("NFT_FIRST_COMMENT", address(PAGE_NFT), 10 ** 18, false);
-        PAGE_MINTER.setMinter("NFT_SECOND_COMMENT", address(PAGE_NFT), 3 ** 18, false);
-        // PAGE_MINTER.setMinter("BANK_SELL", PAGE_NFT.BANK_ADDRESS, 1 ** 18, true); // On the price effect amount of comments
-        // PAGE_MINTER.setMinter("PROFILE_UPDATE", address(PAGE_NFT), 3 ** 18, false);
-        */
         is_init = true;
     }
 
