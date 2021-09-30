@@ -15,10 +15,9 @@ contract PageProfile {
         PAGE_MINTER = IMINTER(_PAGE_MINTER);
     }
 
-    // COMMENTS
     Counters.Counter private _totalSocial;
+    Counters.Counter private _totalStatus;
 
-    // +
     //ADD SOCIALS
     struct Social {
         uint256 uid;
@@ -41,4 +40,22 @@ contract PageProfile {
     }
 
     //ADD STATUS
+    struct Status {
+        uint256 uid;
+        address author;
+        string text;
+    }
+    mapping(uint256 => Status) public StatusById;
+    mapping(address => EnumerableSet.UintSet) private StatusIdsOf;
+    function _add_status(string memory text) public {
+        uint256 uid = _totalStatus.current();
+        address user = msg.sender;
+        StatusIdsOf[user].add(uid);
+        StatusById[uid] = Status({
+            uid: uid,
+            author: user,
+            text: text
+        });
+    }
+
 }

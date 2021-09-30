@@ -129,10 +129,13 @@ async function main() {
     console.log('LIST OF CONTRACTS:')
 
     let PAGE_ADMIN = PageAdmin.address
-    console.log("|- PAGE_ADMIN = ", PageAdmin.address )
+    console.log("|- PAGE_ADMIN = ", PAGE_ADMIN )
     console.log("|- PAGE_TOKEN = ", PAGE_TOKEN )
     console.log("|- PAGE_NFT = ", PAGE_NFT )
     console.log("|- PAGE_MINTER = ", PAGE_MINTER )
+
+    
+    // console.log("|- PAGE_PROFILE = ", PAGE_MINTER )
 
     /*
     let PAGE_NFT_BANK = await PageAdmin.PAGE_NFT_BANK();
