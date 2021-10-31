@@ -5,6 +5,8 @@ yarn deploy:all
 
 # NOTES
 
+beta test server https://b2.crypto.page
+
 PAGE_ADMIN
 npx hardhat verify --network rinkeby --contract contracts/CryptoPageAdmin.sol:PageAdmin 0x59B3160d6F46d759F791A0a658056854bA3B4aB7
 
