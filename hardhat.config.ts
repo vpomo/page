@@ -37,13 +37,17 @@ const config: HardhatUserConfig = {
        url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
        accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
+    ganache: {
+      url: `http://127.0.0.1:8545`,
+      accounts: ['0xc48cb9e0cf5a4e8c8e7427a8278f0cd7149b46eb9aad89aef1de88a46608fa85']
+    }
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY
   },
   // mocha options can be set here
   mocha: {
-    // timeout: "300s",
+    timeout: "300s",
   },
 };
 export default config;
