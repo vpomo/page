@@ -44,18 +44,18 @@ contract PageComment is Ownable {
     // STATISTICS
     Counters.Counter private _totalComments;
     Counters.Counter private _totalLikes;
-    Counters.Counter private _totalDislakes;
-    function totalStats() public view returns (uint256 Comments, uint256 Likes, uint256 Dislakes)
+    Counters.Counter private _totalDislikes;
+    function totalStats() public view returns (uint256 Comments, uint256 Likes, uint256 Dislikes)
     {
         Comments = _totalComments.current();
         Likes = _totalLikes.current();
-        Dislakes = _totalDislakes.current();
+        Dislikes = _totalDislikes.current();
     }
     function _increment(bool like) private {
         if (like) {
             _totalLikes.increment();
         } else {
-            _totalDislakes.increment();
+            _totalDislikes.increment();
         }
         _totalComments.increment();
     }
