@@ -4,9 +4,9 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-import "./../CryptoPageLib/Admin.sol";
-import "./../CryptoPageLib/ASafe.sol";
-import "./../CryptoPageLib/interfaces/IStrategy.sol";
+import "../contracts/CryptoPageLib/Admin.sol";
+import "../contracts/CryptoPageLib/ASafe.sol";
+import "../contracts/CryptoPageLib/interfaces/IStrategy.sol";
 
 contract UExecutor is Admin, ASafe {
     using SafeMath for uint256;
