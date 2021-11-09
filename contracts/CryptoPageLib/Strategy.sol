@@ -11,13 +11,14 @@ abstract contract Strategy is IStrategy, Admin{
      * EXAMPLE
      *
      */
-    function getJson(string memory _function, string memory _values) view public override returns (string memory) {
+    // function getJson(string memory _function, string memory _values) view public override returns (string memory) {
 
         // EXAMPLE HOW BUILD JSON ...
-        string memory tojson;
+        // string memory tojson;
 
         // FIRST ELEMENT MAKING WITH : _JSONelement
         // tojson = JSON();
+        /*
         tojson = '{';
         tojson = _JSONAddString(tojson, "test_2", _values, true);
         tojson = _JSONAddString(tojson, "test_3", _values, true);
@@ -26,7 +27,7 @@ abstract contract Strategy is IStrategy, Admin{
         tojson = _JSONAddString(tojson, "test_6", _values, true);
         tojson = _JSONAddString(tojson, "test_7", _values, true);
 
-/*
+
         // TEST 1
         tojson = tojson.toSlice().concat(','.toSlice())
                        .toSlice().concat(_JSONelement("test_2", _values, true).toSlice());
@@ -64,8 +65,8 @@ abstract contract Strategy is IStrategy, Admin{
     ********/
 
         // COMPILE UNIG JSONcompile FUNCTION
-        return JSONcompile(tojson);
-    }
+        // return JSONcompile(tojson);
+    // }
 
     // bytes memory
     /*
