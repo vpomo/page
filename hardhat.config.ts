@@ -1,53 +1,78 @@
-import { task } from "hardhat/config";
-import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-etherscan";
-import "@nomiclabs/hardhat-waffle";
-import "@openzeppelin/hardhat-upgrades";
-import { HardhatUserConfig } from 'hardhat/types';
-import * as dotenv from "dotenv";
-import "hardhat-watcher";
-
-
-dotenv.config();
-
-
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-solhint";
+import "@nomiclabs/hardhat-waffle";
+import "@openzeppelin/hardhat-upgrades";
+import "@typechain/hardhat";
+import * as dotenv from "dotenv";
+import "hardhat-deploy";
+import "hardhat-watcher";
+import { HardhatUserConfig } from "hardhat/types";
+import "solidity-coverage";
+
+const MAINNET_RPC_URL =
+    process.env.MAINNET_RPC_URL ||
+    process.env.ALCHEMY_MAINNET_RPC_URL ||
+    "https://eth-mainnet.alchemyapi.io/v2/your-api-key";
+const RINKEBY_RPC_URL =
+    process.env.RINKEBY_RPC_URL ||
+    "https://eth-rinkeby.alchemyapi.io/v2/your-api-key";
+const KOVAN_RPC_URL =
+    process.env.KOVAN_RPC_URL ||
+    "https://eth-kovan.alchemyapi.io/v2/your-api-key";
+const MNEMONIC = process.env.MNEMONIC || "your mnemonic";
+const ETHERSCAN_API_KEY =
+    process.env.ETHERSCAN_API_KEY || "Your etherscan API key";
+// optional
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "your private key";
+const PINATA_API_KEY = process.env.PINATA_API_KEY;
+const PINATA_API_SECRET = process.env.PINATA_API_SECRET;
+// url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
+
+dotenv.config();
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "rinkeby",
-  watcher: {    
-    compilation: {
-      tasks: ["compile"],
-      files: ["./contracts"],
-      verbose: true
-    }
-  },
-  solidity: {
-    compilers: [{ version: "0.8.4", settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      }
-    } }],
-  },
-  networks: {
-    rinkeby: {
-       url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
-       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+    defaultNetwork: "ganache",
+    watcher: {
+        compilation: {
+            tasks: ["compile"],
+            files: ["./contracts"],
+            verbose: true,
+        },
     },
-    ganache: {
-      url: `http://127.0.0.1:8545`,
-      accounts: ['0xc48cb9e0cf5a4e8c8e7427a8278f0cd7149b46eb9aad89aef1de88a46608fa85']
-    }
-  },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
-  },
-  // mocha options can be set here
-  mocha: {
-    timeout: "300s",
-  },
+    solidity: {
+        compilers: [
+            {
+                version: "0.8.4",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            },
+        ],
+    },
+    networks: {
+        rinkeby: {
+            url: RINKEBY_RPC_URL,
+            accounts: { mnemonic: MNEMONIC },
+            // saveDeployments: true,
+        },
+        ganache: {
+            url: "http://localhost:7545",
+            accounts: { mnemonic: MNEMONIC },
+            saveDeployments: true,
+        },
+    },
+    etherscan: {
+        apiKey: process.env.ETHERSCAN_API_KEY,
+    },
+    mocha: {
+        timeout: 100000,
+    },
 };
 export default config;
