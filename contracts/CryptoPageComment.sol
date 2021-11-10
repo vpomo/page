@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import '@openzeppelin/contracts/access/Ownable.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract PageComment is Ownable {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -16,15 +16,15 @@ contract PageComment is Ownable {
         string text;
         bool like;
     }
-    event NewComment(
-        uint256 uid,
-        address author,
-        string text,
-        bool like
-    );
+    event NewComment(uint256 uid, address author, string text, bool like);
     mapping(uint256 => Comment) public commentsById;
     mapping(address => EnumerableSet.UintSet) private commentsIdsOf;
-    function _comment(string memory text, bool like, address user) public onlyOwner {
+
+    function _comment(
+        string memory text,
+        bool like,
+        address user
+    ) public onlyOwner {
         uint256 uid = _totalComments.current();
         commentsIdsOf[user].add(uid);
         commentsById[uid] = Comment({
@@ -33,11 +33,7 @@ contract PageComment is Ownable {
             text: text,
             like: like
         });
-        emit NewComment(
-            uid,
-            user,
-            text,
-            like);
+        emit NewComment(uid, user, text, like);
         _increment(like);
     }
 
@@ -45,12 +41,21 @@ contract PageComment is Ownable {
     Counters.Counter private _totalComments;
     Counters.Counter private _totalLikes;
     Counters.Counter private _totalDislikes;
-    function totalStats() public view returns (uint256 Comments, uint256 Likes, uint256 Dislikes)
+
+    function totalStats()
+        public
+        view
+        returns (
+            uint256 Comments,
+            uint256 Likes,
+            uint256 Dislikes
+        )
     {
         Comments = _totalComments.current();
         Likes = _totalLikes.current();
         Dislikes = _totalDislikes.current();
     }
+
     function _increment(bool like) private {
         if (like) {
             _totalLikes.increment();
@@ -60,5 +65,3 @@ contract PageComment is Ownable {
         _totalComments.increment();
     }
 }
-
-

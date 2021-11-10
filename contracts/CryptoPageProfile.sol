@@ -11,7 +11,8 @@ contract PageProfile {
     using EnumerableSet for EnumerableSet.UintSet;
     using Counters for Counters.Counter;
     IMINTER public PAGE_MINTER;
-    constructor (address _PAGE_MINTER) {
+
+    constructor(address _PAGE_MINTER) {
         PAGE_MINTER = IMINTER(_PAGE_MINTER);
     }
 
@@ -27,6 +28,7 @@ contract PageProfile {
     }
     mapping(uint256 => Social) public SocialById;
     mapping(address => EnumerableSet.UintSet) private SocialIdsOf;
+
     function _add_social(string memory title, string memory url) public {
         uint256 uid = _totalSocial.current();
         address user = msg.sender;
@@ -47,15 +49,11 @@ contract PageProfile {
     }
     mapping(uint256 => Status) public StatusById;
     mapping(address => EnumerableSet.UintSet) private StatusIdsOf;
+
     function _add_status(string memory text) public {
         uint256 uid = _totalStatus.current();
         address user = msg.sender;
         StatusIdsOf[user].add(uid);
-        StatusById[uid] = Status({
-            uid: uid,
-            author: user,
-            text: text
-        });
+        StatusById[uid] = Status({uid: uid, author: user, text: text});
     }
-
 }

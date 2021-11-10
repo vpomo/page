@@ -1,14 +1,13 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IERCMINT.sol";
-import './interfaces/ISAFE.sol';
+import "./interfaces/ISAFE.sol";
 
 contract PageToken is ERC20, IERCMINT {
-
     ISAFE private PAGE_MINTER;
+
     constructor(address _PAGE_MINTER) ERC20("Crypto Page", "PAGE") {
         // address _IMINTER
         PAGE_MINTER = ISAFE(_PAGE_MINTER);
@@ -19,7 +18,12 @@ contract PageToken is ERC20, IERCMINT {
         _burn(msg.sender, amount);
     }
 
-    function isEnoughOn(address account, uint256 amount) public override view returns (bool) {
+    function isEnoughOn(address account, uint256 amount)
+        public
+        view
+        override
+        returns (bool)
+    {
         if (balanceOf(account) >= amount) {
             return true;
         } else {
@@ -28,27 +32,44 @@ contract PageToken is ERC20, IERCMINT {
     }
 
     // ADMIN ONLY
-    modifier onlyAdmin() {        
-        require(msg.sender == address(PAGE_MINTER), "onlyAdmin: caller is not the admin");
+    modifier onlyAdmin() {
+        require(
+            msg.sender == address(PAGE_MINTER),
+            "onlyAdmin: caller is not the admin"
+        );
         _;
     }
-    function mint(address to, uint256 amount) public onlyAdmin() override {
+
+    function mint(address to, uint256 amount) public override onlyAdmin {
         _mint(to, amount);
     }
-    function xburn(address from, uint256 amount) public onlyAdmin() override{
+
+    function xburn(address from, uint256 amount) public override onlyAdmin {
         _burn(from, amount);
     }
-    
-    modifier onlySafe() {        
-        require(PAGE_MINTER.isSafe(msg.sender), "onlySafe: caller is not in safe list");
+
+    modifier onlySafe() {
+        require(
+            PAGE_MINTER.isSafe(msg.sender),
+            "onlySafe: caller is not in safe list"
+        );
         _;
     }
 
     // ISAFE
-    function safeDeposit(address from, address to, uint256 amount) public override onlySafe() {
+    function safeDeposit(
+        address from,
+        address to,
+        uint256 amount
+    ) public override onlySafe {
         _transfer(from, to, amount);
     }
-    function safeWithdraw(address from, address to, uint256 amount) public override onlySafe() {
+
+    function safeWithdraw(
+        address from,
+        address to,
+        uint256 amount
+    ) public override onlySafe {
         _transfer(from, to, amount);
     }
 }
