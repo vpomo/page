@@ -34,7 +34,7 @@ async function main() {
     console.log("TreasuryAddress", TreasuryAddress);
     // STEP 1
     let PageAdmin = await deploy("PageAdmin", TreasuryAddress);
-    let PAGE_MINTER = await PageAdmin.PAGE_MINTER();
+    let PAGE_MINTER = await PageAdmin.pageMinter();
 
     // STEP 1.1
     let PageToken = await deploy("PageToken", PAGE_MINTER);
