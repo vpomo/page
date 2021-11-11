@@ -26,15 +26,14 @@ import type {
 
 export interface UExecutorInterface extends ethers.utils.Interface {
     functions: {
-        "_StrategyId()": FunctionFragment;
         "_activeStrategies()": FunctionFragment;
         "_strategies(string)": FunctionFragment;
+        "_strategyId()": FunctionFragment;
         "_totalStrategies()": FunctionFragment;
         "addSafe(address)": FunctionFragment;
         "changeOwner(address)": FunctionFragment;
         "changeSafe(address,address)": FunctionFragment;
         "createStrategy(string,address)": FunctionFragment;
-        "getJson(string,string,string)": FunctionFragment;
         "getStrategy(string)": FunctionFragment;
         "isSafe(address)": FunctionFragment;
         "owner()": FunctionFragment;
@@ -47,16 +46,16 @@ export interface UExecutorInterface extends ethers.utils.Interface {
     };
 
     encodeFunctionData(
-        functionFragment: "_StrategyId",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
         functionFragment: "_activeStrategies",
         values?: undefined
     ): string;
     encodeFunctionData(
         functionFragment: "_strategies",
         values: [string]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_strategyId",
+        values?: undefined
     ): string;
     encodeFunctionData(
         functionFragment: "_totalStrategies",
@@ -74,10 +73,6 @@ export interface UExecutorInterface extends ethers.utils.Interface {
     encodeFunctionData(
         functionFragment: "createStrategy",
         values: [string, string]
-    ): string;
-    encodeFunctionData(
-        functionFragment: "getJson",
-        values: [string, string, string]
     ): string;
     encodeFunctionData(
         functionFragment: "getStrategy",
@@ -111,15 +106,15 @@ export interface UExecutorInterface extends ethers.utils.Interface {
     ): string;
 
     decodeFunctionResult(
-        functionFragment: "_StrategyId",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(
         functionFragment: "_activeStrategies",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
         functionFragment: "_strategies",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_strategyId",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
@@ -139,7 +134,6 @@ export interface UExecutorInterface extends ethers.utils.Interface {
         functionFragment: "createStrategy",
         data: BytesLike
     ): Result;
-    decodeFunctionResult(functionFragment: "getJson", data: BytesLike): Result;
     decodeFunctionResult(
         functionFragment: "getStrategy",
         data: BytesLike
@@ -223,10 +217,6 @@ export interface UExecutor extends BaseContract {
     removeListener: OnEvent<this>;
 
     functions: {
-        _StrategyId(
-            overrides?: CallOverrides
-        ): Promise<[BigNumber] & { _value: BigNumber }>;
-
         _activeStrategies(
             overrides?: CallOverrides
         ): Promise<[BigNumber] & { _value: BigNumber }>;
@@ -241,6 +231,10 @@ export interface UExecutor extends BaseContract {
                 status: boolean;
             }
         >;
+
+        _strategyId(
+            overrides?: CallOverrides
+        ): Promise<[BigNumber] & { _value: BigNumber }>;
 
         _totalStrategies(
             overrides?: CallOverrides
@@ -267,20 +261,6 @@ export interface UExecutor extends BaseContract {
             _account: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
-
-        getJson(
-            _key: string,
-            _function: string,
-            _values: string,
-            overrides?: CallOverrides
-        ): Promise<
-            [BigNumber, string, boolean, string] & {
-                id: BigNumber;
-                author: string;
-                status: boolean;
-                json: string;
-            }
-        >;
 
         getStrategy(
             _key: string,
@@ -328,8 +308,6 @@ export interface UExecutor extends BaseContract {
         ): Promise<ContractTransaction>;
     };
 
-    _StrategyId(overrides?: CallOverrides): Promise<BigNumber>;
-
     _activeStrategies(overrides?: CallOverrides): Promise<BigNumber>;
 
     _strategies(
@@ -342,6 +320,8 @@ export interface UExecutor extends BaseContract {
             status: boolean;
         }
     >;
+
+    _strategyId(overrides?: CallOverrides): Promise<BigNumber>;
 
     _totalStrategies(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -366,20 +346,6 @@ export interface UExecutor extends BaseContract {
         _account: string,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    getJson(
-        _key: string,
-        _function: string,
-        _values: string,
-        overrides?: CallOverrides
-    ): Promise<
-        [BigNumber, string, boolean, string] & {
-            id: BigNumber;
-            author: string;
-            status: boolean;
-            json: string;
-        }
-    >;
 
     getStrategy(
         _key: string,
@@ -427,8 +393,6 @@ export interface UExecutor extends BaseContract {
     ): Promise<ContractTransaction>;
 
     callStatic: {
-        _StrategyId(overrides?: CallOverrides): Promise<BigNumber>;
-
         _activeStrategies(overrides?: CallOverrides): Promise<BigNumber>;
 
         _strategies(
@@ -441,6 +405,8 @@ export interface UExecutor extends BaseContract {
                 status: boolean;
             }
         >;
+
+        _strategyId(overrides?: CallOverrides): Promise<BigNumber>;
 
         _totalStrategies(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -459,20 +425,6 @@ export interface UExecutor extends BaseContract {
             _account: string,
             overrides?: CallOverrides
         ): Promise<void>;
-
-        getJson(
-            _key: string,
-            _function: string,
-            _values: string,
-            overrides?: CallOverrides
-        ): Promise<
-            [BigNumber, string, boolean, string] & {
-                id: BigNumber;
-                author: string;
-                status: boolean;
-                json: string;
-            }
-        >;
 
         getStrategy(
             _key: string,
@@ -525,14 +477,14 @@ export interface UExecutor extends BaseContract {
     };
 
     estimateGas: {
-        _StrategyId(overrides?: CallOverrides): Promise<BigNumber>;
-
         _activeStrategies(overrides?: CallOverrides): Promise<BigNumber>;
 
         _strategies(
             arg0: string,
             overrides?: CallOverrides
         ): Promise<BigNumber>;
+
+        _strategyId(overrides?: CallOverrides): Promise<BigNumber>;
 
         _totalStrategies(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -556,13 +508,6 @@ export interface UExecutor extends BaseContract {
             _key: string,
             _account: string,
             overrides?: Overrides & { from?: string | Promise<string> }
-        ): Promise<BigNumber>;
-
-        getJson(
-            _key: string,
-            _function: string,
-            _values: string,
-            overrides?: CallOverrides
         ): Promise<BigNumber>;
 
         getStrategy(
@@ -606,8 +551,6 @@ export interface UExecutor extends BaseContract {
     };
 
     populateTransaction: {
-        _StrategyId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
         _activeStrategies(
             overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
@@ -616,6 +559,8 @@ export interface UExecutor extends BaseContract {
             arg0: string,
             overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
+
+        _strategyId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         _totalStrategies(
             overrides?: CallOverrides
@@ -641,13 +586,6 @@ export interface UExecutor extends BaseContract {
             _key: string,
             _account: string,
             overrides?: Overrides & { from?: string | Promise<string> }
-        ): Promise<PopulatedTransaction>;
-
-        getJson(
-            _key: string,
-            _function: string,
-            _values: string,
-            overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
 
         getStrategy(

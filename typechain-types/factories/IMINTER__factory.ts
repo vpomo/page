@@ -69,7 +69,7 @@ const _abi = [
     },
     {
         inputs: [],
-        name: "getBurnNFT",
+        name: "getBurnNFTCost",
         outputs: [
             {
                 internalType: "uint256",
@@ -258,7 +258,7 @@ const _abi = [
                 type: "uint256",
             },
         ],
-        name: "setBurnNFT",
+        name: "setBurnNFTCost",
         outputs: [],
         stateMutability: "nonpayable",
         type: "function",

@@ -11,12 +11,12 @@ const _abi = [
         inputs: [
             {
                 internalType: "address",
-                name: "_PAGE_NFT",
+                name: "_pageNFT",
                 type: "address",
             },
             {
                 internalType: "address",
-                name: "_PAGE_MINTER",
+                name: "_pageMinter",
                 type: "address",
             },
         ],
@@ -25,7 +25,7 @@ const _abi = [
     },
     {
         inputs: [],
-        name: "PAGE_MINTER",
+        name: "pageMinter",
         outputs: [
             {
                 internalType: "contract IMINTER",
@@ -38,7 +38,7 @@ const _abi = [
     },
     {
         inputs: [],
-        name: "PAGE_NFT",
+        name: "pageNFT",
         outputs: [
             {
                 internalType: "contract INFTMINT",
@@ -51,7 +51,7 @@ const _abi = [
     },
     {
         inputs: [],
-        name: "PAGE_TOKEN",
+        name: "pageToken",
         outputs: [
             {
                 internalType: "contract IERCMINT",
@@ -65,7 +65,7 @@ const _abi = [
 ];
 
 const _bytecode =
-    "0x608060405234801561001057600080fd5b5060405161018538038061018583398101604081905261002f9161007c565b600080546001600160a01b039384166001600160a01b031991821617909155600180549290931691161790556100ae565b80516001600160a01b038116811461007757600080fd5b919050565b6000806040838503121561008e578182fd5b61009783610060565b91506100a560208401610060565b90509250929050565b60c9806100bc6000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c80630df8b91c146041578063b20566dc14606f578063e3e2f864146081575b600080fd5b6000546053906001600160a01b031681565b6040516001600160a01b03909116815260200160405180910390f35b6001546053906001600160a01b031681565b6002546053906001600160a01b03168156fea264697066735822122073e2f53b277c507154db3de9e5135f84ccb143d3afdf0f6d89bd3ad8b063473b64736f6c63430008040033";
+    "0x608060405234801561001057600080fd5b5060405161018538038061018583398101604081905261002f9161007c565b600080546001600160a01b039384166001600160a01b031991821617909155600180549290931691161790556100ae565b80516001600160a01b038116811461007757600080fd5b919050565b6000806040838503121561008e578182fd5b61009783610060565b91506100a560208401610060565b90509250929050565b60c9806100bc6000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c80631d79ab34146041578063b180778314606f578063cd0cfee4146081575b600080fd5b6001546053906001600160a01b031681565b6040516001600160a01b03909116815260200160405180910390f35b6002546053906001600160a01b031681565b6000546053906001600160a01b03168156fea2646970667358221220c02f74db786fae78da5f60f9efe99587ae1d38efd441faeb22f674918741073e64736f6c63430008040033";
 
 type PageNFTMarketConstructorParams =
     | [signer?: Signer]
@@ -85,24 +85,24 @@ export class PageNFTMarket__factory extends ContractFactory {
     }
 
     deploy(
-        _PAGE_NFT: string,
-        _PAGE_MINTER: string,
+        _pageNFT: string,
+        _pageMinter: string,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PageNFTMarket> {
         return super.deploy(
-            _PAGE_NFT,
-            _PAGE_MINTER,
+            _pageNFT,
+            _pageMinter,
             overrides || {}
         ) as Promise<PageNFTMarket>;
     }
     getDeployTransaction(
-        _PAGE_NFT: string,
-        _PAGE_MINTER: string,
+        _pageNFT: string,
+        _pageMinter: string,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): TransactionRequest {
         return super.getDeployTransaction(
-            _PAGE_NFT,
-            _PAGE_MINTER,
+            _pageNFT,
+            _pageMinter,
             overrides || {}
         );
     }

@@ -153,9 +153,9 @@ export interface PageComment extends BaseContract {
 
         totalStats(overrides?: CallOverrides): Promise<
             [BigNumber, BigNumber, BigNumber] & {
-                Comments: BigNumber;
-                Likes: BigNumber;
-                Dislikes: BigNumber;
+                comments: BigNumber;
+                likes: BigNumber;
+                dislikes: BigNumber;
             }
         >;
 
@@ -192,9 +192,9 @@ export interface PageComment extends BaseContract {
 
     totalStats(overrides?: CallOverrides): Promise<
         [BigNumber, BigNumber, BigNumber] & {
-            Comments: BigNumber;
-            Likes: BigNumber;
-            Dislikes: BigNumber;
+            comments: BigNumber;
+            likes: BigNumber;
+            dislikes: BigNumber;
         }
     >;
 
@@ -229,9 +229,9 @@ export interface PageComment extends BaseContract {
 
         totalStats(overrides?: CallOverrides): Promise<
             [BigNumber, BigNumber, BigNumber] & {
-                Comments: BigNumber;
-                Likes: BigNumber;
-                Dislikes: BigNumber;
+                comments: BigNumber;
+                likes: BigNumber;
+                dislikes: BigNumber;
             }
         >;
 

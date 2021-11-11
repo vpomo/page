@@ -26,8 +26,6 @@ import type {
 
 export interface PageMinterNFTInterface extends ethers.utils.Interface {
     functions: {
-        "PAGE_MINTER()": FunctionFragment;
-        "PAGE_TOKEN()": FunctionFragment;
         "approve(address,uint256)": FunctionFragment;
         "balanceOf(address)": FunctionFragment;
         "burn(uint256)": FunctionFragment;
@@ -39,6 +37,8 @@ export interface PageMinterNFTInterface extends ethers.utils.Interface {
         "isApprovedForAll(address,address)": FunctionFragment;
         "name()": FunctionFragment;
         "ownerOf(uint256)": FunctionFragment;
+        "pageMinter()": FunctionFragment;
+        "pageToken()": FunctionFragment;
         "safeMint(string,bool)": FunctionFragment;
         "safeTransferFrom(address,address,uint256)": FunctionFragment;
         "setApprovalForAll(address,bool)": FunctionFragment;
@@ -51,14 +51,6 @@ export interface PageMinterNFTInterface extends ethers.utils.Interface {
         "transferFrom(address,address,uint256)": FunctionFragment;
     };
 
-    encodeFunctionData(
-        functionFragment: "PAGE_MINTER",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "PAGE_TOKEN",
-        values?: undefined
-    ): string;
     encodeFunctionData(
         functionFragment: "approve",
         values: [string, BigNumberish]
@@ -98,6 +90,14 @@ export interface PageMinterNFTInterface extends ethers.utils.Interface {
         values: [BigNumberish]
     ): string;
     encodeFunctionData(
+        functionFragment: "pageMinter",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "pageToken",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
         functionFragment: "safeMint",
         values: [string, boolean]
     ): string;
@@ -135,14 +135,6 @@ export interface PageMinterNFTInterface extends ethers.utils.Interface {
         values: [string, string, BigNumberish]
     ): string;
 
-    decodeFunctionResult(
-        functionFragment: "PAGE_MINTER",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(
-        functionFragment: "PAGE_TOKEN",
-        data: BytesLike
-    ): Result;
     decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
     decodeFunctionResult(
         functionFragment: "balanceOf",
@@ -172,6 +164,14 @@ export interface PageMinterNFTInterface extends ethers.utils.Interface {
     ): Result;
     decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "pageMinter",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "pageToken",
+        data: BytesLike
+    ): Result;
     decodeFunctionResult(functionFragment: "safeMint", data: BytesLike): Result;
     decodeFunctionResult(
         functionFragment: "safeTransferFrom",
@@ -263,10 +263,6 @@ export interface PageMinterNFT extends BaseContract {
     removeListener: OnEvent<this>;
 
     functions: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<[string]>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<[string]>;
-
         approve(
             to: string,
             tokenId: BigNumberish,
@@ -285,7 +281,7 @@ export interface PageMinterNFT extends BaseContract {
 
         comment(
             _tokenId: BigNumberish,
-            _comment_text: string,
+            _commentText: string,
             _like: boolean,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
@@ -319,6 +315,10 @@ export interface PageMinterNFT extends BaseContract {
             tokenId: BigNumberish,
             overrides?: CallOverrides
         ): Promise<[string]>;
+
+        pageMinter(overrides?: CallOverrides): Promise<[string]>;
+
+        pageToken(overrides?: CallOverrides): Promise<[string]>;
 
         safeMint(
             _tokenURI: string,
@@ -367,7 +367,7 @@ export interface PageMinterNFT extends BaseContract {
                 id: BigNumber;
                 comments: BigNumber;
                 likes: BigNumber;
-                dislakes: BigNumber;
+                dislikes: BigNumber;
                 _contract: string;
             }
         >;
@@ -387,10 +387,6 @@ export interface PageMinterNFT extends BaseContract {
         ): Promise<ContractTransaction>;
     };
 
-    PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
-
-    PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
-
     approve(
         to: string,
         tokenId: BigNumberish,
@@ -406,7 +402,7 @@ export interface PageMinterNFT extends BaseContract {
 
     comment(
         _tokenId: BigNumberish,
-        _comment_text: string,
+        _commentText: string,
         _like: boolean,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -437,6 +433,10 @@ export interface PageMinterNFT extends BaseContract {
     name(overrides?: CallOverrides): Promise<string>;
 
     ownerOf(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
+
+    pageMinter(overrides?: CallOverrides): Promise<string>;
+
+    pageToken(overrides?: CallOverrides): Promise<string>;
 
     safeMint(
         _tokenURI: string,
@@ -485,7 +485,7 @@ export interface PageMinterNFT extends BaseContract {
             id: BigNumber;
             comments: BigNumber;
             likes: BigNumber;
-            dislakes: BigNumber;
+            dislikes: BigNumber;
             _contract: string;
         }
     >;
@@ -502,10 +502,6 @@ export interface PageMinterNFT extends BaseContract {
     ): Promise<ContractTransaction>;
 
     callStatic: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
-
         approve(
             to: string,
             tokenId: BigNumberish,
@@ -518,7 +514,7 @@ export interface PageMinterNFT extends BaseContract {
 
         comment(
             _tokenId: BigNumberish,
-            _comment_text: string,
+            _commentText: string,
             _like: boolean,
             overrides?: CallOverrides
         ): Promise<void>;
@@ -552,6 +548,10 @@ export interface PageMinterNFT extends BaseContract {
             tokenId: BigNumberish,
             overrides?: CallOverrides
         ): Promise<string>;
+
+        pageMinter(overrides?: CallOverrides): Promise<string>;
+
+        pageToken(overrides?: CallOverrides): Promise<string>;
 
         safeMint(
             _tokenURI: string,
@@ -597,7 +597,7 @@ export interface PageMinterNFT extends BaseContract {
                 id: BigNumber;
                 comments: BigNumber;
                 likes: BigNumber;
-                dislakes: BigNumber;
+                dislikes: BigNumber;
                 _contract: string;
             }
         >;
@@ -653,10 +653,6 @@ export interface PageMinterNFT extends BaseContract {
     };
 
     estimateGas: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<BigNumber>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<BigNumber>;
-
         approve(
             to: string,
             tokenId: BigNumberish,
@@ -672,7 +668,7 @@ export interface PageMinterNFT extends BaseContract {
 
         comment(
             _tokenId: BigNumberish,
-            _comment_text: string,
+            _commentText: string,
             _like: boolean,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
@@ -706,6 +702,10 @@ export interface PageMinterNFT extends BaseContract {
             tokenId: BigNumberish,
             overrides?: CallOverrides
         ): Promise<BigNumber>;
+
+        pageMinter(overrides?: CallOverrides): Promise<BigNumber>;
+
+        pageToken(overrides?: CallOverrides): Promise<BigNumber>;
 
         safeMint(
             _tokenURI: string,
@@ -767,10 +767,6 @@ export interface PageMinterNFT extends BaseContract {
     };
 
     populateTransaction: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
         approve(
             to: string,
             tokenId: BigNumberish,
@@ -789,7 +785,7 @@ export interface PageMinterNFT extends BaseContract {
 
         comment(
             _tokenId: BigNumberish,
-            _comment_text: string,
+            _commentText: string,
             _like: boolean,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
@@ -823,6 +819,10 @@ export interface PageMinterNFT extends BaseContract {
             tokenId: BigNumberish,
             overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
+
+        pageMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        pageToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         safeMint(
             _tokenURI: string,

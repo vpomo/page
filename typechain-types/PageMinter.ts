@@ -26,8 +26,6 @@ import type {
 
 export interface PageMinterInterface extends ethers.utils.Interface {
     functions: {
-        "TreasuryAddress()": FunctionFragment;
-        "TreasuryFee()": FunctionFragment;
         "_minterId()": FunctionFragment;
         "_minters(string)": FunctionFragment;
         "_totalMinters()": FunctionFragment;
@@ -36,7 +34,7 @@ export interface PageMinterInterface extends ethers.utils.Interface {
         "burn(address,uint256)": FunctionFragment;
         "changeSafe(address,address)": FunctionFragment;
         "getAdmin()": FunctionFragment;
-        "getBurnNFT()": FunctionFragment;
+        "getBurnNFTCost()": FunctionFragment;
         "getMinter(string)": FunctionFragment;
         "getPageToken()": FunctionFragment;
         "init(address,address)": FunctionFragment;
@@ -48,21 +46,14 @@ export interface PageMinterInterface extends ethers.utils.Interface {
         "mintX(string,address[],uint256)": FunctionFragment;
         "removeMinter(string)": FunctionFragment;
         "removeSafe(address)": FunctionFragment;
-        "setBurnNFT(uint256)": FunctionFragment;
+        "setBurnNFTCost(uint256)": FunctionFragment;
         "setMinter(string,address,uint256,bool)": FunctionFragment;
         "setTreasuryAddress(address)": FunctionFragment;
         "setTreasuryFee(uint256)": FunctionFragment;
-        "testLastinterID()": FunctionFragment;
+        "treasuryAddress()": FunctionFragment;
+        "treasuryFee()": FunctionFragment;
     };
 
-    encodeFunctionData(
-        functionFragment: "TreasuryAddress",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "TreasuryFee",
-        values?: undefined
-    ): string;
     encodeFunctionData(
         functionFragment: "_minterId",
         values?: undefined
@@ -90,7 +81,7 @@ export interface PageMinterInterface extends ethers.utils.Interface {
         values?: undefined
     ): string;
     encodeFunctionData(
-        functionFragment: "getBurnNFT",
+        functionFragment: "getBurnNFTCost",
         values?: undefined
     ): string;
     encodeFunctionData(functionFragment: "getMinter", values: [string]): string;
@@ -132,7 +123,7 @@ export interface PageMinterInterface extends ethers.utils.Interface {
         values: [string]
     ): string;
     encodeFunctionData(
-        functionFragment: "setBurnNFT",
+        functionFragment: "setBurnNFTCost",
         values: [BigNumberish]
     ): string;
     encodeFunctionData(
@@ -148,18 +139,14 @@ export interface PageMinterInterface extends ethers.utils.Interface {
         values: [BigNumberish]
     ): string;
     encodeFunctionData(
-        functionFragment: "testLastinterID",
+        functionFragment: "treasuryAddress",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "treasuryFee",
         values?: undefined
     ): string;
 
-    decodeFunctionResult(
-        functionFragment: "TreasuryAddress",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(
-        functionFragment: "TreasuryFee",
-        data: BytesLike
-    ): Result;
     decodeFunctionResult(
         functionFragment: "_minterId",
         data: BytesLike
@@ -181,7 +168,7 @@ export interface PageMinterInterface extends ethers.utils.Interface {
     ): Result;
     decodeFunctionResult(functionFragment: "getAdmin", data: BytesLike): Result;
     decodeFunctionResult(
-        functionFragment: "getBurnNFT",
+        functionFragment: "getBurnNFTCost",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
@@ -208,7 +195,7 @@ export interface PageMinterInterface extends ethers.utils.Interface {
         data: BytesLike
     ): Result;
     decodeFunctionResult(
-        functionFragment: "setBurnNFT",
+        functionFragment: "setBurnNFTCost",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
@@ -224,7 +211,11 @@ export interface PageMinterInterface extends ethers.utils.Interface {
         data: BytesLike
     ): Result;
     decodeFunctionResult(
-        functionFragment: "testLastinterID",
+        functionFragment: "treasuryAddress",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "treasuryFee",
         data: BytesLike
     ): Result;
 
@@ -258,10 +249,6 @@ export interface PageMinter extends BaseContract {
     removeListener: OnEvent<this>;
 
     functions: {
-        TreasuryAddress(overrides?: CallOverrides): Promise<[string]>;
-
-        TreasuryFee(overrides?: CallOverrides): Promise<[BigNumber]>;
-
         _minterId(
             overrides?: CallOverrides
         ): Promise<[BigNumber] & { _value: BigNumber }>;
@@ -289,10 +276,10 @@ export interface PageMinter extends BaseContract {
 
         amountMint(
             _key: string,
-            _address_count: BigNumberish,
+            _addressCount: BigNumberish,
             overrides?: CallOverrides
         ): Promise<
-            [BigNumber, BigNumber] & { amount_each: BigNumber; fee: BigNumber }
+            [BigNumber, BigNumber] & { amountEach: BigNumber; fee: BigNumber }
         >;
 
         burn(
@@ -309,7 +296,7 @@ export interface PageMinter extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<[string]>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<[BigNumber]>;
+        getBurnNFTCost(overrides?: CallOverrides): Promise<[BigNumber]>;
 
         getMinter(
             _key: string,
@@ -377,7 +364,7 @@ export interface PageMinter extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
@@ -400,12 +387,10 @@ export interface PageMinter extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
 
-        testLastinterID(overrides?: CallOverrides): Promise<[BigNumber]>;
+        treasuryAddress(overrides?: CallOverrides): Promise<[string]>;
+
+        treasuryFee(overrides?: CallOverrides): Promise<[BigNumber]>;
     };
-
-    TreasuryAddress(overrides?: CallOverrides): Promise<string>;
-
-    TreasuryFee(overrides?: CallOverrides): Promise<BigNumber>;
 
     _minterId(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -430,10 +415,10 @@ export interface PageMinter extends BaseContract {
 
     amountMint(
         _key: string,
-        _address_count: BigNumberish,
+        _addressCount: BigNumberish,
         overrides?: CallOverrides
     ): Promise<
-        [BigNumber, BigNumber] & { amount_each: BigNumber; fee: BigNumber }
+        [BigNumber, BigNumber] & { amountEach: BigNumber; fee: BigNumber }
     >;
 
     burn(
@@ -450,7 +435,7 @@ export interface PageMinter extends BaseContract {
 
     getAdmin(overrides?: CallOverrides): Promise<string>;
 
-    getBurnNFT(overrides?: CallOverrides): Promise<BigNumber>;
+    getBurnNFTCost(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMinter(
         _key: string,
@@ -518,7 +503,7 @@ export interface PageMinter extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setBurnNFT(
+    setBurnNFTCost(
         _cost: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -541,13 +526,11 @@ export interface PageMinter extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    testLastinterID(overrides?: CallOverrides): Promise<BigNumber>;
+    treasuryAddress(overrides?: CallOverrides): Promise<string>;
+
+    treasuryFee(overrides?: CallOverrides): Promise<BigNumber>;
 
     callStatic: {
-        TreasuryAddress(overrides?: CallOverrides): Promise<string>;
-
-        TreasuryFee(overrides?: CallOverrides): Promise<BigNumber>;
-
         _minterId(overrides?: CallOverrides): Promise<BigNumber>;
 
         _minters(
@@ -568,10 +551,10 @@ export interface PageMinter extends BaseContract {
 
         amountMint(
             _key: string,
-            _address_count: BigNumberish,
+            _addressCount: BigNumberish,
             overrides?: CallOverrides
         ): Promise<
-            [BigNumber, BigNumber] & { amount_each: BigNumber; fee: BigNumber }
+            [BigNumber, BigNumber] & { amountEach: BigNumber; fee: BigNumber }
         >;
 
         burn(
@@ -588,7 +571,7 @@ export interface PageMinter extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<string>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<BigNumber>;
+        getBurnNFTCost(overrides?: CallOverrides): Promise<BigNumber>;
 
         getMinter(
             _key: string,
@@ -650,7 +633,7 @@ export interface PageMinter extends BaseContract {
 
         removeSafe(_safe: string, overrides?: CallOverrides): Promise<void>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: CallOverrides
         ): Promise<void>;
@@ -673,16 +656,14 @@ export interface PageMinter extends BaseContract {
             overrides?: CallOverrides
         ): Promise<void>;
 
-        testLastinterID(overrides?: CallOverrides): Promise<BigNumber>;
+        treasuryAddress(overrides?: CallOverrides): Promise<string>;
+
+        treasuryFee(overrides?: CallOverrides): Promise<BigNumber>;
     };
 
     filters: {};
 
     estimateGas: {
-        TreasuryAddress(overrides?: CallOverrides): Promise<BigNumber>;
-
-        TreasuryFee(overrides?: CallOverrides): Promise<BigNumber>;
-
         _minterId(overrides?: CallOverrides): Promise<BigNumber>;
 
         _minters(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
@@ -696,7 +677,7 @@ export interface PageMinter extends BaseContract {
 
         amountMint(
             _key: string,
-            _address_count: BigNumberish,
+            _addressCount: BigNumberish,
             overrides?: CallOverrides
         ): Promise<BigNumber>;
 
@@ -714,7 +695,7 @@ export interface PageMinter extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<BigNumber>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<BigNumber>;
+        getBurnNFTCost(overrides?: CallOverrides): Promise<BigNumber>;
 
         getMinter(_key: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -772,7 +753,7 @@ export interface PageMinter extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
@@ -795,16 +776,12 @@ export interface PageMinter extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
-        testLastinterID(overrides?: CallOverrides): Promise<BigNumber>;
+        treasuryAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+        treasuryFee(overrides?: CallOverrides): Promise<BigNumber>;
     };
 
     populateTransaction: {
-        TreasuryAddress(
-            overrides?: CallOverrides
-        ): Promise<PopulatedTransaction>;
-
-        TreasuryFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
         _minterId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         _minters(
@@ -821,7 +798,7 @@ export interface PageMinter extends BaseContract {
 
         amountMint(
             _key: string,
-            _address_count: BigNumberish,
+            _addressCount: BigNumberish,
             overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
 
@@ -839,7 +816,9 @@ export interface PageMinter extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getBurnNFTCost(
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
 
         getMinter(
             _key: string,
@@ -903,7 +882,7 @@ export interface PageMinter extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
@@ -926,8 +905,10 @@ export interface PageMinter extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
-        testLastinterID(
+        treasuryAddress(
             overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
+
+        treasuryFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

@@ -29,7 +29,7 @@ export interface IMINTERInterface extends ethers.utils.Interface {
         "amountMint(string,uint256)": FunctionFragment;
         "burn(address,uint256)": FunctionFragment;
         "getAdmin()": FunctionFragment;
-        "getBurnNFT()": FunctionFragment;
+        "getBurnNFTCost()": FunctionFragment;
         "getMinter(string)": FunctionFragment;
         "getPageToken()": FunctionFragment;
         "mint(string,address[])": FunctionFragment;
@@ -38,7 +38,7 @@ export interface IMINTERInterface extends ethers.utils.Interface {
         "mint3(string,address,address,address)": FunctionFragment;
         "mintX(string,address[],uint256)": FunctionFragment;
         "removeMinter(string)": FunctionFragment;
-        "setBurnNFT(uint256)": FunctionFragment;
+        "setBurnNFTCost(uint256)": FunctionFragment;
         "setMinter(string,address,uint256,bool)": FunctionFragment;
     };
 
@@ -55,7 +55,7 @@ export interface IMINTERInterface extends ethers.utils.Interface {
         values?: undefined
     ): string;
     encodeFunctionData(
-        functionFragment: "getBurnNFT",
+        functionFragment: "getBurnNFTCost",
         values?: undefined
     ): string;
     encodeFunctionData(functionFragment: "getMinter", values: [string]): string;
@@ -88,7 +88,7 @@ export interface IMINTERInterface extends ethers.utils.Interface {
         values: [string]
     ): string;
     encodeFunctionData(
-        functionFragment: "setBurnNFT",
+        functionFragment: "setBurnNFTCost",
         values: [BigNumberish]
     ): string;
     encodeFunctionData(
@@ -103,7 +103,7 @@ export interface IMINTERInterface extends ethers.utils.Interface {
     decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getAdmin", data: BytesLike): Result;
     decodeFunctionResult(
-        functionFragment: "getBurnNFT",
+        functionFragment: "getBurnNFTCost",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
@@ -124,7 +124,7 @@ export interface IMINTERInterface extends ethers.utils.Interface {
         data: BytesLike
     ): Result;
     decodeFunctionResult(
-        functionFragment: "setBurnNFT",
+        functionFragment: "setBurnNFTCost",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
@@ -178,7 +178,7 @@ export interface IMINTER extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<[string]>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<[BigNumber]>;
+        getBurnNFTCost(overrides?: CallOverrides): Promise<[BigNumber]>;
 
         getMinter(
             _key: string,
@@ -233,7 +233,7 @@ export interface IMINTER extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
@@ -263,7 +263,7 @@ export interface IMINTER extends BaseContract {
 
     getAdmin(overrides?: CallOverrides): Promise<string>;
 
-    getBurnNFT(overrides?: CallOverrides): Promise<BigNumber>;
+    getBurnNFTCost(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMinter(
         _key: string,
@@ -318,7 +318,7 @@ export interface IMINTER extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setBurnNFT(
+    setBurnNFTCost(
         _cost: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -348,7 +348,7 @@ export interface IMINTER extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<string>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<BigNumber>;
+        getBurnNFTCost(overrides?: CallOverrides): Promise<BigNumber>;
 
         getMinter(
             _key: string,
@@ -400,7 +400,7 @@ export interface IMINTER extends BaseContract {
 
         removeMinter(_key: string, overrides?: CallOverrides): Promise<void>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: CallOverrides
         ): Promise<void>;
@@ -431,7 +431,7 @@ export interface IMINTER extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<BigNumber>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<BigNumber>;
+        getBurnNFTCost(overrides?: CallOverrides): Promise<BigNumber>;
 
         getMinter(_key: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -476,7 +476,7 @@ export interface IMINTER extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
@@ -505,7 +505,9 @@ export interface IMINTER extends BaseContract {
 
         getAdmin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-        getBurnNFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getBurnNFTCost(
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
 
         getMinter(
             _key: string,
@@ -553,7 +555,7 @@ export interface IMINTER extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
-        setBurnNFT(
+        setBurnNFTCost(
             _cost: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;

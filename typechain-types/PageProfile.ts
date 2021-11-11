@@ -26,25 +26,13 @@ import type {
 
 export interface PageProfileInterface extends ethers.utils.Interface {
     functions: {
-        "PAGE_MINTER()": FunctionFragment;
-        "SocialById(uint256)": FunctionFragment;
-        "StatusById(uint256)": FunctionFragment;
         "_add_social(string,string)": FunctionFragment;
         "_add_status(string)": FunctionFragment;
+        "pageMinter()": FunctionFragment;
+        "socialById(uint256)": FunctionFragment;
+        "statusById(uint256)": FunctionFragment;
     };
 
-    encodeFunctionData(
-        functionFragment: "PAGE_MINTER",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "SocialById",
-        values: [BigNumberish]
-    ): string;
-    encodeFunctionData(
-        functionFragment: "StatusById",
-        values: [BigNumberish]
-    ): string;
     encodeFunctionData(
         functionFragment: "_add_social",
         values: [string, string]
@@ -53,25 +41,37 @@ export interface PageProfileInterface extends ethers.utils.Interface {
         functionFragment: "_add_status",
         values: [string]
     ): string;
+    encodeFunctionData(
+        functionFragment: "pageMinter",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "socialById",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "statusById",
+        values: [BigNumberish]
+    ): string;
 
-    decodeFunctionResult(
-        functionFragment: "PAGE_MINTER",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(
-        functionFragment: "SocialById",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(
-        functionFragment: "StatusById",
-        data: BytesLike
-    ): Result;
     decodeFunctionResult(
         functionFragment: "_add_social",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
         functionFragment: "_add_status",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "pageMinter",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "socialById",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "statusById",
         data: BytesLike
     ): Result;
 
@@ -105,9 +105,20 @@ export interface PageProfile extends BaseContract {
     removeListener: OnEvent<this>;
 
     functions: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<[string]>;
+        _add_social(
+            title: string,
+            url: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
 
-        SocialById(
+        _add_status(
+            text: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        pageMinter(overrides?: CallOverrides): Promise<[string]>;
+
+        socialById(
             arg0: BigNumberish,
             overrides?: CallOverrides
         ): Promise<
@@ -119,7 +130,7 @@ export interface PageProfile extends BaseContract {
             }
         >;
 
-        StatusById(
+        statusById(
             arg0: BigNumberish,
             overrides?: CallOverrides
         ): Promise<
@@ -129,43 +140,7 @@ export interface PageProfile extends BaseContract {
                 text: string;
             }
         >;
-
-        _add_social(
-            title: string,
-            url: string,
-            overrides?: Overrides & { from?: string | Promise<string> }
-        ): Promise<ContractTransaction>;
-
-        _add_status(
-            text: string,
-            overrides?: Overrides & { from?: string | Promise<string> }
-        ): Promise<ContractTransaction>;
     };
-
-    PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
-
-    SocialById(
-        arg0: BigNumberish,
-        overrides?: CallOverrides
-    ): Promise<
-        [BigNumber, string, string, string] & {
-            uid: BigNumber;
-            author: string;
-            title: string;
-            url: string;
-        }
-    >;
-
-    StatusById(
-        arg0: BigNumberish,
-        overrides?: CallOverrides
-    ): Promise<
-        [BigNumber, string, string] & {
-            uid: BigNumber;
-            author: string;
-            text: string;
-        }
-    >;
 
     _add_social(
         title: string,
@@ -178,10 +153,43 @@ export interface PageProfile extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    callStatic: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
+    pageMinter(overrides?: CallOverrides): Promise<string>;
 
-        SocialById(
+    socialById(
+        arg0: BigNumberish,
+        overrides?: CallOverrides
+    ): Promise<
+        [BigNumber, string, string, string] & {
+            uid: BigNumber;
+            author: string;
+            title: string;
+            url: string;
+        }
+    >;
+
+    statusById(
+        arg0: BigNumberish,
+        overrides?: CallOverrides
+    ): Promise<
+        [BigNumber, string, string] & {
+            uid: BigNumber;
+            author: string;
+            text: string;
+        }
+    >;
+
+    callStatic: {
+        _add_social(
+            title: string,
+            url: string,
+            overrides?: CallOverrides
+        ): Promise<void>;
+
+        _add_status(text: string, overrides?: CallOverrides): Promise<void>;
+
+        pageMinter(overrides?: CallOverrides): Promise<string>;
+
+        socialById(
             arg0: BigNumberish,
             overrides?: CallOverrides
         ): Promise<
@@ -193,7 +201,7 @@ export interface PageProfile extends BaseContract {
             }
         >;
 
-        StatusById(
+        statusById(
             arg0: BigNumberish,
             overrides?: CallOverrides
         ): Promise<
@@ -203,31 +211,11 @@ export interface PageProfile extends BaseContract {
                 text: string;
             }
         >;
-
-        _add_social(
-            title: string,
-            url: string,
-            overrides?: CallOverrides
-        ): Promise<void>;
-
-        _add_status(text: string, overrides?: CallOverrides): Promise<void>;
     };
 
     filters: {};
 
     estimateGas: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<BigNumber>;
-
-        SocialById(
-            arg0: BigNumberish,
-            overrides?: CallOverrides
-        ): Promise<BigNumber>;
-
-        StatusById(
-            arg0: BigNumberish,
-            overrides?: CallOverrides
-        ): Promise<BigNumber>;
-
         _add_social(
             title: string,
             url: string,
@@ -237,22 +225,22 @@ export interface PageProfile extends BaseContract {
         _add_status(
             text: string,
             overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        pageMinter(overrides?: CallOverrides): Promise<BigNumber>;
+
+        socialById(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        statusById(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
         ): Promise<BigNumber>;
     };
 
     populateTransaction: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-        SocialById(
-            arg0: BigNumberish,
-            overrides?: CallOverrides
-        ): Promise<PopulatedTransaction>;
-
-        StatusById(
-            arg0: BigNumberish,
-            overrides?: CallOverrides
-        ): Promise<PopulatedTransaction>;
-
         _add_social(
             title: string,
             url: string,
@@ -262,6 +250,18 @@ export interface PageProfile extends BaseContract {
         _add_status(
             text: string,
             overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        pageMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        socialById(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        statusById(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
     };
 }

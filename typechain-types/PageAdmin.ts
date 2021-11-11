@@ -26,41 +26,24 @@ import type {
 
 export interface PageAdminInterface extends ethers.utils.Interface {
     functions: {
-        "PAGE_MINTER()": FunctionFragment;
-        "PAGE_NFT()": FunctionFragment;
-        "PAGE_TOKEN()": FunctionFragment;
-        "TreasuryAddress()": FunctionFragment;
         "addSafe(address[])": FunctionFragment;
         "changeSafe(address,address)": FunctionFragment;
         "init(address,address)": FunctionFragment;
         "owner()": FunctionFragment;
+        "pageMinter()": FunctionFragment;
+        "pageNFT()": FunctionFragment;
+        "pageToken()": FunctionFragment;
         "removeMinter(string)": FunctionFragment;
         "removeSafe(address)": FunctionFragment;
         "renounceOwnership()": FunctionFragment;
-        "setBurnNFTcost(uint256)": FunctionFragment;
+        "setBurnNFTCost(uint256)": FunctionFragment;
         "setMinter(string,address,uint256)": FunctionFragment;
-        "setNftBaseURL(string)": FunctionFragment;
         "setTreasuryAddress(address)": FunctionFragment;
         "setTreasuryFee(uint256)": FunctionFragment;
         "transferOwnership(address)": FunctionFragment;
+        "treasuryAddress()": FunctionFragment;
     };
 
-    encodeFunctionData(
-        functionFragment: "PAGE_MINTER",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "PAGE_NFT",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "PAGE_TOKEN",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "TreasuryAddress",
-        values?: undefined
-    ): string;
     encodeFunctionData(functionFragment: "addSafe", values: [string[]]): string;
     encodeFunctionData(
         functionFragment: "changeSafe",
@@ -72,6 +55,15 @@ export interface PageAdminInterface extends ethers.utils.Interface {
     ): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
     encodeFunctionData(
+        functionFragment: "pageMinter",
+        values?: undefined
+    ): string;
+    encodeFunctionData(functionFragment: "pageNFT", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "pageToken",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
         functionFragment: "removeMinter",
         values: [string]
     ): string;
@@ -84,16 +76,12 @@ export interface PageAdminInterface extends ethers.utils.Interface {
         values?: undefined
     ): string;
     encodeFunctionData(
-        functionFragment: "setBurnNFTcost",
+        functionFragment: "setBurnNFTCost",
         values: [BigNumberish]
     ): string;
     encodeFunctionData(
         functionFragment: "setMinter",
         values: [string, string, BigNumberish]
-    ): string;
-    encodeFunctionData(
-        functionFragment: "setNftBaseURL",
-        values: [string]
     ): string;
     encodeFunctionData(
         functionFragment: "setTreasuryAddress",
@@ -107,20 +95,11 @@ export interface PageAdminInterface extends ethers.utils.Interface {
         functionFragment: "transferOwnership",
         values: [string]
     ): string;
+    encodeFunctionData(
+        functionFragment: "treasuryAddress",
+        values?: undefined
+    ): string;
 
-    decodeFunctionResult(
-        functionFragment: "PAGE_MINTER",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(functionFragment: "PAGE_NFT", data: BytesLike): Result;
-    decodeFunctionResult(
-        functionFragment: "PAGE_TOKEN",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(
-        functionFragment: "TreasuryAddress",
-        data: BytesLike
-    ): Result;
     decodeFunctionResult(functionFragment: "addSafe", data: BytesLike): Result;
     decodeFunctionResult(
         functionFragment: "changeSafe",
@@ -128,6 +107,15 @@ export interface PageAdminInterface extends ethers.utils.Interface {
     ): Result;
     decodeFunctionResult(functionFragment: "init", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "pageMinter",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "pageNFT", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "pageToken",
+        data: BytesLike
+    ): Result;
     decodeFunctionResult(
         functionFragment: "removeMinter",
         data: BytesLike
@@ -141,15 +129,11 @@ export interface PageAdminInterface extends ethers.utils.Interface {
         data: BytesLike
     ): Result;
     decodeFunctionResult(
-        functionFragment: "setBurnNFTcost",
+        functionFragment: "setBurnNFTCost",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
         functionFragment: "setMinter",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(
-        functionFragment: "setNftBaseURL",
         data: BytesLike
     ): Result;
     decodeFunctionResult(
@@ -162,6 +146,10 @@ export interface PageAdminInterface extends ethers.utils.Interface {
     ): Result;
     decodeFunctionResult(
         functionFragment: "transferOwnership",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "treasuryAddress",
         data: BytesLike
     ): Result;
 
@@ -207,14 +195,6 @@ export interface PageAdmin extends BaseContract {
     removeListener: OnEvent<this>;
 
     functions: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<[string]>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<[string]>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<[string]>;
-
-        TreasuryAddress(overrides?: CallOverrides): Promise<[string]>;
-
         addSafe(
             _safe: string[],
             overrides?: Overrides & { from?: string | Promise<string> }
@@ -227,12 +207,18 @@ export interface PageAdmin extends BaseContract {
         ): Promise<ContractTransaction>;
 
         init(
-            _PAGE_NFT: string,
-            _PAGE_TOKEN: string,
+            _pageNFT: string,
+            _pageToken: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
 
         owner(overrides?: CallOverrides): Promise<[string]>;
+
+        pageMinter(overrides?: CallOverrides): Promise<[string]>;
+
+        pageNFT(overrides?: CallOverrides): Promise<[string]>;
+
+        pageToken(overrides?: CallOverrides): Promise<[string]>;
 
         removeMinter(
             _key: string,
@@ -248,7 +234,7 @@ export interface PageAdmin extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
 
-        setBurnNFTcost(
+        setBurnNFTCost(
             _pageamount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
@@ -257,11 +243,6 @@ export interface PageAdmin extends BaseContract {
             _key: string,
             _account: string,
             _pageamount: BigNumberish,
-            overrides?: Overrides & { from?: string | Promise<string> }
-        ): Promise<ContractTransaction>;
-
-        setNftBaseURL(
-            _url: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
 
@@ -279,15 +260,9 @@ export interface PageAdmin extends BaseContract {
             newOwner: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
+
+        treasuryAddress(overrides?: CallOverrides): Promise<[string]>;
     };
-
-    PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
-
-    PAGE_NFT(overrides?: CallOverrides): Promise<string>;
-
-    PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
-
-    TreasuryAddress(overrides?: CallOverrides): Promise<string>;
 
     addSafe(
         _safe: string[],
@@ -301,12 +276,18 @@ export interface PageAdmin extends BaseContract {
     ): Promise<ContractTransaction>;
 
     init(
-        _PAGE_NFT: string,
-        _PAGE_TOKEN: string,
+        _pageNFT: string,
+        _pageToken: string,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<string>;
+
+    pageMinter(overrides?: CallOverrides): Promise<string>;
+
+    pageNFT(overrides?: CallOverrides): Promise<string>;
+
+    pageToken(overrides?: CallOverrides): Promise<string>;
 
     removeMinter(
         _key: string,
@@ -322,7 +303,7 @@ export interface PageAdmin extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setBurnNFTcost(
+    setBurnNFTCost(
         _pageamount: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -331,11 +312,6 @@ export interface PageAdmin extends BaseContract {
         _key: string,
         _account: string,
         _pageamount: BigNumberish,
-        overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    setNftBaseURL(
-        _url: string,
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -354,15 +330,9 @@ export interface PageAdmin extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    treasuryAddress(overrides?: CallOverrides): Promise<string>;
+
     callStatic: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<string>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
-
-        TreasuryAddress(overrides?: CallOverrides): Promise<string>;
-
         addSafe(_safe: string[], overrides?: CallOverrides): Promise<void>;
 
         changeSafe(
@@ -372,12 +342,18 @@ export interface PageAdmin extends BaseContract {
         ): Promise<void>;
 
         init(
-            _PAGE_NFT: string,
-            _PAGE_TOKEN: string,
+            _pageNFT: string,
+            _pageToken: string,
             overrides?: CallOverrides
         ): Promise<void>;
 
         owner(overrides?: CallOverrides): Promise<string>;
+
+        pageMinter(overrides?: CallOverrides): Promise<string>;
+
+        pageNFT(overrides?: CallOverrides): Promise<string>;
+
+        pageToken(overrides?: CallOverrides): Promise<string>;
 
         removeMinter(_key: string, overrides?: CallOverrides): Promise<void>;
 
@@ -385,7 +361,7 @@ export interface PageAdmin extends BaseContract {
 
         renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-        setBurnNFTcost(
+        setBurnNFTCost(
             _pageamount: BigNumberish,
             overrides?: CallOverrides
         ): Promise<void>;
@@ -396,8 +372,6 @@ export interface PageAdmin extends BaseContract {
             _pageamount: BigNumberish,
             overrides?: CallOverrides
         ): Promise<void>;
-
-        setNftBaseURL(_url: string, overrides?: CallOverrides): Promise<void>;
 
         setTreasuryAddress(
             _treasury: string,
@@ -413,6 +387,8 @@ export interface PageAdmin extends BaseContract {
             newOwner: string,
             overrides?: CallOverrides
         ): Promise<void>;
+
+        treasuryAddress(overrides?: CallOverrides): Promise<string>;
     };
 
     filters: {
@@ -427,14 +403,6 @@ export interface PageAdmin extends BaseContract {
     };
 
     estimateGas: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<BigNumber>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<BigNumber>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<BigNumber>;
-
-        TreasuryAddress(overrides?: CallOverrides): Promise<BigNumber>;
-
         addSafe(
             _safe: string[],
             overrides?: Overrides & { from?: string | Promise<string> }
@@ -447,13 +415,19 @@ export interface PageAdmin extends BaseContract {
         ): Promise<BigNumber>;
 
         init(
-            _PAGE_NFT: string,
-            _PAGE_TOKEN: string,
+            _pageNFT: string,
+            _pageToken: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
         owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+        pageMinter(overrides?: CallOverrides): Promise<BigNumber>;
+
+        pageNFT(overrides?: CallOverrides): Promise<BigNumber>;
+
+        pageToken(overrides?: CallOverrides): Promise<BigNumber>;
+
         removeMinter(
             _key: string,
             overrides?: Overrides & { from?: string | Promise<string> }
@@ -468,7 +442,7 @@ export interface PageAdmin extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
-        setBurnNFTcost(
+        setBurnNFTCost(
             _pageamount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
@@ -477,11 +451,6 @@ export interface PageAdmin extends BaseContract {
             _key: string,
             _account: string,
             _pageamount: BigNumberish,
-            overrides?: Overrides & { from?: string | Promise<string> }
-        ): Promise<BigNumber>;
-
-        setNftBaseURL(
-            _url: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
@@ -499,19 +468,11 @@ export interface PageAdmin extends BaseContract {
             newOwner: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
+
+        treasuryAddress(overrides?: CallOverrides): Promise<BigNumber>;
     };
 
     populateTransaction: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-        TreasuryAddress(
-            overrides?: CallOverrides
-        ): Promise<PopulatedTransaction>;
-
         addSafe(
             _safe: string[],
             overrides?: Overrides & { from?: string | Promise<string> }
@@ -524,12 +485,18 @@ export interface PageAdmin extends BaseContract {
         ): Promise<PopulatedTransaction>;
 
         init(
-            _PAGE_NFT: string,
-            _PAGE_TOKEN: string,
+            _pageNFT: string,
+            _pageToken: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
         owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        pageMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        pageNFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        pageToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         removeMinter(
             _key: string,
@@ -545,7 +512,7 @@ export interface PageAdmin extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
-        setBurnNFTcost(
+        setBurnNFTCost(
             _pageamount: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
@@ -554,11 +521,6 @@ export interface PageAdmin extends BaseContract {
             _key: string,
             _account: string,
             _pageamount: BigNumberish,
-            overrides?: Overrides & { from?: string | Promise<string> }
-        ): Promise<PopulatedTransaction>;
-
-        setNftBaseURL(
-            _url: string,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
@@ -575,6 +537,10 @@ export interface PageAdmin extends BaseContract {
         transferOwnership(
             newOwner: string,
             overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        treasuryAddress(
+            overrides?: CallOverrides
         ): Promise<PopulatedTransaction>;
     };
 }

@@ -25,31 +25,28 @@ import type {
 
 export interface PageNFTMarketInterface extends ethers.utils.Interface {
     functions: {
-        "PAGE_MINTER()": FunctionFragment;
-        "PAGE_NFT()": FunctionFragment;
-        "PAGE_TOKEN()": FunctionFragment;
+        "pageMinter()": FunctionFragment;
+        "pageNFT()": FunctionFragment;
+        "pageToken()": FunctionFragment;
     };
 
     encodeFunctionData(
-        functionFragment: "PAGE_MINTER",
+        functionFragment: "pageMinter",
         values?: undefined
     ): string;
+    encodeFunctionData(functionFragment: "pageNFT", values?: undefined): string;
     encodeFunctionData(
-        functionFragment: "PAGE_NFT",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "PAGE_TOKEN",
+        functionFragment: "pageToken",
         values?: undefined
     ): string;
 
     decodeFunctionResult(
-        functionFragment: "PAGE_MINTER",
+        functionFragment: "pageMinter",
         data: BytesLike
     ): Result;
-    decodeFunctionResult(functionFragment: "PAGE_NFT", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "pageNFT", data: BytesLike): Result;
     decodeFunctionResult(
-        functionFragment: "PAGE_TOKEN",
+        functionFragment: "pageToken",
         data: BytesLike
     ): Result;
 
@@ -83,42 +80,42 @@ export interface PageNFTMarket extends BaseContract {
     removeListener: OnEvent<this>;
 
     functions: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<[string]>;
+        pageMinter(overrides?: CallOverrides): Promise<[string]>;
 
-        PAGE_NFT(overrides?: CallOverrides): Promise<[string]>;
+        pageNFT(overrides?: CallOverrides): Promise<[string]>;
 
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<[string]>;
+        pageToken(overrides?: CallOverrides): Promise<[string]>;
     };
 
-    PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
+    pageMinter(overrides?: CallOverrides): Promise<string>;
 
-    PAGE_NFT(overrides?: CallOverrides): Promise<string>;
+    pageNFT(overrides?: CallOverrides): Promise<string>;
 
-    PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
+    pageToken(overrides?: CallOverrides): Promise<string>;
 
     callStatic: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
+        pageMinter(overrides?: CallOverrides): Promise<string>;
 
-        PAGE_NFT(overrides?: CallOverrides): Promise<string>;
+        pageNFT(overrides?: CallOverrides): Promise<string>;
 
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
+        pageToken(overrides?: CallOverrides): Promise<string>;
     };
 
     filters: {};
 
     estimateGas: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<BigNumber>;
+        pageMinter(overrides?: CallOverrides): Promise<BigNumber>;
 
-        PAGE_NFT(overrides?: CallOverrides): Promise<BigNumber>;
+        pageNFT(overrides?: CallOverrides): Promise<BigNumber>;
 
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<BigNumber>;
+        pageToken(overrides?: CallOverrides): Promise<BigNumber>;
     };
 
     populateTransaction: {
-        PAGE_MINTER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        pageMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-        PAGE_NFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        pageNFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        pageToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

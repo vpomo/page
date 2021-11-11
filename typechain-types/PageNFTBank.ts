@@ -27,34 +27,31 @@ import type {
 export interface PageNFTBankInterface extends ethers.utils.Interface {
     functions: {
         "Buy(uint256)": FunctionFragment;
-        "PAGE_MINTER()": FunctionFragment;
-        "PAGE_NFT()": FunctionFragment;
-        "PAGE_TOKEN()": FunctionFragment;
         "Sell(uint256)": FunctionFragment;
         "getPrice()": FunctionFragment;
+        "pageMinter()": FunctionFragment;
+        "pageNFT()": FunctionFragment;
+        "pageToken()": FunctionFragment;
         "setBuyPrice(uint256)": FunctionFragment;
         "setSellPrice(uint256)": FunctionFragment;
     };
 
     encodeFunctionData(functionFragment: "Buy", values: [BigNumberish]): string;
     encodeFunctionData(
-        functionFragment: "PAGE_MINTER",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "PAGE_NFT",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
-        functionFragment: "PAGE_TOKEN",
-        values?: undefined
-    ): string;
-    encodeFunctionData(
         functionFragment: "Sell",
         values: [BigNumberish]
     ): string;
     encodeFunctionData(
         functionFragment: "getPrice",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "pageMinter",
+        values?: undefined
+    ): string;
+    encodeFunctionData(functionFragment: "pageNFT", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "pageToken",
         values?: undefined
     ): string;
     encodeFunctionData(
@@ -67,17 +64,17 @@ export interface PageNFTBankInterface extends ethers.utils.Interface {
     ): string;
 
     decodeFunctionResult(functionFragment: "Buy", data: BytesLike): Result;
-    decodeFunctionResult(
-        functionFragment: "PAGE_MINTER",
-        data: BytesLike
-    ): Result;
-    decodeFunctionResult(functionFragment: "PAGE_NFT", data: BytesLike): Result;
-    decodeFunctionResult(
-        functionFragment: "PAGE_TOKEN",
-        data: BytesLike
-    ): Result;
     decodeFunctionResult(functionFragment: "Sell", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getPrice", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "pageMinter",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "pageNFT", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "pageToken",
+        data: BytesLike
+    ): Result;
     decodeFunctionResult(
         functionFragment: "setBuyPrice",
         data: BytesLike
@@ -122,12 +119,6 @@ export interface PageNFTBank extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<ContractTransaction>;
 
-        PAGE_MINTER(overrides?: CallOverrides): Promise<[string]>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<[string]>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<[string]>;
-
         Sell(
             tokenId: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
@@ -138,6 +129,12 @@ export interface PageNFTBank extends BaseContract {
         ): Promise<
             [BigNumber, BigNumber] & { sell: BigNumber; buy: BigNumber }
         >;
+
+        pageMinter(overrides?: CallOverrides): Promise<[string]>;
+
+        pageNFT(overrides?: CallOverrides): Promise<[string]>;
+
+        pageToken(overrides?: CallOverrides): Promise<[string]>;
 
         setBuyPrice(
             _price: BigNumberish,
@@ -155,12 +152,6 @@ export interface PageNFTBank extends BaseContract {
         overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
-
-    PAGE_NFT(overrides?: CallOverrides): Promise<string>;
-
-    PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
-
     Sell(
         tokenId: BigNumberish,
         overrides?: Overrides & { from?: string | Promise<string> }
@@ -169,6 +160,12 @@ export interface PageNFTBank extends BaseContract {
     getPrice(
         overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber] & { sell: BigNumber; buy: BigNumber }>;
+
+    pageMinter(overrides?: CallOverrides): Promise<string>;
+
+    pageNFT(overrides?: CallOverrides): Promise<string>;
+
+    pageToken(overrides?: CallOverrides): Promise<string>;
 
     setBuyPrice(
         _price: BigNumberish,
@@ -183,12 +180,6 @@ export interface PageNFTBank extends BaseContract {
     callStatic: {
         Buy(tokenId: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-        PAGE_MINTER(overrides?: CallOverrides): Promise<string>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<string>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<string>;
-
         Sell(tokenId: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
         getPrice(
@@ -196,6 +187,12 @@ export interface PageNFTBank extends BaseContract {
         ): Promise<
             [BigNumber, BigNumber] & { sell: BigNumber; buy: BigNumber }
         >;
+
+        pageMinter(overrides?: CallOverrides): Promise<string>;
+
+        pageNFT(overrides?: CallOverrides): Promise<string>;
+
+        pageToken(overrides?: CallOverrides): Promise<string>;
 
         setBuyPrice(
             _price: BigNumberish,
@@ -216,18 +213,18 @@ export interface PageNFTBank extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
-        PAGE_MINTER(overrides?: CallOverrides): Promise<BigNumber>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<BigNumber>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<BigNumber>;
-
         Sell(
             tokenId: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<BigNumber>;
 
         getPrice(overrides?: CallOverrides): Promise<BigNumber>;
+
+        pageMinter(overrides?: CallOverrides): Promise<BigNumber>;
+
+        pageNFT(overrides?: CallOverrides): Promise<BigNumber>;
+
+        pageToken(overrides?: CallOverrides): Promise<BigNumber>;
 
         setBuyPrice(
             _price: BigNumberish,
@@ -246,18 +243,18 @@ export interface PageNFTBank extends BaseContract {
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
-        PAGE_MINTER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-        PAGE_NFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-        PAGE_TOKEN(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
         Sell(
             tokenId: BigNumberish,
             overrides?: Overrides & { from?: string | Promise<string> }
         ): Promise<PopulatedTransaction>;
 
         getPrice(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        pageMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        pageNFT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        pageToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
         setBuyPrice(
             _price: BigNumberish,
