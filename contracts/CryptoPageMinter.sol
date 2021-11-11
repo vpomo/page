@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import "./interfaces/IMINTER.sol";
 import "./interfaces/IERCMINT.sol";
-// import "./interfaces/INFTMINT.sol";
 import "./interfaces/ISAFE.sol";
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -13,11 +12,11 @@ contract PageMinter is IMINTER, ISAFE {
     using SafeMath for uint256;
     using Counters for Counters.Counter;
 
-    IERCMINT private PAGE;
+    IERCMINT private page;
 
-    address public TreasuryAddress = address(0);
-    address private AdminAddress = address(0);
-    uint256 public TreasuryFee = 1000; // 100 is 1% || 10000 is 100%
+    address public treasuryAddress = address(0);
+    address private adminAddress = address(0);
+    uint256 public treasuryFee = 1000; // 100 is 1% || 10000 is 100%
 
     // MINTERS
     Counters.Counter public _totalMinters;
@@ -35,15 +34,15 @@ contract PageMinter is IMINTER, ISAFE {
 
     /* INIT */
     constructor(address _admin, address _treasury) {
-        AdminAddress = _admin;
-        TreasuryAddress = _treasury; // setTreasuryAddress
+        adminAddress = _admin;
+        treasuryAddress = _treasury; // setTreasuryAddress
     }
 
-    bool private is_init = false;
+    bool private isReady = false;
 
     function init(address _page, address _nft) public onlyAdmin {
-        require(!is_init, "can be call only once");
-        PAGE = IERCMINT(_page); // PAGE ADDRESS
+        require(!isReady, "can be call only once");
+        page = IERCMINT(_page); // PAGE ADDRESS
 
         /* 
         PAGE_MINTER.addSafe(address(PAGE_MINTER));
@@ -57,26 +56,26 @@ contract PageMinter is IMINTER, ISAFE {
         setMinter("NFT_CREATE_WITH_COMMENT", _nft, 10000000000000000000, false);
         setMinter("NFT_CREATE_ADD_COMMENT", _nft, 10000000000000000000, false);
         setMinter("NFT_ADD_COMMENT", _nft, 10000000000000000000, false);
-        is_init = true;
+        isReady = true;
     }
 
-    function amountMint(string memory _key, uint256 _address_count)
+    function amountMint(string memory _key, uint256 _addressCount)
         public
         view
         override
-        returns (uint256 amount_each, uint256 fee)
+        returns (uint256 amountEach, uint256 fee)
     {
         require(_keytank[_key], "amountMint: _key doesn't exists");
-        require(_address_count < 5, "address count > 4");
-        require(_address_count > 0, "address count is zero");
+        require(_addressCount < 5, "address count > 4");
+        require(_addressCount > 0, "address count is zero");
         // (address author, uint256 amount) = _minters[_key];
         Minters storage minter = _minters[_key];
-        fee = minter.amount.mul(TreasuryFee).div(10000);
-        amount_each = (minter.amount - fee).div(_address_count);
+        fee = minter.amount.mul(treasuryFee).div(10000);
+        amountEach = (minter.amount - fee).div(_addressCount);
     }
 
     function mint(string memory _key, address[] memory _to) public override {
-        require(is_init, "need to be init by admin");
+        require(isReady, "need to be init by admin");
         require(_keytank[_key], "mint: _key doesn't exists");
 
         // MINTER ONLY
@@ -84,24 +83,24 @@ contract PageMinter is IMINTER, ISAFE {
         require(minter.amount > 0, "mint: minter.amount can't be 0");
         require(minter.author == msg.sender, "mint: not minter");
 
-        uint256 address_count = _to.length;
+        uint256 addressCount = _to.length;
         // require(_addresses[_key] != 0, "Address Amount is 0");
-        require(address_count < 5, "address count > 4");
-        require(address_count > 0, "address count is zero");
+        require(addressCount < 5, "address count > 4");
+        require(addressCount > 0, "address count is zero");
 
-        (uint256 amount_each, uint256 fee) = amountMint(_key, address_count);
+        (uint256 amountEach, uint256 fee) = amountMint(_key, addressCount);
 
         // MINT TO ADDRESS
-        for (uint256 i; i < address_count; i++) {
-            PAGE.mint(_to[i], amount_each);
+        for (uint256 i; i < addressCount; i++) {
+            page.mint(_to[i], amountEach);
         }
 
         // FEE TO ADDRESS
-        PAGE.mint(TreasuryAddress, fee);
+        page.mint(treasuryAddress, fee);
     }
 
     function mint1(string memory _key, address _to) public override {
-        require(is_init, "need to be init by admin");
+        require(isReady, "need to be init by admin");
         require(_keytank[_key], "mint: _key doesn't exists");
 
         // MINTER ONLY
@@ -112,10 +111,10 @@ contract PageMinter is IMINTER, ISAFE {
         (uint256 amountEach, uint256 fee) = amountMint(_key, 1);
 
         // MINT TO ADDRESS
-        PAGE.mint(_to, amountEach);
+        page.mint(_to, amountEach);
 
         // FEE TO ADDRESS
-        PAGE.mint(TreasuryAddress, fee);
+        page.mint(treasuryAddress, fee);
     }
 
     function mint2(
@@ -123,7 +122,7 @@ contract PageMinter is IMINTER, ISAFE {
         address _to1,
         address _to2
     ) public override {
-        require(is_init, "need to be init by admin");
+        require(isReady, "need to be init by admin");
         require(_keytank[_key], "mint: _key doesn't exists");
 
         // MINTER ONLY
@@ -134,11 +133,11 @@ contract PageMinter is IMINTER, ISAFE {
         (uint256 amountEach, uint256 fee) = amountMint(_key, 2);
 
         // MINT TO ADDRESS
-        PAGE.mint(_to1, amountEach);
-        PAGE.mint(_to2, amountEach);
+        page.mint(_to1, amountEach);
+        page.mint(_to2, amountEach);
 
         // FEE TO ADDRESS
-        PAGE.mint(TreasuryAddress, fee);
+        page.mint(treasuryAddress, fee);
     }
 
     function mint3(
@@ -147,7 +146,7 @@ contract PageMinter is IMINTER, ISAFE {
         address _to2,
         address _to3
     ) public override {
-        require(is_init, "need to be init by admin");
+        require(isReady, "need to be init by admin");
         require(_keytank[_key], "mint: _key doesn't exists");
 
         // MINTER ONLY
@@ -158,12 +157,12 @@ contract PageMinter is IMINTER, ISAFE {
         (uint256 amountEach, uint256 fee) = amountMint(_key, 3);
 
         // MINT TO ADDRESS
-        PAGE.mint(_to1, amountEach);
-        PAGE.mint(_to2, amountEach);
-        PAGE.mint(_to3, amountEach);
+        page.mint(_to1, amountEach);
+        page.mint(_to2, amountEach);
+        page.mint(_to3, amountEach);
 
         // FEE TO ADDRESS
-        PAGE.mint(TreasuryAddress, fee);
+        page.mint(treasuryAddress, fee);
     }
 
     function mintX(
@@ -171,7 +170,7 @@ contract PageMinter is IMINTER, ISAFE {
         address[] memory _to,
         uint256 _multiplier
     ) public override {
-        require(is_init, "need to be init by admin");
+        require(isReady, "need to be init by admin");
         require(_keytank[_key], "mintX: _key doesn't exists");
 
         // MINTER ONLY
@@ -180,26 +179,26 @@ contract PageMinter is IMINTER, ISAFE {
         require(minter.author == msg.sender, "mint: not minter");
         require(minter.xmint, "xmint: not active");
 
-        uint256 address_count = _to.length;
+        uint256 addressCount = _to.length;
         // require(_addresses[_key] != 0, "Address Amount is 0");
-        require(address_count < 5, "address count > 4");
-        require(address_count > 0, "address count is zero");
+        require(addressCount < 5, "address count > 4");
+        require(addressCount > 0, "address count is zero");
 
-        (uint256 amountEach, uint256 fee) = amountMint(_key, address_count);
+        (uint256 amountEach, uint256 fee) = amountMint(_key, addressCount);
 
         // MINT TO ADDRESS
-        for (uint256 i; i < address_count; i++) {
-            PAGE.mint(_to[i], amountEach.mul(_multiplier));
+        for (uint256 i; i < addressCount; i++) {
+            page.mint(_to[i], amountEach.mul(_multiplier));
         }
 
         // FEE TO ADDRESS
-        PAGE.mint(TreasuryAddress, fee.mul(_multiplier));
+        page.mint(treasuryAddress, fee.mul(_multiplier));
     }
 
     // > > > onlyAdmin < < <
     modifier onlyAdmin() {
         require(
-            msg.sender == AdminAddress,
+            msg.sender == adminAddress,
             "onlyAdmin: caller is not the admin"
         );
         _;
@@ -239,10 +238,11 @@ contract PageMinter is IMINTER, ISAFE {
         }
     }
 
+    /*
     function testLastinterID() public view returns (uint256) {
         return _minterId.current();
     }
-
+    */
     function setTreasuryFee(uint256 _percent) public onlyAdmin {
         require(
             _percent >= 10,
@@ -252,12 +252,12 @@ contract PageMinter is IMINTER, ISAFE {
             _percent <= 3000,
             "setTreasuryFee: maximum treasury fee percent is 30%"
         );
-        TreasuryFee = _percent;
+        treasuryFee = _percent;
     }
 
     function setTreasuryAddress(address _treasury) public onlyAdmin {
         require(_treasury != address(0), "setTreasuryAddress: is zero address");
-        TreasuryAddress = _treasury;
+        treasuryAddress = _treasury;
     }
 
     // GET FUNCTIONS
@@ -282,13 +282,13 @@ contract PageMinter is IMINTER, ISAFE {
 
     // PROXY
     function burn(address from, uint256 amount) public override onlySafe {
-        require(is_init, "need to be init by admin");
+        require(isReady, "need to be init by admin");
 
         // burn 100% PAGE
-        PAGE.xburn(from, amount);
+        page.xburn(from, amount);
 
         // recover 10% to Treasury address
-        PAGE.mint(TreasuryAddress, amount.mul(TreasuryFee).div(10000));
+        page.mint(treasuryAddress, amount.mul(treasuryFee).div(10000));
     }
 
     // ISAFE
@@ -319,22 +319,22 @@ contract PageMinter is IMINTER, ISAFE {
     }
 
     // DESTROY NFT
-    uint256 private CostBurnNFT;
+    uint256 private burnNFTCost;
 
-    function setBurnNFT(uint256 _cost) public override onlyAdmin {
-        CostBurnNFT = _cost;
+    function setBurnNFTCost(uint256 _cost) public override onlyAdmin {
+        burnNFTCost = _cost;
     }
 
     // VIEW FUNCTIONS
-    function getBurnNFT() public view override returns (uint256) {
-        return CostBurnNFT;
+    function getBurnNFTCost() public view override returns (uint256) {
+        return burnNFTCost;
     }
 
     function getAdmin() public view override returns (address) {
-        return AdminAddress;
+        return adminAddress;
     }
 
     function getPageToken() public view override returns (address) {
-        return address(PAGE);
+        return address(page);
     }
 }

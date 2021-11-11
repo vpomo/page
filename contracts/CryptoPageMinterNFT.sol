@@ -16,19 +16,21 @@ import "./CryptoPageComment.sol";
 contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
     using Counters for Counters.Counter;
     using Strings for uint256;
-    string private BaseURL = "https://ipfs.io/ipfs/";
+
     Counters.Counter private _tokenIdCounter;
 
-    IERC20 public PAGE_TOKEN;
-    IMINTER public PAGE_MINTER;
-    ISAFE private PAGE_SAFE;
+    IERC20 public pageToken;
+    IMINTER public pageMinter;
+    ISAFE private pageSafe;
 
-    constructor(address _PAGE_MINTER, address _PAGE_TOKEN)
+    string private baseURL = "https://ipfs.io/ipfs/";
+
+    constructor(address _pageMinter, address _pageToken)
         ERC721("Crypto Page NFT", "PAGE-NFT")
     {
-        PAGE_MINTER = IMINTER(_PAGE_MINTER);
-        PAGE_SAFE = ISAFE(_PAGE_MINTER);
-        PAGE_TOKEN = IERC20(_PAGE_TOKEN);
+        pageMinter = IMINTER(_pageMinter);
+        pageSafe = ISAFE(_pageMinter);
+        pageToken = IERC20(_pageToken);
     }
 
     /**
@@ -51,7 +53,7 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
         return (spender == owner ||
             getApproved(tokenId) == spender ||
             isApprovedForAll(owner, spender) ||
-            PAGE_SAFE.isSafe(spender));
+            pageSafe.isSafe(spender));
     }
 
     function _burn(uint256 tokenId)
@@ -66,10 +68,10 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
             ownerOf(_tokenId) == msg.sender,
             "It's possible only for owner"
         );
-        uint256 BALANCE = PAGE_TOKEN.balanceOf(msg.sender);
-        uint256 BURN_PRICE = PAGE_MINTER.getBurnNFT();
-        require((BALANCE >= BURN_PRICE), "not enoph PAGE tokens");
-        PAGE_MINTER.burn(msg.sender, BURN_PRICE);
+        uint256 balance = pageToken.balanceOf(msg.sender);
+        uint256 burnPrice = pageMinter.getBurnNFTCost();
+        require((balance >= burnPrice), "not enoph PAGE tokens");
+        pageMinter.burn(msg.sender, burnPrice);
         _burn(_tokenId);
     }
 
@@ -97,7 +99,7 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
             uint256 id,
             uint256 comments,
             uint256 likes,
-            uint256 dislakes,
+            uint256 dislikes,
             address _contract
         )
     {
@@ -106,15 +108,17 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
             "No comment functionaly for this nft"
         );
 
-        address Contract = commentsById[_tokenId];
-        (uint256 Comments, uint256 Likes, uint256 Dislakes) = PageComment(
-            Contract
+        address _commentContract = commentsById[_tokenId];
+
+        (uint256 _comments, uint256 _likes, uint256 _dislikes) = PageComment(
+            _commentContract
         ).totalStats();
+
         id = _tokenId;
-        comments = Comments;
-        likes = Likes;
-        dislakes = Dislakes;
-        _contract = Contract;
+        comments = _comments;
+        likes = _likes;
+        dislikes = _dislikes;
+        _contract = _commentContract;
     }
 
     mapping(uint256 => address) private commentsById;
@@ -126,11 +130,11 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
     {
         uint256 tokenId = _tokenIdCounter.current();
         if (_comment) {
-            PAGE_MINTER.mint1("NFT_CREATE_WITH_COMMENT", msg.sender); // MINT
+            pageMinter.mint1("NFT_CREATE_WITH_COMMENT", msg.sender); // MINT
             PageComment newComment = new PageComment();
             commentsById[tokenId] = address(newComment);
         } else {
-            PAGE_MINTER.mint1("NFT_CREATE", msg.sender); // MINT
+            pageMinter.mint1("NFT_CREATE", msg.sender); // MINT
         }
         creatorById[tokenId] = msg.sender;
         _safeMint(msg.sender, tokenId);
@@ -141,7 +145,7 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
 
     function comment(
         uint256 _tokenId,
-        string memory _comment_text,
+        string memory _commentText,
         bool _like
     ) public {
         require(_tokenId <= totalSupply(), "nonexistent token");
@@ -150,8 +154,8 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
             "No comment functionaly for this nft"
         );
         PageComment newComment = PageComment(commentsById[_tokenId]);
-        newComment._comment(_comment_text, _like, msg.sender);
-        PAGE_MINTER.mint3(
+        newComment._comment(_commentText, _like, msg.sender);
+        pageMinter.mint3(
             "NFT_ADD_COMMENT",
             msg.sender,
             ownerOf(_tokenId),
@@ -168,15 +172,15 @@ contract PageMinterNFT is ERC721, ERC721URIStorage, INFTMINT {
         );
         PageComment newComment = new PageComment();
         commentsById[_tokenId] = address(newComment);
-        PAGE_MINTER.mint1("NFT_CREATE_ADD_COMMENT", msg.sender); // MINT
+        pageMinter.mint1("NFT_CREATE_ADD_COMMENT", msg.sender); // MINT
     }
 
     function setBaseURL(string memory url) public override {
-        require(msg.sender == PAGE_MINTER.getAdmin(), "only for admin");
-        BaseURL = url;
+        require(msg.sender == pageMinter.getAdmin(), "only for admin");
+        baseURL = url;
     }
 
     function getBaseURL() public view override returns (string memory) {
-        return BaseURL;
+        return baseURL;
     }
 }

@@ -6,13 +6,13 @@ import "./interfaces/IMINTER.sol";
 import "./interfaces/IERCMINT.sol";
 
 contract PageNFTMarket {
-    INFTMINT public PAGE_NFT;
-    IMINTER public PAGE_MINTER;
-    IERCMINT public PAGE_TOKEN;
+    INFTMINT public pageNFT;
+    IMINTER public pageMinter;
+    IERCMINT public pageToken;
 
-    constructor(address _PAGE_NFT, address _PAGE_MINTER) {
-        PAGE_NFT = INFTMINT(_PAGE_NFT);
-        PAGE_MINTER = IMINTER(_PAGE_MINTER);
+    constructor(address _pageNFT, address _pageMinter) {
+        pageNFT = INFTMINT(_pageNFT);
+        pageMinter = IMINTER(_pageMinter);
     }
     // DEPOSIT
 }
@@ -25,6 +25,7 @@ interface IBeacon {
 
 abstract contract Proxy {
     function _delegate(address implementation) internal virtual {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             calldatacopy(0, 0, calldatasize())
             let result := delegatecall(
@@ -49,7 +50,7 @@ abstract contract Proxy {
     function _implementation() internal view virtual returns (address);
 
     function _fallback() internal virtual {
-        _beforeFallback();
+        // _beforeFallback();
         _delegate(_implementation());
     }
 
@@ -60,10 +61,11 @@ abstract contract Proxy {
     receive() external payable virtual {
         _fallback();
     }
-
+    /*
     function _beforeFallback() internal virtual {
         // +
     }
+    */
 }
 
 contract BeaconProxy is Proxy {
@@ -80,6 +82,7 @@ contract BeaconProxy is Proxy {
 
     function _beacon() internal view virtual returns (address beacon) {
         bytes32 slot = _BEACON_SLOT;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             beacon := sload(slot)
         }

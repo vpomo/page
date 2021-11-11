@@ -6,11 +6,10 @@ import "./interfaces/IERCMINT.sol";
 import "./interfaces/ISAFE.sol";
 
 contract PageToken is ERC20, IERCMINT {
-    ISAFE private PAGE_MINTER;
+    ISAFE private pageMinter;
 
-    constructor(address _PAGE_MINTER) ERC20("Crypto Page", "PAGE") {
-        // address _IMINTER
-        PAGE_MINTER = ISAFE(_PAGE_MINTER);
+    constructor(address _pageMinter) ERC20("Crypto Page", "PAGE") {
+        pageMinter = ISAFE(_pageMinter);
     }
 
     // OPEN
@@ -34,7 +33,7 @@ contract PageToken is ERC20, IERCMINT {
     // ADMIN ONLY
     modifier onlyAdmin() {
         require(
-            msg.sender == address(PAGE_MINTER),
+            msg.sender == address(pageMinter),
             "onlyAdmin: caller is not the admin"
         );
         _;
@@ -50,7 +49,7 @@ contract PageToken is ERC20, IERCMINT {
 
     modifier onlySafe() {
         require(
-            PAGE_MINTER.isSafe(msg.sender),
+            pageMinter.isSafe(msg.sender),
             "onlySafe: caller is not in safe list"
         );
         _;

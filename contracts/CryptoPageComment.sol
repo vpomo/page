@@ -46,14 +46,14 @@ contract PageComment is Ownable {
         public
         view
         returns (
-            uint256 Comments,
-            uint256 Likes,
-            uint256 Dislikes
+            uint256 comments,
+            uint256 likes,
+            uint256 dislikes
         )
     {
-        Comments = _totalComments.current();
-        Likes = _totalLikes.current();
-        Dislikes = _totalDislikes.current();
+        comments = _totalComments.current();
+        likes = _totalLikes.current();
+        dislikes = _totalDislikes.current();
     }
 
     function _increment(bool like) private {

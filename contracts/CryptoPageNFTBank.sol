@@ -8,40 +8,40 @@ import "./interfaces/IERCMINT.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract PageNFTBank {
-    IERC721 public PAGE_NFT;
-    IMINTER public PAGE_MINTER;
-    IERCMINT public PAGE_TOKEN;
+    IERC721 public pageNFT;
+    IMINTER public pageMinter;
+    IERCMINT public pageToken;
 
-    constructor(address _PAGE_NFT, address _PAGE_MINTER) {
-        PAGE_NFT = IERC721(_PAGE_NFT);
-        PAGE_MINTER = IMINTER(_PAGE_MINTER);
-        PAGE_TOKEN = IERCMINT(PAGE_MINTER.getPageToken());
+    constructor(address _pageNFT, address _pageMinter) {
+        pageNFT = IERC721(_pageNFT);
+        pageMinter = IMINTER(_pageMinter);
+        pageToken = IERCMINT(pageMinter.getPageToken());
     }
 
     function Buy(uint256 tokenId) public {
-        require(PAGE_TOKEN.isEnoughOn(msg.sender, _buy), "Not enough tokens");
+        require(pageToken.isEnoughOn(msg.sender, _buy), "Not enough tokens");
         require(
-            address(this) == PAGE_NFT.ownerOf(tokenId),
+            address(this) == pageNFT.ownerOf(tokenId),
             "only owner can call this function"
         );
-        PAGE_TOKEN.safeDeposit(msg.sender, address(this), _buy);
-        PAGE_NFT.safeTransferFrom(address(this), msg.sender, tokenId);
+        pageToken.safeDeposit(msg.sender, address(this), _buy);
+        pageNFT.safeTransferFrom(address(this), msg.sender, tokenId);
     }
 
     function Sell(uint256 tokenId) public {
         // require(msg.sender == PAGE_MINTER.getAdmin(), "onlyAdmin: caller is not the admin");
         require(
-            msg.sender == PAGE_NFT.ownerOf(tokenId),
+            msg.sender == pageNFT.ownerOf(tokenId),
             "only owner can call this function"
         );
-        PAGE_NFT.safeTransferFrom(msg.sender, address(this), tokenId);
+        pageNFT.safeTransferFrom(msg.sender, address(this), tokenId);
 
         // MINT
     }
 
     modifier onlyAdmin() {
         require(
-            msg.sender == PAGE_MINTER.getAdmin(),
+            msg.sender == pageMinter.getAdmin(),
             "onlyAdmin: caller is not the admin"
         );
         _;

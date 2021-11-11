@@ -52,9 +52,9 @@ interface IMINTER {
         );
 
     // Burn NFT PRICE
-    function setBurnNFT(uint256 _cost) external;
+    function setBurnNFTCost(uint256 _cost) external;
 
-    function getBurnNFT() external view returns (uint256);
+    function getBurnNFTCost() external view returns (uint256);
 
     function getAdmin() external view returns (address);
 

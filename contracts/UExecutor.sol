@@ -14,7 +14,7 @@ contract UExecutor is Admin, ASafe {
     using Counters for Counters.Counter;
 
     // COUNTERS
-    Counters.Counter public _StrategyId;
+    Counters.Counter public _strategyId;
     Counters.Counter public _totalStrategies;
     Counters.Counter public _activeStrategies;
 
@@ -37,10 +37,10 @@ contract UExecutor is Admin, ASafe {
         onlyOwner
     {
         require(!_keytank[_key], "removeStrategy: _key doesn't exists");
-        _StrategyId.increment();
+        _strategyId.increment();
         _keytank[_key] = true;
         _strategies[_key] = Strategy({
-            id: _StrategyId.current(),
+            id: _strategyId.current(),
             author: _account,
             status: true
         });
@@ -107,6 +107,7 @@ contract UExecutor is Admin, ASafe {
     }
 
     // INTERACTION
+    /*
     function getJson(
         string memory _key,
         string memory _function,
@@ -133,7 +134,7 @@ contract UExecutor is Admin, ASafe {
         // string memory _function
         // string memory _values
     }
-
+    */
     /**
     // INTERACTION
     function runUE(string memory _key, string memory _function, string memory _values) public {

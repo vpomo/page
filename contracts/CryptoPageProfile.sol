@@ -10,10 +10,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract PageProfile {
     using EnumerableSet for EnumerableSet.UintSet;
     using Counters for Counters.Counter;
-    IMINTER public PAGE_MINTER;
+    IMINTER public pageMinter;
 
-    constructor(address _PAGE_MINTER) {
-        PAGE_MINTER = IMINTER(_PAGE_MINTER);
+    constructor(address _pageMinter) {
+        pageMinter = IMINTER(_pageMinter);
     }
 
     Counters.Counter private _totalSocial;
@@ -26,14 +26,14 @@ contract PageProfile {
         string title;
         string url;
     }
-    mapping(uint256 => Social) public SocialById;
-    mapping(address => EnumerableSet.UintSet) private SocialIdsOf;
+    mapping(uint256 => Social) public socialById;
+    mapping(address => EnumerableSet.UintSet) private socialIdsOf;
 
     function _add_social(string memory title, string memory url) public {
         uint256 uid = _totalSocial.current();
         address user = msg.sender;
-        SocialIdsOf[user].add(uid);
-        SocialById[uid] = Social({
+        socialIdsOf[user].add(uid);
+        socialById[uid] = Social({
             uid: uid,
             author: user,
             title: title,
@@ -47,13 +47,13 @@ contract PageProfile {
         address author;
         string text;
     }
-    mapping(uint256 => Status) public StatusById;
-    mapping(address => EnumerableSet.UintSet) private StatusIdsOf;
+    mapping(uint256 => Status) public statusById;
+    mapping(address => EnumerableSet.UintSet) private statusIdsOf;
 
     function _add_status(string memory text) public {
         uint256 uid = _totalStatus.current();
         address user = msg.sender;
-        StatusIdsOf[user].add(uid);
-        StatusById[uid] = Status({uid: uid, author: user, text: text});
+        statusIdsOf[user].add(uid);
+        statusById[uid] = Status({uid: uid, author: user, text: text});
     }
 }
