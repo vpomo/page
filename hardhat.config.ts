@@ -63,7 +63,7 @@ const config: HardhatUserConfig = {
             // saveDeployments: true,
         },
         ganache: {
-            url: "http://localhost:7545",
+            url: "http://127.0.0.1:7545",
             accounts: { mnemonic: MNEMONIC },
             saveDeployments: true,
         },
