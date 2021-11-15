@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IERCMINT.sol";
 import "./interfaces/ISAFE.sol";
 
+// import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+
 contract PageToken is ERC20, IERCMINT {
     ISAFE private pageMinter;
 
@@ -43,7 +45,7 @@ contract PageToken is ERC20, IERCMINT {
         _mint(to, amount);
     }
 
-    function xburn(address from, uint256 amount) public override onlyAdmin {
+    function burnFrom(address from, uint256 amount) public override onlyAdmin {
         _burn(from, amount);
     }
 
@@ -56,6 +58,7 @@ contract PageToken is ERC20, IERCMINT {
     }
 
     // ISAFE
+    /*
     function safeDeposit(
         address from,
         address to,
@@ -63,6 +66,7 @@ contract PageToken is ERC20, IERCMINT {
     ) public override onlySafe {
         _transfer(from, to, amount);
     }
+    */
 
     function safeWithdraw(
         address from,

@@ -30,8 +30,10 @@ async function deploy2(ContractName, construct1, construct2) {
 }
 
 async function main() {
-    let TreasuryAddress = process.env.TREASURY_ADDRESS;
-    console.log("TreasuryAddress", TreasuryAddress);
+    const mnemonic = process.env.MNEMONIC || "";
+    const wallet = await ethers.Wallet.fromMnemonic(mnemonic);
+    const TreasuryAddress = wallet.address;
+
     // STEP 1
     let PageAdmin = await deploy("PageAdmin", TreasuryAddress);
     let PAGE_MINTER = await PageAdmin.pageMinter();

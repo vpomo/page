@@ -4,15 +4,17 @@ pragma solidity ^0.8.4;
 interface IERCMINT {
     function mint(address to, uint256 amount) external;
 
-    function xburn(address from, uint256 amount) external;
+    function burnFrom(address from, uint256 amount) external;
 
     function burn(uint256 amount) external;
 
+    /*
     function safeDeposit(
         address from,
         address to,
         uint256 amount
     ) external;
+    */
 
     function safeWithdraw(
         address from,
