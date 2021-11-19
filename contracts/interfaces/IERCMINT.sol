@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.4;
 
 interface IERCMINT {
@@ -14,14 +15,14 @@ interface IERCMINT {
         address to,
         uint256 amount
     ) external;
-    */
+    
 
     function safeWithdraw(
         address from,
         address to,
         uint256 amount
     ) external;
-
+    */
     // IF ENOUGH TOKENS ON BALANCE ??
     function isEnoughOn(address account, uint256 amount)
         external

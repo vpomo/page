@@ -1,33 +1,61 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/Ownable.sol";
+// import "./CryptoPageTokenMinter.sol";
+// import "./CryptoPageMinter.sol";
+import "./CryptoPageToken.sol";
+import "./CryptoPageTokenMinter.sol";
+import "./CryptoPageNFT.sol";
+import "./CryptoPageNFTMinter.sol";
 
-// MINTER
-import "./CryptoPageMinter.sol";
-import "./interfaces/INFTMINT.sol";
+// import "./CryptoPageMinterNFT.sol";
+// import "./interfaces/INFTMINT.sol";
+// import "./interfaces/IMINTER.sol";
+
+// import "./interfaces/ICryptoPageComment.sol";
 
 contract PageAdmin is Ownable {
-    PageMinter public pageMinter;
-    address public pageToken;
-    // PageNFTBank public pageNFTBank;
-    INFTMINT public pageNFT;
+    address public treasury;
+    // PageToken public token;
+    PageTokenMinter public tokenMinter;
+    PageNFTMinter public nftMinter;
 
-    address public treasuryAddress;
+    // IERCMINT public pageToken;
+    // PageToken public pageToken;
+    // PageMinterNFT public pageMinterNFT;
+    // INFTMINT public pageNFT;
+    // address public pageToken;
 
-    constructor(address _treasuryAddress) {
-        treasuryAddress = _treasuryAddress;
-        pageMinter = new PageMinter(address(this), _treasuryAddress);
+    // bool private oneTime = true;
+
+    constructor(
+        address _treasury,
+        PageTokenMinter _tokenMinter,
+        PageNFTMinter _nftMinter // PageToken _token, // PageNFT _nft // INFTMINT _pageNFT, // IERCMINT _pageToken
+    ) {
+        treasury = _treasury;
+        tokenMinter = _tokenMinter;
+        nftMinter = _nftMinter;
+        // token = _token;
+        // nft = _nft;
+        // pageMinter = _pageMinter;
+        // pageNFT = _pageNFT;
+        // pageToken = _pageToken;
+        // require(oneTime, "CAN BE CALL ONLY ONCE");
+        // pageNFT = INFTMINT(_pageNFT);
+        //
+        // pageMinter.init(_pageToken, _pageNFT);
+        // oneTime = false;
+        // pageMinter = new PageMinter(address(this), _treasuryAddress);
     }
 
-    // INIT
-    bool private oneTime = true;
-    address[] private safeAddresses;
-
+    /*
     modifier onlyAfterInit() {
         require(!oneTime, "INIT FUNCTION NOT CALLED");
         _;
     }
-
+    
     function init(address _pageNFT, address _pageToken) public onlyOwner {
         require(oneTime, "CAN BE CALL ONLY ONCE");
         pageNFT = INFTMINT(_pageNFT);
@@ -35,63 +63,34 @@ contract PageAdmin is Ownable {
         pageMinter.init(_pageToken, _pageNFT);
         oneTime = false;
     }
-
-    // ONLY ADMIN ???
+    */
     /*
-    function removeMinter(string memory _key) public onlyOwner onlyAfterInit {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
-        pageMinter.removeMinter(_key);
+    function setTokenMintFee(uint256 _percent) public onlyOwner {
+        // pageMinter.setTreasuryFee(_percent);
     }
 
-    function setMinter(
-        string memory _key,
-        address _account,
-        uint256 _pageamount
-    ) public onlyOwner onlyAfterInit {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
-        pageMinter.setMinter(_key, _account, _pageamount, false);
+    function setTokenBurnFee(uint256 _percent) public onlyOwner {
+        // pageMinter.setTreasuryFee(_percent);
     }
     */
-    function setTreasuryFee(uint256 _percent) public onlyOwner onlyAfterInit {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
-        pageMinter.setTreasuryFee(_percent);
+    function setMintFee(uint256 _percent) public onlyOwner {
+        // pageMinter.setTreasuryFee(_percent);
+        nftMinter.setMintFee(_percent);
     }
 
-    function setTreasuryAddress(address _treasury)
-        public
-        onlyOwner
-        onlyAfterInit
-    {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
-        pageMinter.setTreasuryAddress(_treasury);
+    function setBurnFee(uint256 _percent) public onlyOwner {
+        // pageMinter.setTreasuryFee(_percent);
+        // tokenMinter.setTreasury(_treasury);
+        nftMinter.setBurnFee(_percent);
     }
 
-    // ++++
-    function addSafe(address[] memory _safe) public onlyOwner onlyAfterInit {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
-        pageMinter.addSafe(_safe); // memory
+    function setTreasury(address _treasury) public onlyOwner {
+        // tokenMinter.setTreasury(_treasury);
+        nftMinter.setTreasury(_treasury);
     }
-
-    function removeSafe(address _safe) public onlyOwner onlyAfterInit {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
-        pageMinter.removeSafe(_safe);
-    }
-
-    function changeSafe(address _from, address _to)
-        public
-        onlyOwner
-        onlyAfterInit
-    {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
-        pageMinter.changeSafe(_from, _to);
-    }
-
-    function setBurnNFTCost(uint256 _pageamount)
-        public
-        onlyOwner
-        onlyAfterInit
-    {
-        // require(!oneTime, "INIT FUNCTION NOT CALLED");
+    /*
+    function setBurnNFTCost(uint256 _pageamount) public onlyOwner {
         pageMinter.setBurnNFTCost(_pageamount);
     }
+    */
 }
