@@ -9,6 +9,8 @@ import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 import * as dotenv from "dotenv";
 import "hardhat-deploy";
+import "hardhat-deploy-ethers";
+import "hardhat-spdx-license-identifier";
 import "hardhat-watcher";
 import { HardhatUserConfig } from "hardhat/types";
 import "solidity-coverage";
@@ -38,6 +40,17 @@ const etherscanAPIKEY =
 
 const config: HardhatUserConfig = {
     defaultNetwork,
+    namedAccounts: {
+        deployer: {
+            default: 0,
+        },
+        dev: {
+            // Default to 1
+            default: 1,
+            // dev address mainnet
+            // 1: "",
+        },
+    },
     watcher: {
         compilation: {
             tasks: ["compile"],
@@ -74,6 +87,10 @@ const config: HardhatUserConfig = {
     },
     mocha: {
         timeout: 100000,
+    },
+    spdxLicenseIdentifier: {
+        overwrite: true,
+        runOnCompile: true,
     },
     typechain: {
         outDir: "types",
