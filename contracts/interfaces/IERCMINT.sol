@@ -9,21 +9,6 @@ interface IERCMINT {
 
     function burn(uint256 amount) external;
 
-    /*
-    function safeDeposit(
-        address from,
-        address to,
-        uint256 amount
-    ) external;
-    
-
-    function safeWithdraw(
-        address from,
-        address to,
-        uint256 amount
-    ) external;
-    */
-    // IF ENOUGH TOKENS ON BALANCE ??
     function isEnoughOn(address account, uint256 amount)
         external
         view

@@ -11,7 +11,6 @@ contract PageComment is Ownable {
     using EnumerableSet for EnumerableSet.UintSet;
     using Counters for Counters.Counter;
 
-    // NEW COMMENTS
     struct Comment {
         uint256 id;
         address author;
@@ -21,22 +20,13 @@ contract PageComment is Ownable {
 
     bool private active = true;
     uint256[] public commentsIds;
-    // IERC721 public nft;
 
     mapping(uint256 => Comment) public commentsById;
-    // mapping(address => EnumerableSet.UintSet) private commentsIdsOf;
 
     Counters.Counter private _totalLikes;
     Counters.Counter private _totalDislikes;
 
     event NewComment(uint256 id, address author, string text, bool like);
-    /*
-    constructor(address _owmer ) { ///, IERC721 _nft) {
-        transferOwnership(_owmer);
-        // nft = _nft;
-        active = true;
-    }
-    */
     modifier onlyActive() {
         require(active, "Comments not activated.");
         _;
@@ -52,7 +42,6 @@ contract PageComment is Ownable {
         bool like
     ) public onlyActive {
         uint256 id = commentsIds.length;
-        // commentsIdsOf[author].add(id);
         commentsIds.push(id);
         commentsById[id] = Comment(id, author, text, like);
 
