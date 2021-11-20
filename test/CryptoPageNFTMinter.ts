@@ -89,20 +89,14 @@ describe("PageNFTMinter", function () {
 
         it("Should be burned by owner", async function () {
             await nftMinter.safeMint("https://ipfs.io/ipfs/IPFSHash", false);
-            // const owner = await nft.ownerOf(0);
             await nftMinter.burn(0);
-            // console.log("owner", owner);
         });
-        /*
-         */
-
         it("Should not be burned by another account", async function () {
             await nftMinter.safeMint("https://ipfs.io/ipfs/IPFSHash", false);
             await expect(
                 nftMinter.connect(signers[1]).burn(0)
             ).to.be.revertedWith("It's possible only for owner");
         });
-
         it("Should be available burn fee", async function () {
             const burnFee = await nftMinter.getBurnFee();
             expect(burnFee).to.equal(0);
@@ -115,7 +109,6 @@ describe("PageNFTMinter", function () {
             const treasury = await nftMinter.getTreasury();
             expect(treasury).to.equal(address);
         });
-
         it("Should be available set burn fee only by owner", async function () {
             await nftMinter.setBurnFee(1000);
             const burnFee = await nftMinter.getBurnFee();
@@ -138,17 +131,5 @@ describe("PageNFTMinter", function () {
             const treasury = await nftMinter.getTreasury();
             expect(treasury).to.equal(anotherTreasuryAddress);
         });
-
-        /*
-        it("Should be available check activated on any ERC721 contract", async function () {
-            // nftMinter.safeMint('https://ipfs.io/ipfs/IPFSHash', false)
-            // const activated = await commentMinter.activated(nft.address, 0);
-            // expect(activated).to.equal(false);
-            // console.log("hello world");
-            const treasury = await nftMinter.getTreasury();
-            // console.log('treasury', treasury)
-            expect(treasury).to.equal(treasury);
-        });
-        */
     });
 });

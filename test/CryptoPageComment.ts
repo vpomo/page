@@ -9,13 +9,12 @@ describe("PageComment", async function () {
     let address: Address;
     let accounts: Signer[];
     let comment: PageComment;
-    const pageCommentFactory = (await ethers.getContractFactory(
+    const commentFactory = (await ethers.getContractFactory(
         "PageComment"
     )) as PageComment__factory;
     beforeEach(async function () {
         accounts = await ethers.getSigners();
-        comment = await pageCommentFactory.deploy();
-        // comment = await ethers.getContract("PageComment")
+        comment = await commentFactory.deploy();
         address = await accounts[0].getAddress();
     });
 
@@ -48,7 +47,7 @@ describe("PageComment", async function () {
                 "_ids length must be less or equal commentsIds"
             );
         });
-        it("zzzz", async function () {
+        it("Should Be Avoid Create Comment If Inactove", async function () {
             await comment.toggleActive();
             await comment.toggleActive();
             await comment.toggleActive();

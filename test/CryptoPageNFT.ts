@@ -37,7 +37,6 @@ describe("PageNFT", function () {
     });
 
     it("should only allow owner to mint NFT", async function () {
-        // const tokenURI = "https://ipfs.io/ipfs/fakeIPFSHash";
         await nft.mint(aliceAddress, tokenURI);
         await expect(
             nft.connect(bob).mint(aliceAddress, tokenURI)
@@ -69,34 +68,4 @@ describe("PageNFT", function () {
     it("should allow to call getBaseURL", async function () {
         await expect(nft.connect(bob).getBaseURL(), "https://ipfs.io/ipfs");
     });
-    /*
-    it("should supply token transfers properly", async function () {
-        await this.token.mint(this.alice.address, "100");
-        await this.token.mint(this.bob.address, "1000");
-        await this.token.transfer(this.carol.address, "10");
-        await this.token.connect(this.bob).transfer(this.carol.address, "100", {
-            from: this.bob.address,
-        });
-        const totalSupply = await this.token.totalSupply();
-        const aliceBalance = await this.token.balanceOf(this.alice.address);
-        const bobBalance = await this.token.balanceOf(this.bob.address);
-        const carolBalance = await this.token.balanceOf(this.carol.address);
-        expect(totalSupply, "1100");
-        expect(aliceBalance, "90");
-        expect(bobBalance, "900");
-        expect(carolBalance, "110");
-    });
-
-    it("should fail if you try to do bad transfers", async function () {
-        await this.token.mint(this.alice.address, "100");
-        await expect(
-            this.token.transfer(this.carol.address, "110")
-        ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-        await expect(
-            this.token
-                .connect(this.bob)
-                .transfer(this.carol.address, "1", { from: this.bob.address })
-        ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-    });
-    */
 });

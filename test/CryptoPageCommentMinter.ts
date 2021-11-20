@@ -60,17 +60,6 @@ describe("PageCommentMinter", async function () {
             nft.address,
             commentMinter.address
         );
-        /*
-        console.log("tokenMinter.address", tokenMinter.address);
-        console.log("nft.address", nft.address);
-        console.log("commentMinter.address", commentMinter.address);
-        nftMinter = await nftMinterFactory.deploy(
-            address,
-            tokenMinter.address,
-            nft.address,
-            commentMinter.address
-        );
-        */
     });
 
     describe("After Deployment", function () {
@@ -102,32 +91,6 @@ describe("PageCommentMinter", async function () {
                 "Hello, world!",
                 true
             );
-            // expect(activated).to.equal(false);
-            // console.log("activated", activated);
         });
     });
-
-    /*
-    describe("After Deployment", function () {
-        it("Should be available check activated on any ERC721 contract", async function () {
-            const activated = await commentMinter.activated(nft.address, 0);
-            expect(activated).to.equal(false);
-        });
-        it("Should be available check activated on any ERC721 contract", async function () {
-            const activated = await commentMinter.activateComment(
-                nft.address,
-                0
-            );
-            expect(activated).to.equal(false);
-        });
-        it("Should be available check activated on any ERC721 contract", async function () {
-            const activated = await commentMinter.activated(nft.address, 0);
-            expect(activated).to.equal(false);
-        });
-    });
-    */
 });
-
-//             await nft.mint(address, tokenURI);
-// activated = await pageCommentMinter.activated(nft.address, 0);
-// expect(activated).to.equal(false);
