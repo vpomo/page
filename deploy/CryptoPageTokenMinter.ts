@@ -34,7 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         deterministicDeployment: false,
     });
-    await token.transferOwnership(tokenMinter.address);
+    // await token.transferOwnership(tokenMinter.address);
 };
 func.tags = ["PageToken"];
 func.dependencies = ["PageTokenMinter"];

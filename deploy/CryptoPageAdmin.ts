@@ -4,13 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = hre.deployments;
     const { deployer } = await hre.ethers.getNamedSigners();
-    /*
-    await deploy("PageComment", {
-        from: deployer.address,
-        log: true,
-        deterministicDeployment: false,
-    });
-    */
+
     const MINTER_ROLE = hre.ethers.utils.id("MINTER_ROLE");
     const BURNER_ROLE = hre.ethers.utils.id("BURNER_ROLE");
 
@@ -21,14 +15,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await deploy("PageAdmin", {
         from: deployer.address,
-        args: [deployer, tokenMinter.address, nftMinter.address],
+        args: [deployer.address, tokenMinter.address, nftMinter.address],
         log: true,
         deterministicDeployment: false,
     });
-    await token.transferOwnership(tokenMinter.address);
-    await nft.transferOwnership(nftMinter.address);
-    await tokenMinter.grantRole(MINTER_ROLE, nftMinter.address);
-    await tokenMinter.grantRole(BURNER_ROLE, nftMinter.address);
+    if ((await token.owner()) !== deployer.address) {
+        await token.transferOwnership(tokenMinter.address);
+    }
+    if ((await nft.owner()) !== deployer.address) {
+        await nft.transferOwnership(nftMinter.address);
+    }
+    if ((await tokenMinter.owner()) !== deployer.address) {
+        await tokenMinter.grantRole(MINTER_ROLE, nftMinter.address);
+        await tokenMinter.grantRole(BURNER_ROLE, nftMinter.address);
+    }
 };
 func.tags = ["PageAdmin"];
 func.dependencies = [

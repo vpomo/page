@@ -7,13 +7,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const nft = await hre.ethers.getContract("PageNFT");
     const tokenMinter = await hre.ethers.getContract("PageTokenMinter");
     const commentMinter = await hre.ethers.getContract("PageCommentMinter");
+    // treasury = _treasury;
+    // tokenMinter = _tokenMinter;
+    // commentMinter = _commentMinter;
+    // nft = _nft;
+
     await deploy("PageNFTMinter", {
         from: deployer.address,
         args: [
-            deployer,
+            deployer.address,
             tokenMinter.address,
-            nft.address,
             commentMinter.address,
+            nft.address,
         ],
         log: true,
         deterministicDeployment: false,
