@@ -11,7 +11,7 @@
     "verify": "npx hardhat verify",
     "node": "npx hardhat node",
     "coverage": "npx hardhat coverage",
-    "lint:fix": "prettier --write 'scripts/**/*.{js,ts}' 'test/**/*.{js,ts}' && tslint --fix --config tslint.json --project tsconfig.json && solhint contracts/**/*.sol",
+    "lint:fix": "prettier --write 'test/**/*.{js,ts}' && tslint --fix --config tslint.json --project tsconfig.json && solhint contracts/**/*.sol",
     "lint": "tslint --config tslint.json --project tsconfig.json && solhint contracts/**/*.sol",
     "format": "prettier --check \"**/*.{ts,js,sol}\"",
     "format:fix": "prettier --write \"**/*.{ts,js,sol}\"",

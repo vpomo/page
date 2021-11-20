@@ -9,10 +9,10 @@
       "baseUrl": "./"
   },
   "include": [
-      "./scripts",
       "./tasks",      
       "./test",
       "./deploy",
+      "./contracts",
       "."
   ],
   "exclude": ["./node_modules"],

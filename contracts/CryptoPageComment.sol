@@ -69,45 +69,23 @@ contract PageComment is Ownable {
         public
         view
         returns (Comment[] memory)
-    // uint256[] memory,
-    // address[] memory,
-    // string[] memory,
-    // bool[] memory
     {
         require(_ids.length > 0, "_ids length must be more than zero");
         require(
             _ids.length <= commentsIds.length,
             "_ids length must be less or equal commentsIds"
         );
-        // uint256[] memory ids = new uint256[](_ids.length);
-        // address[] memory authors = new address[](_ids.length);
-        // string[] memory texts = new string[](_ids.length);
-        // bool[] memory likes = new bool[](_ids.length);
 
         Comment[] memory comments = new Comment[](_ids.length);
         for (uint256 i = 0; i < _ids.length; i++) {
             require(_ids[i] <= commentsIds.length, "No comment with this ID");
             Comment storage comment = commentsById[_ids[i]];
-            // ids[i] = comment.id;
-            // authors[i] = comment.author;
-            // texts[i] = comment.text;
-            // likes[i] = comment.like;
             comments[i] = comment;
-            // comments[i] = comment;
         }
-        // return (ids, authors, texts, likes);
         return comments;
     }
 
-    function getComments()
-        public
-        view
-        returns (Comment[] memory)
-    // uint256[] memory,
-    // address[] memory,
-    // string[] memory,
-    // bool[] memory
-    {
+    function getComments() public view returns (Comment[] memory) {
         return getCommentsByIds(commentsIds);
     }
 

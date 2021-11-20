@@ -9,11 +9,11 @@ describe("PageComment", async function () {
     let address: Address;
     let accounts: Signer[];
     let comment: PageComment;
+    const pageCommentFactory = (await ethers.getContractFactory(
+        "PageComment"
+    )) as PageComment__factory;
     beforeEach(async function () {
         accounts = await ethers.getSigners();
-        const pageCommentFactory = (await ethers.getContractFactory(
-            "PageComment"
-        )) as PageComment__factory;
         comment = await pageCommentFactory.deploy();
         // comment = await ethers.getContract("PageComment")
         address = await accounts[0].getAddress();
