@@ -27,9 +27,14 @@ contract PageComment is Ownable {
     Counters.Counter private _totalDislikes;
 
     event NewComment(uint256 id, address author, string text, bool like);
+
     modifier onlyActive() {
         require(active, "Comments not activated.");
         _;
+    }
+
+    constructor(address _owner) {
+        transferOwnership(_owner);
     }
 
     function getActive() public view returns (bool) {
