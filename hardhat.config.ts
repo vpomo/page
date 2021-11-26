@@ -81,6 +81,10 @@ const config: HardhatUserConfig = {
             url: rinkebyRPCURL,
             accounts: { mnemonic },
         },
+        kovan: {
+            url: kovanRPCURL,
+            accounts: { mnemonic },
+        },
     },
     etherscan: {
         apiKey: process.env.ETHERSCAN_API_KEY,
