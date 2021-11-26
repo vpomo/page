@@ -4,10 +4,8 @@ import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
 import {
-    PageComment,
     PageCommentMinter,
     PageCommentMinter__factory,
-    PageComment__factory,
     PageNFT,
     PageNFT__factory,
     PageToken,
@@ -27,9 +25,6 @@ describe("PageCommentMinter", async function () {
         const tokenFactory = (await ethers.getContractFactory(
             "PageToken"
         )) as PageToken__factory;
-        const commentFactory = (await ethers.getContractFactory(
-            "PageComment"
-        )) as PageComment__factory;
         const commentMinterFactory = (await ethers.getContractFactory(
             "PageCommentMinter"
         )) as PageCommentMinter__factory;

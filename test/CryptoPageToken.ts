@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { Signer } from "ethers";
-import { ethers, waffle } from "hardhat";
+import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
 import { PageToken, PageToken__factory } from "../types";
@@ -18,7 +18,6 @@ describe("PageToken", function () {
         )) as PageToken__factory;
         signers = await ethers.getSigners();
         alice = await signers[0].getAddress();
-        console.log("alice", alice);
         bob = await signers[1].getAddress();
         carol = await signers[2].getAddress();
         token = await tokenFactory.deploy();

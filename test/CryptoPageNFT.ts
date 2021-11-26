@@ -116,7 +116,6 @@ describe("PageNFT", function () {
     });
 
     it("should allow to get tokenURI", async function () {
-        console.log("nft.address", nft.address);
         await nft.safeMint("https://ipfs.io/ipfs/fakeIPFSHash", true);
         await expect(nft.connect(bob).tokenURI(0), tokenURI);
     });
