@@ -18,10 +18,13 @@ describe("PageToken", function () {
         )) as PageToken__factory;
         signers = await ethers.getSigners();
         alice = await signers[0].getAddress();
+        console.log("alice", alice);
         bob = await signers[1].getAddress();
         carol = await signers[2].getAddress();
         token = await tokenFactory.deploy();
         await token.deployed();
+        const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
+        await token.grantRole(MINTER_ROLE, alice);
     });
 
     it("should have correct name and symbol and decimal", async function () {
@@ -38,7 +41,9 @@ describe("PageToken", function () {
         await token.mint(bob, "1000");
         await expect(
             token.connect(signers[1]).mint(carol, "1000")
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        ).to.be.revertedWith(
+            `AccessControl: account ${bob.toLocaleLowerCase()} is missing role 0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6`
+        );
         const totalSupply = await token.totalSupply();
         const aliceBal = await token.balanceOf(alice);
         const bobBal = await token.balanceOf(bob);
@@ -48,6 +53,7 @@ describe("PageToken", function () {
         expect(bobBal).to.equal("1000");
         expect(carolBal).to.equal("0");
     });
+
     it("should supply token transfers properly", async function () {
         await token.mint(alice, "100");
         await token.mint(bob, "1000");

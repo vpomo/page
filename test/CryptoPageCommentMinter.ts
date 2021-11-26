@@ -9,12 +9,8 @@ import {
     PageCommentMinter__factory,
     PageComment__factory,
     PageNFT,
-    PageNFTMinter,
-    PageNFTMinter__factory,
     PageNFT__factory,
     PageToken,
-    PageTokenMinter,
-    PageTokenMinter__factory,
     PageToken__factory,
 } from "../types";
 
@@ -23,20 +19,14 @@ describe("PageCommentMinter", async function () {
     let address: Address;
     let accounts: Signer[];
     let token: PageToken;
-    let tokenMinter: PageTokenMinter;
-    let comment: PageComment;
     let commentMinter: PageCommentMinter;
     let nft: PageNFT;
-    let nftMinter: PageNFTMinter;
     beforeEach(async function () {
         accounts = await ethers.getSigners();
         address = await accounts[0].getAddress();
         const tokenFactory = (await ethers.getContractFactory(
             "PageToken"
         )) as PageToken__factory;
-        const tokenMinterFactory = (await ethers.getContractFactory(
-            "PageTokenMinter"
-        )) as PageTokenMinter__factory;
         const commentFactory = (await ethers.getContractFactory(
             "PageComment"
         )) as PageComment__factory;
@@ -46,20 +36,23 @@ describe("PageCommentMinter", async function () {
         const nftFactory = (await ethers.getContractFactory(
             "PageNFT"
         )) as PageNFT__factory;
-        const nftMinterFactory = (await ethers.getContractFactory(
-            "PageNFTMinter"
-        )) as PageNFTMinter__factory;
         token = await tokenFactory.deploy();
-        tokenMinter = await tokenMinterFactory.deploy(token.address);
-        comment = await commentFactory.deploy();
-        commentMinter = await commentMinterFactory.deploy();
-        nft = await nftFactory.deploy();
-        nftMinter = await nftMinterFactory.deploy(
+        commentMinter = await commentMinterFactory.deploy(
             address,
-            tokenMinter.address,
-            nft.address,
+            token.address
+        );
+        nft = await nftFactory.deploy(
+            address,
+            token.address,
             commentMinter.address
         );
+        const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
+        const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
+
+        await token.grantRole(MINTER_ROLE, commentMinter.address);
+        await token.grantRole(MINTER_ROLE, nft.address);
+        await token.grantRole(BURNER_ROLE, nft.address);
+        await nft.deployed();
     });
 
     describe("After Deployment", function () {
@@ -67,12 +60,25 @@ describe("PageCommentMinter", async function () {
             const activated = await commentMinter.activated(nft.address, 0);
             expect(activated).to.equal(false);
         });
-        it("Should be allow activate any TokenId from any ERC721 contract", async function () {
-            await nft.mint(address, tokenURI);
-            await commentMinter.activateComment(nft.address, 0);
+        it("Should Be Allowed Existing Contract", async function () {
+            await nft.safeMint(tokenURI, true);
+            await commentMinter.getContract(nft.address, 0);
+        });
+        it("Should Be Not Allowed Existing Contract", async function () {
+            await expect(
+                commentMinter.getContract(nft.address, 0)
+            ).to.be.revertedWith("NFT contract does not exist");
         });
         it("Should be allow activate any TokenId from any ERC721 contract", async function () {
-            await nft.mint(address, tokenURI);
+            await nft.safeMint(tokenURI, false);
+            await commentMinter.activateComments(nft.address, 0);
+        });
+        it("Should be allow check comments existing", async function () {
+            await nft.safeMint(tokenURI, false);
+            await commentMinter.hasComments(nft.address, 0);
+        });
+        it("Should be allow activate any TokenId from any ERC721 contract", async function () {
+            await nft.safeMint(tokenURI, true);
             await commentMinter.createComment(
                 nft.address,
                 0,
@@ -82,8 +88,7 @@ describe("PageCommentMinter", async function () {
             );
         });
         it("Should be allow activate any TokenId from any ERC721 contract", async function () {
-            await nft.mint(address, tokenURI);
-            await commentMinter.activateComment(nft.address, 0);
+            await nft.safeMint(tokenURI, false);
             const activated = await commentMinter.createComment(
                 nft.address,
                 0,

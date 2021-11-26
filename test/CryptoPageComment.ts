@@ -14,8 +14,8 @@ describe("PageComment", async function () {
     )) as PageComment__factory;
     beforeEach(async function () {
         accounts = await ethers.getSigners();
-        comment = await commentFactory.deploy();
         address = await accounts[0].getAddress();
+        comment = await commentFactory.deploy(address);
     });
 
     describe("After Deployment", function () {

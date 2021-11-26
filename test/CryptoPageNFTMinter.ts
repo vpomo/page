@@ -1,3 +1,4 @@
+/*
 import { expect } from "chai";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
@@ -24,7 +25,7 @@ describe("PageNFTMinter", function () {
     let signers: Signer[];
     let token: PageToken;
     let tokenMinter: PageTokenMinter;
-    let comment: PageComment;
+    // let comment: PageComment;
     let commentMinter: PageCommentMinter;
     let nft: PageNFT;
     let nftMinter: PageNFTMinter;
@@ -54,14 +55,12 @@ describe("PageNFTMinter", function () {
 
         token = await tokenFactory.deploy();
         nft = await nftFactory.deploy();
-        comment = await commentFactory.deploy();
+        // comment = await commentFactory.deploy();
         commentMinter = await commentMinterFactory.deploy();
         tokenMinter = await tokenMinterFactory.deploy(token.address);
 
         const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
-        // console.log("MINTER_ROLE", MINTER_ROLE);
         const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
-        // console.log("BURNER_ROLE", BURNER_ROLE);
 
         nftMinter = await nftMinterFactory.deploy(
             address,
@@ -78,7 +77,20 @@ describe("PageNFTMinter", function () {
     });
 
     describe("After Deployment", function () {
-        it("Should be available safeMint", async function () {
+        it("Should be available safeMint for everyone", async function () {
+            await nftMinter
+                .connect(signers[1])
+                .safeMint("https://ipfs.io/ipfs/IPFSHash", false);
+            let activated = await commentMinter.activated(nft.address, 0);
+            expect(activated).to.equal(false);
+            await nftMinter
+                .connect(signers[1])
+                .safeMint("https://ipfs.io/ipfs/IPFSHash", true);
+            activated = await commentMinter.activated(nft.address, 1);
+            expect(activated).to.equal(true);
+        });
+
+        it("Should be available safeMint for owner", async function () {
             await nftMinter.safeMint("https://ipfs.io/ipfs/IPFSHash", false);
             let activated = await commentMinter.activated(nft.address, 0);
             expect(activated).to.equal(false);
@@ -133,3 +145,4 @@ describe("PageNFTMinter", function () {
         });
     });
 });
+*/

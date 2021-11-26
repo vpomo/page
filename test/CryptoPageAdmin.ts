@@ -6,17 +6,12 @@ import { Address } from "hardhat-deploy/dist/types";
 import {
     PageAdmin,
     PageAdmin__factory,
-    PageComment,
     PageCommentMinter,
     PageCommentMinter__factory,
     PageComment__factory,
     PageNFT,
-    PageNFTMinter,
-    PageNFTMinter__factory,
     PageNFT__factory,
     PageToken,
-    PageTokenMinter,
-    PageTokenMinter__factory,
     PageToken__factory,
 } from "../types";
 
@@ -26,11 +21,8 @@ describe("PageNFTMinter", function () {
     let signers: Signer[];
     let admin: PageAdmin;
     let token: PageToken;
-    let tokenMinter: PageTokenMinter;
-    let comment: PageComment;
     let commentMinter: PageCommentMinter;
     let nft: PageNFT;
-    let nftMinter: PageNFTMinter;
 
     beforeEach(async function () {
         signers = await ethers.getSigners();
@@ -41,9 +33,6 @@ describe("PageNFTMinter", function () {
         const tokenFactory = (await ethers.getContractFactory(
             "PageToken"
         )) as PageToken__factory;
-        const tokenMinterFactory = (await ethers.getContractFactory(
-            "PageTokenMinter"
-        )) as PageTokenMinter__factory;
         const commentFactory = (await ethers.getContractFactory(
             "PageComment"
         )) as PageComment__factory;
@@ -53,33 +42,24 @@ describe("PageNFTMinter", function () {
         const nftFactory = (await ethers.getContractFactory(
             "PageNFT"
         )) as PageNFT__factory;
-        const nftMinterFactory = (await ethers.getContractFactory(
-            "PageNFTMinter"
-        )) as PageNFTMinter__factory;
         token = await tokenFactory.deploy();
-        nft = await nftFactory.deploy();
-        comment = await commentFactory.deploy();
-        commentMinter = await commentMinterFactory.deploy();
-        tokenMinter = await tokenMinterFactory.deploy(token.address);
-        const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
-        const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
-        nftMinter = await nftMinterFactory.deploy(
+        commentMinter = await commentMinterFactory.deploy(
             address,
-            tokenMinter.address,
-            nft.address,
+            token.address
+        );
+        nft = await nftFactory.deploy(
+            address,
+            token.address,
             commentMinter.address
         );
-        await nftMinter.deployed();
-        await tokenMinter.grantRole(MINTER_ROLE, nftMinter.address);
-        await tokenMinter.grantRole(BURNER_ROLE, nftMinter.address);
-        await token.transferOwnership(tokenMinter.address);
-        await nft.transferOwnership(nftMinter.address);
-        admin = await adminFactory.deploy(
-            address,
-            tokenMinter.address,
-            nftMinter.address
-        );
-        await nftMinter.transferOwnership(admin.address);
+        const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
+        const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
+
+        await token.grantRole(MINTER_ROLE, commentMinter.address);
+        await token.grantRole(MINTER_ROLE, nft.address);
+        await token.grantRole(BURNER_ROLE, nft.address);
+        admin = await adminFactory.deploy(address, token.address, nft.address);
+        await nft.transferOwnership(admin.address);
     });
 
     describe("After Deployment", function () {
