@@ -3,34 +3,32 @@
 pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./CryptoPageToken.sol";
-import "./CryptoPageTokenMinter.sol";
 import "./CryptoPageNFT.sol";
-import "./CryptoPageNFTMinter.sol";
 
 contract PageAdmin is Ownable {
     address public treasury;
-    PageTokenMinter public tokenMinter;
-    PageNFTMinter public nftMinter;
+    PageToken public token;
+    PageNFT public nft;
 
     constructor(
         address _treasury,
-        PageTokenMinter _tokenMinter,
-        PageNFTMinter _nftMinter
+        PageToken _token,
+        PageNFT _nft
     ) {
         treasury = _treasury;
-        tokenMinter = _tokenMinter;
-        nftMinter = _nftMinter;
+        token = _token;
+        nft = _nft;
     }
 
     function setMintFee(uint256 _percent) public onlyOwner {
-        nftMinter.setMintFee(_percent);
+        nft.setMintFee(_percent);
     }
 
     function setBurnFee(uint256 _percent) public onlyOwner {
-        nftMinter.setBurnFee(_percent);
+        nft.setBurnFee(_percent);
     }
 
     function setTreasury(address _treasury) public onlyOwner {
-        nftMinter.setTreasury(_treasury);
+        nft.setTreasury(_treasury);
     }
 }
