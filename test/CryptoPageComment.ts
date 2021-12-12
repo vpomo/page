@@ -47,16 +47,6 @@ describe("PageComment", async function () {
                 "_ids length must be less or equal commentsIds"
             );
         });
-        /*
-        it("Should Be Avoid Create Comment If Inactove", async function () {
-            await comment.toggleActive();
-            await comment.toggleActive();
-            await comment.toggleActive();
-            await expect(
-                comment.createComment(address, "Hello, World!", true)
-            ).to.be.revertedWith("Comments not activated.");
-        });
-        */
         describe("Each New Comment", function () {
             it("Should Be Available In Total Comments Ids", async function () {
                 await comment.createComment(address, "Hello, World!", true);
@@ -109,13 +99,6 @@ describe("PageComment", async function () {
                 expect(statistic.dislikes).to.equal(0);
                 expect(statistic.total).to.equal(1);
             });
-            /*
-            it("Should Be Active By Default", async function () {
-                await comment.createComment(address, "Hello, World!", true);
-                const active = await comment.getActive();
-                expect(active).to.equal(true);
-            });
-            */
         });
     });
 });

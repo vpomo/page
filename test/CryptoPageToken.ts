@@ -53,7 +53,6 @@ describe("PageToken", function () {
             3000
         );
         const poolContract = await ethers.getContractAt(POOL_ABI, pool);
-        // console.log('price', ethers.utils.parseEther("79228162514264337593543950336"))
         await poolContract.initialize(ethers.utils.parseEther("792281333999")); // 79228162514264337593543950336
         await token.setPool(pool);
         await token.grantRole(MINTER_ROLE, token.address);
@@ -117,7 +116,6 @@ describe("PageToken", function () {
 
     it("should be available price", async function () {
         const price = await token.getPrice();
-        console.log("price", price.toString());
         expect(price.toString(), "10");
     });
 

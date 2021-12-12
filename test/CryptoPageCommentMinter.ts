@@ -85,12 +85,6 @@ describe("PageCommentMinter", async function () {
     });
 
     describe("After Deployment", function () {
-        /*
-        it("Should Be Available Check Activated On Any ERC721 Contract", async function () {
-            const isActive = await commentMinter.isActive(nft.address, 0);
-            expect(isActive).to.equal(false);
-        });
-        */
         it("Should Be Allowed Check Existing Contract", async function () {
             await nft.safeMint(address, tokenURI);
             await commentMinter.createComment(
@@ -115,12 +109,6 @@ describe("PageCommentMinter", async function () {
                 commentMinter.getContract(nft.address, 0)
             ).to.be.revertedWith("NFT contract does not exist");
         });
-        /*
-        it("Should Be Allowed Check Comments Activated", async function () {
-            await nft.safeMint(address, tokenURI);
-            await commentMinter.getContract(nft.address, 0);
-        });
-        */
         it("Should Be Allowed Activate Any TokenId From Any ERC721 Contract", async function () {
             await nft.safeMint(address, tokenURI);
             await commentMinter.createComment(

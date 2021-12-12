@@ -161,39 +161,6 @@ describe("PageNFT", function () {
         await expect(nft.connect(bob).burn(0)).to.be.revertedWith(
             "not enought balance"
         );
-        // await nft.connect(bob).burn(0);
-        // const balance = await token.balanceOf(aliceAddress);
-        // console.log("balance", balance.toString());
-        // const price = await token.getPrice();
-        // console.log("price", price.toNumber());
-        // const bbalance = await token.balanceOf(aliceAddress);
-        // console.log("balance", bbalance.toNumber());
-        /*
-        await commentMinter.createComment(
-            nft.address,
-            0,
-            aliceAddress,
-            "Hello, World!",
-            false
-        );
-
-        const hasComments = await commentMinter.isActive(nft.address, 0);
-        await nft.burn(0);
-        await nft
-            .connect(bob)
-            .safeMint("https://ipfs.io/ipfs/fakeIPFSHash", true);
-        const bobAddress = await bob.getAddress();
-        */
-        // const balance = await token.balanceOf(bobAddress);
-        // console.log("bob balance", balance.toNumber());
-        // const amount = balance.toNumber() - 100;
-        // await token.connect(bob).transfer(aliceAddress, "289874612318996870000000000");
-        // hasComments = await commentMinter.isActive(nft.address, 1);
-        // console.log('hasComments', hasComments);
-        // await expect(nft.connect(bob).burn(1)).to.be.revertedWith(
-        // "not enought balance"
-        // );
-        // await expect(nft.connect(bob).tokenURI(0), tokenURI);
     });
 
     it("should %%%%%%%%%%%%%%%%%%%%%%%", async function () {
@@ -205,13 +172,6 @@ describe("PageNFT", function () {
         ).to.be.revertedWith(
             "ERC721: transfer caller is not owner or approved"
         );
-        // nft["safeTransferFrom(address,address,uint256)"].call()
-        // await commentMinter.createComment(nft.address, 0, aliceAddress, 'Hello, World!', true);
-        // const bobAddress = await bob.getAddress();
-        // console.log('nft', nft)
-        // await nft["safeTransferFrom(address,address,uint256,bytes)"](aliceAddress, bobAddress, 0, [])
-        // await nft.safeTransferFrom(aliceAddress, bobAddress, 0);
-        // await expect(nft.connect(bob).tokenURI(0), tokenURI);
     });
 
     it("should allow to call getBaseURL", async function () {
