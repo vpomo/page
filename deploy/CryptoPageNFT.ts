@@ -15,6 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const MINTER_ROLE = hre.ethers.utils.id("MINTER_ROLE");
     const BURNER_ROLE = hre.ethers.utils.id("BURNER_ROLE");
+
     if (!(await token.hasRole(MINTER_ROLE, commentMinter.address))) {
         await token.grantRole(MINTER_ROLE, commentMinter.address);
     }
