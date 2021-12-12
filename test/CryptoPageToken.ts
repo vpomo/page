@@ -1,29 +1,64 @@
+import {
+    abi as FACTORY_ABI,
+    bytecode as FACTORY_BYTECODE,
+} from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
+import { abi as POOL_ABI } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
 import { expect } from "chai";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
-import { PageToken, PageToken__factory } from "../types";
+import {
+    MockToken,
+    MockToken__factory,
+    PageToken,
+    PageToken__factory,
+} from "../types";
 
 describe("PageToken", function () {
+    const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
+    const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
     let token: PageToken;
+    let mockToken: MockToken;
     let signers: Signer[];
     let alice: Address;
     let bob: Address;
     let carol: Address;
 
     beforeEach(async function () {
-        const tokenFactory = (await ethers.getContractFactory(
-            "PageToken"
-        )) as PageToken__factory;
         signers = await ethers.getSigners();
         alice = await signers[0].getAddress();
         bob = await signers[1].getAddress();
         carol = await signers[2].getAddress();
-        token = await tokenFactory.deploy();
+        const treasury = await signers[9].getAddress();
+        const tokenFactory = (await ethers.getContractFactory(
+            "PageToken"
+        )) as PageToken__factory;
+        const mockTokenFactory = (await ethers.getContractFactory(
+            "MockToken"
+        )) as MockToken__factory;
+        const factoryFactory = new ethers.ContractFactory(
+            FACTORY_ABI,
+            FACTORY_BYTECODE,
+            signers[0]
+        );
+        const factory = await factoryFactory.deploy();
+        mockToken = await mockTokenFactory.deploy();
+        token = await tokenFactory.deploy(treasury);
         await token.deployed();
-        const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
+        await factory.createPool(factory.address, mockToken.address, 3000);
+        const pool = await factory.getPool(
+            factory.address,
+            mockToken.address,
+            3000
+        );
+        const poolContract = await ethers.getContractAt(POOL_ABI, pool);
+        // console.log('price', ethers.utils.parseEther("79228162514264337593543950336"))
+        await poolContract.initialize(ethers.utils.parseEther("792281333999")); // 79228162514264337593543950336
+        await token.setPool(pool);
+        await token.grantRole(MINTER_ROLE, token.address);
         await token.grantRole(MINTER_ROLE, alice);
+        await token.grantRole(BURNER_ROLE, alice);
     });
 
     it("should have correct name and symbol and decimal", async function () {
@@ -35,7 +70,7 @@ describe("PageToken", function () {
         expect(decimals, "18");
     });
 
-    it("should only allow owner to mint token", async function () {
+    it("Should Allow To Mint Only For Owner", async function () {
         await token.mint(alice, "100");
         await token.mint(bob, "1000");
         await expect(
@@ -47,7 +82,7 @@ describe("PageToken", function () {
         const aliceBal = await token.balanceOf(alice);
         const bobBal = await token.balanceOf(bob);
         const carolBal = await token.balanceOf(carol);
-        expect(totalSupply).to.equal("1100");
+        expect(totalSupply).to.equal("10000000000000000000001100");
         expect(aliceBal).to.equal("100");
         expect(bobBal).to.equal("1000");
         expect(carolBal).to.equal("0");
@@ -80,36 +115,21 @@ describe("PageToken", function () {
         ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
-    it("Staking 10x2", async function () {
-        const amount = "10";
-        await token.mint(alice, Number(amount) * 5);
-        let balance = await token.balanceOf(alice);
-        await token.stake(amount);
-        await ethers.provider.send("evm_increaseTime", [3600 * 3000]);
-        await ethers.provider.send("evm_mine", []);
-        await ethers.provider.send("evm_increaseTime", [3600 * 3000]);
-        await ethers.provider.send("evm_mine", []);
-        await token.stake(amount);
-        await ethers.provider.send("evm_increaseTime", [3600 * 3000]);
-        await ethers.provider.send("evm_mine", []);
+    it("should be available price", async function () {
+        const price = await token.getPrice();
+        console.log("price", price.toString());
+        expect(price.toString(), "10");
+    });
 
-        await token.stake(amount);
-        await ethers.provider.send("evm_increaseTime", [3600 * 3000]);
-        await ethers.provider.send("evm_mine", []);
-        const blockNumBefore = await ethers.provider.getBlockNumber();
-        const blockBefore = await ethers.provider.getBlock(blockNumBefore);
-        const timestampBefore = blockBefore.timestamp;
-        const stakeSummary = await token.hasStake(alice);
-        const stake = stakeSummary.stakes[0];
-        await token.withdrawStake(Number(amount) * 1, 0);
-        balance = await token.balanceOf(alice);
-        await token.withdrawStake(Number(amount) / 2, 1);
+    it("should be burnable only for owner", async function () {
+        const role =
+            "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
+        await token.mint(alice, "100");
+        await token.burn(alice, "50");
         await expect(
-            token.withdrawStake(Number(amount) * 1.5, 1)
-        ).to.revertedWith("Staking: Cannot withdraw more than you have staked");
-        await expect(token.stake(100000)).to.revertedWith(
-            "PageToken: Cannot stake more than you own"
+            token.connect(signers[1]).burn(alice, "50", { from: bob })
+        ).to.be.revertedWith(
+            `AccessControl: account ${bob.toLowerCase()} is missing role ${role}`
         );
-        await expect(token.stake(0)).to.revertedWith("Cannot stake nothing");
     });
 });
