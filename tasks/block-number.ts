@@ -12,5 +12,5 @@ task(
 );
 
 export default {
-    solidity: "0.8.4",
+    solidity: "0.8.0",
 };
