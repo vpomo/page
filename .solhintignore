@@ -4,8 +4,9 @@ artifacts/
 cache/
 coverage/
 node_modules/
-typechain/
+types/
 scripts/
 tasks/
 test/
 .vscode/
+graph/

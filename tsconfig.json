@@ -13,8 +13,8 @@
       "./test",
       "./deploy",
       "./contracts",
-      "."
+      "./types",
   ],
-  "exclude": ["./node_modules"],
+  "exclude": ["./node_modules", "./graph"],
   "files": ["./hardhat.config.ts"]
 }

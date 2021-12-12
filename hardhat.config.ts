@@ -33,10 +33,15 @@ const mainnetRPCURL =
 const rinkebyRPCURL =
     process.env.RINKEBY_RPC_URL ||
     `https://rinkeby.infura.io/v3/${infuraAPIKey}`;
+const bscTestnetRPCURL =
+    process.env.BSC_TESTNET_RPC_URL ||
+    `https://data-seed-prebsc-1-s1.binance.org:8545`;
+
 const kovanRPCURL =
     process.env.KOVAN_RPC_URL || `https://kovan.infura.io/v3/${infuraAPIKey}`;
 const etherscanAPIKEY =
-    process.env.ETHERSCAN_API_KEY || "Your etherscan API key";
+    process.env.ETHERSCAN_API_KEY || "TQDPK4XAU4BZT8WQNN6IETRRXXDI37W64Y";
+const alchemyMainnetRPCURL = process.env.ALCHEMY_MAINNET_RPC_URL || "";
 
 const config: HardhatUserConfig = {
     defaultNetwork,
@@ -45,10 +50,7 @@ const config: HardhatUserConfig = {
             default: 0,
         },
         dev: {
-            // Default to 1
             default: 1,
-            // dev address mainnet
-            // 1: "",
         },
     },
     watcher: {
@@ -61,7 +63,7 @@ const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: "0.8.4",
+                version: "0.8.0",
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -72,7 +74,11 @@ const config: HardhatUserConfig = {
         ],
     },
     networks: {
-        hardhat: {},
+        hardhat: {
+            // forking: {
+            // url: alchemyMainnetRPCURL,
+            // },
+        },
         ganache: {
             url: "http://127.0.0.1:7545",
             accounts: { mnemonic },
@@ -80,14 +86,22 @@ const config: HardhatUserConfig = {
         rinkeby: {
             url: rinkebyRPCURL,
             accounts: { mnemonic },
+            gas: 2100000,
+            gasPrice: 8000000000,
+            // gas: 6500000,
+            // gasPrice: 100000000000
         },
         kovan: {
             url: kovanRPCURL,
             accounts: { mnemonic },
         },
+        bscTestnet: {
+            url: bscTestnetRPCURL,
+            accounts: { mnemonic },
+        },
     },
     etherscan: {
-        apiKey: process.env.ETHERSCAN_API_KEY,
+        apiKey: etherscanAPIKEY,
     },
     mocha: {
         timeout: 100000,
