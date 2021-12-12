@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract PageComment is Ownable {
+contract PageComment {
+    using SafeMath for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
     using Counters for Counters.Counter;
 
@@ -16,9 +16,9 @@ contract PageComment is Ownable {
         address author;
         string text;
         bool like;
+        uint256 price;
     }
 
-    bool private active = true;
     uint256[] public commentsIds;
 
     mapping(uint256 => Comment) public commentsById;
@@ -26,33 +26,35 @@ contract PageComment is Ownable {
     Counters.Counter private _totalLikes;
     Counters.Counter private _totalDislikes;
 
-    event NewComment(uint256 id, address author, string text, bool like);
-
-    modifier onlyActive() {
-        require(active, "Comments not activated.");
-        _;
-    }
-
-    constructor(address _owner) {
-        transferOwnership(_owner);
-    }
-
-    function getActive() public view returns (bool) {
-        return active;
-    }
+    event NewComment(
+        uint256 id,
+        address author,
+        string text,
+        bool like,
+        uint256 price
+    );
 
     function createComment(
         address author,
         string memory text,
         bool like
-    ) public onlyActive {
+    ) public returns (uint256) {
+        uint256 amount = gasleft().mul(tx.gasprice);
         uint256 id = commentsIds.length;
+
         commentsIds.push(id);
-        commentsById[id] = Comment(id, author, text, like);
+        commentsById[id] = Comment(id, author, text, like, 0);
+        commentsById[id].price = amount;
 
-        emit NewComment(id, author, text, like);
+        if (like) {
+            _totalLikes.increment();
+        } else {
+            _totalDislikes.increment();
+        }
 
-        _incrementStatistic(like);
+        emit NewComment(id, author, text, like, amount);
+
+        return id;
     }
 
     function getCommentsIds() public view returns (uint256[] memory) {
@@ -80,26 +82,16 @@ contract PageComment is Ownable {
     }
 
     function getComments() public view returns (Comment[] memory) {
-        return getCommentsByIds(commentsIds);
+        Comment[] memory comments;
+        if (commentsIds.length > 0) {
+            comments = getCommentsByIds(commentsIds);
+        }
+        return comments;
     }
 
-    function getCommentById(uint256 id)
-        public
-        view
-        returns (
-            uint256,
-            address,
-            string memory,
-            bool
-        )
-    {
+    function getCommentById(uint256 id) public view returns (Comment memory) {
         require(id <= commentsIds.length, "No comment with this ID");
-        return (
-            commentsById[id].id,
-            commentsById[id].author,
-            commentsById[id].text,
-            commentsById[id].like
-        );
+        return commentsById[id];
     }
 
     function getStatistic()
@@ -116,19 +108,19 @@ contract PageComment is Ownable {
         dislikes = _totalDislikes.current();
     }
 
-    function toggleActive() public onlyOwner {
-        if (active) {
-            active = false;
-        } else {
-            active = true;
-        }
-    }
-
-    function _incrementStatistic(bool like) private {
-        if (like) {
-            _totalLikes.increment();
-        } else {
-            _totalDislikes.increment();
-        }
+    function getStatisticWithComments()
+        public
+        view
+        returns (
+            uint256 total,
+            uint256 likes,
+            uint256 dislikes,
+            Comment[] memory comments
+        )
+    {
+        total = commentsIds.length;
+        likes = _totalLikes.current();
+        dislikes = _totalDislikes.current();
+        comments = getComments();
     }
 }
