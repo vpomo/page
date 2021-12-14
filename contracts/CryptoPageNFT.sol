@@ -11,7 +11,7 @@ import "./CryptoPageCommentMinter.sol";
 import "./CryptoPageComment.sol";
 import "./CryptoPageToken.sol";
 
-contract PageNFT is ERC721("Crypto.Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
+contract PageNFT is ERC721("Crypto.Page NFT", "PAGE.NFT"), ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
