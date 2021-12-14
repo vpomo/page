@@ -29,7 +29,7 @@ const pinateAPISecret = process.env.PINATA_API_SECRET;
 
 // networks RPC URLs
 const mainnetRPCURL =
-    process.env.MAINNET_RPC_URL || `https://infura.io/v3/${infuraAPIKey}`;
+    process.env.MAINNET_RPC_URL || `https://mainnet.infura.io/v3/${infuraAPIKey}`;
 const rinkebyRPCURL =
     process.env.RINKEBY_RPC_URL ||
     `https://rinkeby.infura.io/v3/${infuraAPIKey}`;
@@ -74,11 +74,7 @@ const config: HardhatUserConfig = {
         ],
     },
     networks: {
-        hardhat: {
-            // forking: {
-            // url: alchemyMainnetRPCURL,
-            // },
-        },
+        hardhat: {},
         ganache: {
             url: "http://127.0.0.1:7545",
             accounts: { mnemonic },
@@ -88,8 +84,6 @@ const config: HardhatUserConfig = {
             accounts: { mnemonic },
             gas: 2100000,
             gasPrice: 8000000000,
-            // gas: 6500000,
-            // gasPrice: 100000000000
         },
         kovan: {
             url: kovanRPCURL,
