@@ -66,9 +66,9 @@ describe("PageToken", function () {
         const name = await token.name();
         const symbol = await token.symbol();
         const decimals = await token.decimals();
-        expect(name, "PageToken");
-        expect(symbol, "PAGE");
-        expect(decimals, "18");
+        expect(name).to.equal("Crypto.Page");
+        expect(symbol).to.equal("PAGE");
+        expect(decimals.toString()).to.equal("18");
     });
 
     it("Should Allow To Mint Only For Owner", async function () {

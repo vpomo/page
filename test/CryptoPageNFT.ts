@@ -98,8 +98,8 @@ describe("PageNFT", function () {
     it("Should Have Correct Name And Symbol", async function () {
         const name = await nft.name();
         const symbol = await nft.symbol();
-        expect(name, "Page NFT");
-        expect(symbol, "PAGE-NFT");
+        expect(name).to.equal("Crypto.Page NFT");
+        expect(symbol).to.equal("PAGE.NFT");
     });
 
     it("Should Be Available Set Fee Only By Owner", async function () {
