@@ -41,9 +41,6 @@ contract PageToken is ERC20("PageToken", "PAGE"), AccessControl, Ownable {
     function getWETHUSDTPrice() external view returns (uint256) {
         (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
         uint256 price = (sqrtPriceX96 / ( 2 ** 96 )) **2;
-        // if (price > 400000) {
-            // price = 400000;
-        // }
         return price;
     }
 
