@@ -11,7 +11,7 @@ import "./CryptoPageCommentMinter.sol";
 import "./CryptoPageComment.sol";
 import "./CryptoPageToken.sol";
 
-contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
+contract PageNFT is ERC721("Crypto.Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
@@ -21,7 +21,7 @@ contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
 
     string public baseURL = "https://ipfs.io/ipfs/";
     address public treasury;
-    uint256 public fee = 1000; // 100 is 1% || 10000 is 100%
+    uint256 public fee = 1000;
 
     mapping(uint256 => address) private commentsById;
     mapping(uint256 => uint256) private pricesById;
@@ -56,7 +56,7 @@ contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
         if (msg.sender == _owner) {
             token.mint(_owner, ownerAmount);
         } else {
-            uint256 senderAmount = ownerAmount.div(2); //.div(10000).sub(5000);
+            uint256 senderAmount = ownerAmount.div(2);
             token.mint(_owner, senderAmount);
             token.mint(msg.sender, senderAmount);
         }
@@ -75,7 +75,7 @@ contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
             .mul(token.getUSDTPAGEPrice())
             .div(10000)
             .mul(8000);
-        // solhint-disable-next-line max-line-length
+
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
             "ERC721: transfer caller is not owner or approved"

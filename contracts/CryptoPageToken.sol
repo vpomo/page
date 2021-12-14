@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -8,7 +9,7 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract PageToken is ERC20("PageToken", "PAGE"), AccessControl, Ownable {
+contract PageToken is ERC20("Crypto.Page", "PAGE"), AccessControl, Ownable {
     using SafeMath for uint256;
 
     bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
