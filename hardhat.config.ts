@@ -99,6 +99,10 @@ const config: HardhatUserConfig = {
             url: bscTestnetRPCURL,
             accounts: { mnemonic },
         },
+        mainnet: {
+            url: mainnetRPCURL,
+            accounts: { mnemonic }
+        }
     },
     etherscan: {
         apiKey: etherscanAPIKEY,
