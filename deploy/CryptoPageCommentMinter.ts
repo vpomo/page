@@ -7,7 +7,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const token = await hre.ethers.getContract("PageToken");
     await deploy("PageCommentMinter", {
         from: deployer.address,
-        args: [deployer.address, token.address],
+        args: [
+            process.env.TREASURY_ADDRESS || deployer.address,
+            token.address
+        ],
         log: true,
         deterministicDeployment: false,
     });
