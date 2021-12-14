@@ -43,9 +43,10 @@ contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
     {
         uint256 amount = gasleft()
             .mul(tx.gasprice)
-            .mul(uint256(token.getPrice()))
+            .mul(token.getWETHUSDTPrice())
+            .mul(token.getUSDTPAGEPrice())
             .div(10000)
-            .mul(7000);
+            .mul(8000);
         uint256 tokenId = _mint(_owner, _tokenURI);
         uint256 treasuryAmount = amount.div(10000).mul(fee);
         uint256 ownerAmount = amount.sub(treasuryAmount);
@@ -55,7 +56,7 @@ contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
         if (msg.sender == _owner) {
             token.mint(_owner, ownerAmount);
         } else {
-            uint256 senderAmount = ownerAmount.div(10000).sub(5000);
+            uint256 senderAmount = ownerAmount.div(2); //.div(10000).sub(5000);
             token.mint(_owner, senderAmount);
             token.mint(msg.sender, senderAmount);
         }
@@ -70,9 +71,10 @@ contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
     ) public override {
         uint256 amount = gasleft()
             .mul(tx.gasprice)
-            .mul(uint256(token.getPrice()))
+            .mul(token.getWETHUSDTPrice())
+            .mul(token.getUSDTPAGEPrice())
             .div(10000)
-            .mul(7000);
+            .mul(8000);
         // solhint-disable-next-line max-line-length
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
@@ -87,7 +89,7 @@ contract PageNFT is ERC721("Page NFT", "PAGE-NFT"), ERC721URIStorage, Ownable {
     }
 
     function burn(uint256 _tokenId) public {
-        uint256 price = token.getPrice();
+        uint256 price = token.getWETHUSDTPrice().mul(token.getUSDTPAGEPrice());
         uint256 burnPrice = gasleft().mul(tx.gasprice).mul(price);
         require(
             ownerOf(_tokenId) == msg.sender,

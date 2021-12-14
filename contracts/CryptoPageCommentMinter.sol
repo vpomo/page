@@ -70,9 +70,10 @@ contract PageCommentMinter is Ownable {
     ) public {
         uint256 amount = gasleft()
             .mul(tx.gasprice)
-            .mul(token.getPrice())
+            .mul(token.getWETHUSDTPrice())
+            .mul(token.getUSDTPAGEPrice())
             .div(10000)
-            .mul(7000);
+            .mul(8000);
         bool exists = _exists(_nft, _tokenId);
         if (exists) {
             _get(_nft, _tokenId).createComment(_author, _text, _like);

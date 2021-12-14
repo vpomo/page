@@ -14,15 +14,20 @@ contract PageToken is ERC20("PageToken", "PAGE"), AccessControl, Ownable {
     bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 private constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    IUniswapV3Pool public pool;
+    IUniswapV3Pool public usdtpagePool;
+    IUniswapV3Pool public wethusdtPool;
 
     constructor(address _treasury) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _mint(_treasury, 1e25);
     }
 
-    function setPool(address _pool) public onlyOwner {
-        pool = IUniswapV3Pool(_pool);
+    function setUSDTPAGEPool(address _usdtPool) public onlyOwner {
+        usdtpagePool = IUniswapV3Pool(_usdtPool);
+    }
+
+    function setWETHUSDTPool(address _wethPool) public onlyOwner {
+        wethusdtPool = IUniswapV3Pool(_wethPool);
     }
 
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
@@ -33,12 +38,20 @@ contract PageToken is ERC20("PageToken", "PAGE"), AccessControl, Ownable {
         _burn(to, amount);
     }
 
-    function getPrice() external view returns (uint256) {
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        uint256 price = uint256(sqrtPriceX96).mul(uint256(sqrtPriceX96)) >>
-            (96 * 2);
-        if (price == 0) {
-            return 1;
+    function getWETHUSDTPrice() external view returns (uint256) {
+        (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
+        uint256 price = (sqrtPriceX96 / ( 2 ** 96 )) **2;
+        // if (price > 400000) {
+            // price = 400000;
+        // }
+        return price;
+    }
+
+    function getUSDTPAGEPrice() external view returns (uint256) {
+        (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
+        uint256 price =  (sqrtPriceX96 / ( 2 ** 96 )) **2;
+        if (price > 100) {
+            price = 100;
         }
         return price;
     }
