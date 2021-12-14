@@ -75,9 +75,10 @@ describe("PageNFT", function () {
             mockToken.address,
             3000
         );
-        await token.setPool(pool);
+        await token.setUSDTPAGEPool(pool);
+        await token.setWETHUSDTPool(pool);
         const poolContract = await ethers.getContractAt(POOL_ABI, pool);
-        await poolContract.initialize(7922816251426433);
+        await poolContract.initialize(ethers.utils.parseEther("1000000000000"));
         commentMinter = await commentMinterFactory.deploy(
             treasury,
             token.address
@@ -117,7 +118,7 @@ describe("PageNFT", function () {
         expect(treasury).to.equal(anotherTreasuryAddress);
     });
 
-    it("should only allow owner of contract to burn NFT", async function () {
+    it("Should Only Allow Owner Of Contract To Burn NFT", async function () {
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
         await nft.burn(0);
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
@@ -135,18 +136,18 @@ describe("PageNFT", function () {
         );
     });
 
-    it("should not allow burn nonexistent token", async function () {
+    it("Should Not Allow Burn Nonexistent Token", async function () {
         await expect(nft.burn(1)).to.be.revertedWith(
             "ERC721: owner query for nonexistent token"
         );
     });
 
-    it("should allow to get tokenURI", async function () {
+    it("Should Allow To Get TokenURI", async function () {
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
         await expect(nft.connect(bob).tokenURI(0), tokenURI);
     });
 
-    it("should ##############################", async function () {
+    it("Should ##############################", async function () {
         await nft.safeMint(
             await bob.getAddress(),
             "https://ipfs.io/ipfs/fakeIPFSHash"
@@ -158,12 +159,14 @@ describe("PageNFT", function () {
             "Hello, World!",
             false
         );
+        const balance = await token.balanceOf(await bob.getAddress())
+        await token.connect(bob).transfer(aliceAddress, balance)
         await expect(nft.connect(bob).burn(0)).to.be.revertedWith(
             "not enought balance"
         );
     });
 
-    it("should %%%%%%%%%%%%%%%%%%%%%%%", async function () {
+    it("Should %%%%%%%%%%%%%%%%%%%%%%%", async function () {
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
         const bobAddress = await bob.getAddress();
         await nft.transferFrom(aliceAddress, bobAddress, 0);
@@ -174,18 +177,18 @@ describe("PageNFT", function () {
         );
     });
 
-    it("should allow to call getBaseURL", async function () {
+    it("Should Allow To Call GetBaseURL", async function () {
         await expect(nft.connect(bob).getBaseURL(), "https://ipfs.io/ipfs");
     });
 
-    it("Should be available set only valid treasury only for owner", async function () {
+    it("Should Be Available Set Only Valid Treasury Only For Owner", async function () {
         const anotherAddress = await signers[1].getAddress();
         const nullAddress = "0x0000000000000000000000000000000000000000";
         await nft.setTreasury(anotherAddress);
         await expect(nft.setTreasury(nullAddress)).to.revertedWith("");
     });
 
-    it("Should be available set mint fee < 3000 and > 100 for owner", async function () {
+    it("Should Be Available Set Mint Fee < 3000 And > 100 For Owner", async function () {
         await nft.setFee(3000);
         await expect(nft.setFee(9)).to.revertedWith(
             "setMintFee: minimum mint fee percent is 0.1%"

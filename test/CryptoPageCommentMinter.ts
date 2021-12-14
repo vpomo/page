@@ -63,9 +63,10 @@ describe("PageCommentMinter", async function () {
             mockToken.address,
             3000
         );
-        await token.setPool(pool);
+        await token.setUSDTPAGEPool(pool);
+        await token.setWETHUSDTPool(pool);
         const poolContract = await ethers.getContractAt(POOL_ABI, pool);
-        await poolContract.initialize(Number(7922816251426433));
+        await poolContract.initialize(ethers.utils.parseEther("1"));
         commentMinter = await commentMinterFactory.deploy(
             address,
             token.address

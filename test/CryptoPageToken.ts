@@ -53,14 +53,16 @@ describe("PageToken", function () {
             3000
         );
         const poolContract = await ethers.getContractAt(POOL_ABI, pool);
-        await poolContract.initialize(ethers.utils.parseEther("792281333999")); // 79228162514264337593543950336
-        await token.setPool(pool);
+        const asd = ethers.utils.parseEther("1119999999999")
+        await token.setUSDTPAGEPool(pool);
+        await token.setWETHUSDTPool(pool);
+        await poolContract.initialize(asd);
         await token.grantRole(MINTER_ROLE, token.address);
         await token.grantRole(MINTER_ROLE, alice);
         await token.grantRole(BURNER_ROLE, alice);
     });
 
-    it("should have correct name and symbol and decimal", async function () {
+    it("Should Have Correct Name And Symbol And Decimal", async function () {
         const name = await token.name();
         const symbol = await token.symbol();
         const decimals = await token.decimals();
@@ -87,7 +89,7 @@ describe("PageToken", function () {
         expect(carolBal).to.equal("0");
     });
 
-    it("should supply token transfers properly", async function () {
+    it("Should Supply Token Transfers Properly", async function () {
         await token.mint(alice, "100");
         await token.mint(bob, "1000");
         await token.transfer(carol, "10");
@@ -104,7 +106,7 @@ describe("PageToken", function () {
         expect(carolBalance, "110");
     });
 
-    it("should fail if you try to do bad transfers", async function () {
+    it("Should Fail If You Try To Do Bad Transfers", async function () {
         await token.mint(alice, "100");
         await expect(token.transfer(carol, "110")).to.be.revertedWith(
             "ERC20: transfer amount exceeds balance"
@@ -114,12 +116,15 @@ describe("PageToken", function () {
         ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
-    it("should be available price", async function () {
-        const price = await token.getPrice();
-        expect(price.toString(), "10");
+    it("Should Be Available Price", async function () {
+        const wethusdtPrice = await token.getWETHUSDTPrice();
+        const usdtpagePrice = await token.getUSDTPAGEPrice();
+        // console.log('wethusdtPrice', wethusdtPrice.toString());
+        // console.log('wethusdtPrice', usdtpagePrice.toString());
+        // expect(price.toString(), "10");
     });
 
-    it("should be burnable only for owner", async function () {
+    it("Should Be Burnable Only For Owner", async function () {
         const role =
             "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
         await token.mint(alice, "100");
