@@ -1,6 +1,7 @@
 import hre from "hardhat"
 import "@nomiclabs/hardhat-ethers";
 import { abi as FactoryABI } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
+
 const factoryAddress =
     process.env.FACTORY_ADDRESS || "0x1F98431c8aD98523631AE4a59f267346ea31F984";
 const tokenBAddress =
@@ -9,7 +10,7 @@ const tokenBAddress =
 const USDTAddress = process.env.USDT_ADDRESS || "0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02"
 const WETHAddress = process.env.WETH_ADDRESS || tokenBAddress
 
-async function main() {
+export async function main() {
     const token = await hre.ethers.getContract("PageToken");
     const factory = await hre.ethers.getContractAt(FactoryABI, factoryAddress);
     const WETHUSDTpoolAddress = await factory.getPool(
