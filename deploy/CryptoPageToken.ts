@@ -50,7 +50,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log(
             `Call setWETHUSDTPool with ${WETHUSDTPoolAddress} pool address`
         );
-        await token.setWETHUSDTPool(WETHUSDTPoolAddress);
+        const setWETHUSDTPoolTx = await token.setWETHUSDTPool(
+            WETHUSDTPoolAddress
+        );
+        console.log("setWETHUSDTPool Transaction", setWETHUSDTPoolTx);
         const WETHUSDTPrice = await token.getWETHUSDTPrice();
         console.log("WETHUSDTPrice is ", WETHUSDTPrice.toString());
     }
@@ -59,7 +62,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log(
             `Call setWETHUSDTPool with ${USDTPAGEPoolAddress} pool address`
         );
-        await token.setUSDTPAGEPool(USDTPAGEPoolAddress);
+        const setUSDTPAGEPoolTx = await token.setUSDTPAGEPool(
+            USDTPAGEPoolAddress
+        );
+        console.log("setUSDTPAGEPool Transaction", setUSDTPAGEPoolTx);
         const USDTPAGEPrice = await token.getUSDTPAGEPrice();
         console.log("USDTPAGEPrice is ", USDTPAGEPrice.toString());
     }
