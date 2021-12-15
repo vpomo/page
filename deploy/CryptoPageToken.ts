@@ -44,7 +44,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (
         WETHUSDTpoolAddress !== "0x0000000000000000000000000000000000000000" &&
-        USDTPAGEPrice.toNumber() !== 100
+        WETHUSDTpoolAddress.toNumber() == 0
     ) {
         await token.setWETHUSDTPool(WETHUSDTpoolAddress);
     }
@@ -59,7 +59,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (
         USDTPAGEpoolAddress !== "0x0000000000000000000000000000000000000000" &&
-        WETHUSDTPrice.toNumber() === 0
+        USDTPAGEPrice.toNumber() !== 100
     ) {
         await token.setUSDTPAGEPool(USDTPAGEpoolAddress);
     }
