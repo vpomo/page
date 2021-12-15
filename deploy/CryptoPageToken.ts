@@ -44,7 +44,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (
         WETHUSDTpoolAddress !== "0x0000000000000000000000000000000000000000" &&
-        WETHUSDTpoolAddress.toNumber() == 0
+        WETHUSDTPrice.toNumber() == 0
     ) {
         await token.setWETHUSDTPool(WETHUSDTpoolAddress);
     }
