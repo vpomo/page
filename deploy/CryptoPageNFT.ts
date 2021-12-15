@@ -4,6 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = hre.deployments;
     const { deployer } = await hre.ethers.getNamedSigners();
+    /*    
     const token = await hre.ethers.getContract("PageToken");
     const commentMinter = await hre.ethers.getContract("PageCommentMinter");
     await deploy("PageNFT", {
@@ -31,6 +32,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     if (!(await token.hasRole(BURNER_ROLE, nft.address))) {
         await token.grantRole(BURNER_ROLE, nft.address);
     }
+    */
 };
 func.tags = ["PageNFT"];
 func.dependencies = ["PageToken", "PageCommentMinter"];
