@@ -9,15 +9,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const commentMinter = await hre.ethers.getContract("PageCommentMinter");
     await deploy("PageNFT", {
         from: deployer.address,
-        args: [
-            process.env.TREASURY_ADDRESS || deployer.address,
-            token.address,
-            commentMinter.address,
-        ],
         log: true,
         deterministicDeployment: false,
     });
     const nft = await hre.ethers.getContract("PageNFT");
+    await nft.initialize(process.env.TREASURY_ADDRESS, token.address, commentMinter.address);
     const MINTER_ROLE = hre.ethers.utils.id("MINTER_ROLE");
     const BURNER_ROLE = hre.ethers.utils.id("BURNER_ROLE");
 

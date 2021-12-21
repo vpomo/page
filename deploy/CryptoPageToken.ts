@@ -19,11 +19,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await hre.ethers.getNamedSigners();
     await deploy("PageToken", {
         from: deployer.address,
-        args: [process.env.TREASURY_ADDRESS || deployer.address],
         log: true,
         deterministicDeployment: false,
     });
     const token = await hre.ethers.getContract("PageToken");
+    await token.initialize(process.env.TREASURY_ADDRESS);
     const factory = await hre.ethers.getContractAt(FactoryABI, factoryAddress);
     const WETHUSDTPoolAddress = await factory.getPool(
         hre.ethers.utils.getAddress(WETHAddress),
