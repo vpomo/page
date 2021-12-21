@@ -87,8 +87,8 @@ const config: HardhatUserConfig = {
         rinkeby: {
             url: rinkebyRPCURL,
             accounts: { mnemonic },
-            gas: 2100000,
-            gasPrice: 8000000000,
+            gas: 21000000,
+            gasPrice: 80000000000
         },
         kovan: {
             url: kovanRPCURL,
