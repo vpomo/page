@@ -49,17 +49,18 @@ contract PageToken is
 
     function getWETHUSDTPrice() public view returns (uint256) {
         (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
-        uint256 price = ((sqrtPriceX96 * sqrtPriceX96) * (10**18 / 10**6)) / (192**2);
+        uint256 price = ((sqrtPriceX96 * sqrtPriceX96) * (1e18 / 1e6)) /
+            (192**2);
         return price;
     }
 
     function getUSDTPAGEPrice() external view returns (uint256) {
         (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
-        uint256 price = ((sqrtPriceX96 * sqrtPriceX96) * (10**18 / 10**6)) / (192**2);
+        uint256 price = ((sqrtPriceX96 * sqrtPriceX96) * (1e18 / 1e6)) /
+            (192**2);
         if (price > 100) {
             price = 100;
         }
         return price;
     }
-
 }

@@ -56,11 +56,11 @@ describe("PageToken", function () {
         uniswapv2pair = await uniswapV2PairFactory.deploy();
         const factory = await factoryFactory.deploy();
         mockWETHToken = await mockMETHTokenFactory.deploy();
-        mockWETHToken.decimals();
+        await mockWETHToken.decimals();
         mockUSDTToken = await mockUSDTTokenFactory.deploy();
-        mockUSDTToken.decimals();
+        await mockUSDTToken.decimals();
         token = await tokenFactory.deploy();
-        uniswapv2pair.initialize(mockUSDTToken.address, token.address);
+        await uniswapv2pair.initialize(mockUSDTToken.address, token.address);
         await token.deployed();
         await token.initialize(treasury);
 
@@ -167,5 +167,4 @@ describe("PageToken", function () {
             `AccessControl: account ${bob.toLowerCase()} is missing role ${role}`
         );
     });
-
 });

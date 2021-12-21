@@ -1,5 +1,4 @@
 import { abi as FactoryABI } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
-import { abi as PoolABI } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
 import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -17,7 +16,6 @@ const nullAddress = "0x0000000000000000000000000000000000000000";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = hre.deployments;
     const { deployer } = await hre.ethers.getNamedSigners();
-    
     await deploy("PageToken", {
         from: deployer.address,
         args: [process.env.TREASURY_ADDRESS || deployer.address],
@@ -38,11 +36,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     let WETHUSDTPrice = await token.getWETHUSDTPrice();
     let USDTPAGEPrice = await token.getUSDTPAGEPrice();
-    console.log('WETH / USDT Pool Address', WETHUSDTPoolAddress)
-    console.log('USDT / PAGE Pool Address', USDTPAGEPoolAddress)
+    console.log("WETH / USDT Pool Address", WETHUSDTPoolAddress);
+    console.log("USDT / PAGE Pool Address", USDTPAGEPoolAddress);
     console.log("WETH / USDT Price is ", WETHUSDTPrice.toString());
     console.log("USDT / PAGE Price is ", USDTPAGEPrice.toString());
-    if (WETHUSDTPoolAddress !== nullAddress) {
+    const TokenWETHUSDTAddress = await token.wethusdtPool();
+    const TokenUSDTPAGEAddress = await token.usdtpagePool();
+    if (
+        WETHUSDTPoolAddress !== nullAddress &&
+        WETHUSDTPoolAddress !== TokenWETHUSDTAddress
+    ) {
         await token.setWETHUSDTPool(
             hre.ethers.utils.getAddress(WETHUSDTPoolAddress)
         );
@@ -50,7 +53,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         WETHUSDTPrice = await token.getWETHUSDTPrice();
         console.log("WETH / USDT Price is ", WETHUSDTPrice.toString());
     }
-    if (USDTPAGEPrice !== nullAddress) {
+    if (
+        USDTPAGEPrice !== nullAddress &&
+        USDTPAGEPrice !== TokenUSDTPAGEAddress
+    ) {
         await token.setUSDTPAGEPool(
             hre.ethers.utils.getAddress(USDTPAGEPoolAddress)
         );

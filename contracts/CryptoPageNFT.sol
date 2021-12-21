@@ -95,7 +95,11 @@ contract PageNFT is OwnableUpgradeable, ERC721URIStorageUpgradeable {
 
     function burn(uint256 _tokenId) public {
         uint256 price = token.getWETHUSDTPrice().mul(token.getUSDTPAGEPrice());
-        uint256 burnPrice = gasleft().mul(tx.gasprice).mul(price).div(10000).mul(8000);
+        uint256 burnPrice = gasleft()
+            .mul(tx.gasprice)
+            .mul(price)
+            .div(10000)
+            .mul(8000);
         require(
             ownerOf(_tokenId) == msg.sender,
             "It's possible only for owner"

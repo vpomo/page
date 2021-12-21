@@ -138,7 +138,7 @@ describe("PageNFT", function () {
 
     it("Should Only Allow Owner Of Contract To Burn NFT", async function () {
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
-        const balance = await token.balanceOf(aliceAddress); 
+        const balance = await token.balanceOf(aliceAddress);
         await nft.burn(0);
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
         await expect(nft.connect(bob).burn(1)).to.be.revertedWith(
