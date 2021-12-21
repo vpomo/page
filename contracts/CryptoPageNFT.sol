@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.3;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./CryptoPageCommentMinter.sol";
 import "./CryptoPageComment.sol";
 import "./CryptoPageToken.sol";
 
-contract PageNFT is ERC721("Crypto.Page NFT", "PAGE.NFT"), ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
-    using SafeMath for uint256;
+contract PageNFT is OwnableUpgradeable, ERC721URIStorageUpgradeable {
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    using SafeMathUpgradeable for uint256;
 
-    Counters.Counter private _tokenIdCounter;
+    CountersUpgradeable.Counter private _tokenIdCounter;
     PageToken private token;
     PageCommentMinter private commentMinter;
 
@@ -27,11 +30,13 @@ contract PageNFT is ERC721("Crypto.Page NFT", "PAGE.NFT"), ERC721URIStorage, Own
     mapping(uint256 => uint256) private pricesById;
     mapping(uint256 => address) private creatorById;
 
-    constructor(
+    function initialize(
         address _treasury,
         address _token,
         address _commentMinter
-    ) {
+    ) public payable initializer {
+        __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
+        __Ownable_init_unchained();
         treasury = _treasury;
         token = PageToken(_token);
         commentMinter = PageCommentMinter(_commentMinter);
@@ -90,7 +95,7 @@ contract PageNFT is ERC721("Crypto.Page NFT", "PAGE.NFT"), ERC721URIStorage, Own
 
     function burn(uint256 _tokenId) public {
         uint256 price = token.getWETHUSDTPrice().mul(token.getUSDTPAGEPrice());
-        uint256 burnPrice = gasleft().mul(tx.gasprice).mul(price);
+        uint256 burnPrice = gasleft().mul(tx.gasprice).mul(price).div(10000).mul(8000);
         require(
             ownerOf(_tokenId) == msg.sender,
             "It's possible only for owner"
@@ -128,13 +133,6 @@ contract PageNFT is ERC721("Crypto.Page NFT", "PAGE.NFT"), ERC721URIStorage, Own
         return tokenId;
     }
 
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721, ERC721URIStorage)
-    {
-        super._burn(tokenId);
-    }
-
     function setTreasury(address _treasury) public onlyOwner {
         require(_treasury != address(0), "setTreasury: is zero address");
         treasury = _treasury;
@@ -152,19 +150,6 @@ contract PageNFT is ERC721("Crypto.Page NFT", "PAGE.NFT"), ERC721URIStorage, Own
     function tokenPrice(uint256 tokenId) public view returns (uint256) {
         require(tokenId <= _tokenIdCounter.current(), "No token with this Id");
         return pricesById[tokenId];
-    }
-
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
-        return string(abi.encodePacked(getBaseURL(), super.tokenURI(tokenId)));
-    }
-
-    function getBaseURL() public view returns (string memory) {
-        return baseURL;
     }
 
     function getFee() public view returns (uint256) {

@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.3;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 contract PageComment {
-    using SafeMath for uint256;
-    using EnumerableSet for EnumerableSet.UintSet;
-    using Counters for Counters.Counter;
+    using SafeMathUpgradeable for uint256;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
 
     struct Comment {
         uint256 id;
@@ -23,8 +22,8 @@ contract PageComment {
 
     mapping(uint256 => Comment) public commentsById;
 
-    Counters.Counter private _totalLikes;
-    Counters.Counter private _totalDislikes;
+    CountersUpgradeable.Counter private _totalLikes;
+    CountersUpgradeable.Counter private _totalDislikes;
 
     event NewComment(
         uint256 id,

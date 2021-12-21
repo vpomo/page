@@ -1,24 +1,31 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.3;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./CryptoPageComment.sol";
 import "./CryptoPageToken.sol";
 
-contract PageCommentMinter is Ownable {
-    using EnumerableMap for EnumerableMap.UintToAddressMap;
-    using SafeMath for uint256;
+contract PageCommentMinter is OwnableUpgradeable {
+    using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
+    using SafeMathUpgradeable for uint256;
 
-    mapping(address => EnumerableMap.UintToAddressMap) private commentsByERC721;
+    mapping(address => EnumerableMapUpgradeable.UintToAddressMap)
+        private commentsByERC721;
 
     PageToken public token;
     address public treasury;
 
-    constructor(address _treasury, address _token) {
+    function initialize(address _treasury, address _token)
+        public
+        payable
+        initializer
+    {
+        __Ownable_init();
         treasury = _treasury;
         token = PageToken(_token);
     }
@@ -82,7 +89,7 @@ contract PageCommentMinter is Ownable {
         }
         uint256 accountAmount = amount.div(10000).mul(9000);
         uint256 treasuryAmount = amount.sub(accountAmount);
-        IERC721 nft = IERC721(_nft);
+        IERC721Upgradeable nft = IERC721Upgradeable(_nft);
 
         token.mint(nft.ownerOf(_tokenId), accountAmount);
         token.mint(treasury, treasuryAmount);
