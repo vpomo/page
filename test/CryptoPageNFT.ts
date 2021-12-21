@@ -103,8 +103,8 @@ describe("PageNFT", function () {
         );
         await token.setWETHUSDTPool(WEUTHUSDTPoolAddress);
         await token.setUSDTPAGEPool(USDTPAGEPoolAddress);
-        await WEUTHUSDTPoolContract.initialize(1000000000000);
-        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1"));
+        await WEUTHUSDTPoolContract.initialize(ethers.utils.parseEther("1")); // 5.007187174633349e+24
+        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1")); // 4.9029716095450684e+35
         await token.grantRole(MINTER_ROLE, await alice.getAddress());
         await token.grantRole(BURNER_ROLE, await alice.getAddress());
         await token.grantRole(MINTER_ROLE, nft.address);

@@ -90,8 +90,8 @@ describe("PageToken", function () {
         );
         await token.setWETHUSDTPool(WEUTHUSDTPoolAddress);
         await token.setUSDTPAGEPool(USDTPAGEPoolAddress);
-        await WEUTHUSDTPoolContract.initialize(ethers.utils.parseEther("1"));
-        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1"));
+        await WEUTHUSDTPoolContract.initialize(ethers.utils.parseEther("1")); // 5.007187174633349e+24
+        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1")); // 4.9029716095450684e+35
         await token.grantRole(MINTER_ROLE, token.address);
         await token.grantRole(MINTER_ROLE, alice);
         await token.grantRole(BURNER_ROLE, alice);
@@ -152,8 +152,8 @@ describe("PageToken", function () {
     });
 
     it("Should Be Available Price", async function () {
-        const wethusdtPrice = await token.getWETHUSDTPrice();
-        const usdtpagePrice = await token.getUSDTPAGEPrice();
+        await token.getWETHUSDTPrice();
+        await token.getUSDTPAGEPrice();
     });
 
     it("Should Be Burnable Only For Owner", async function () {
