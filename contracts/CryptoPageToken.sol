@@ -49,7 +49,7 @@ contract PageToken is
 
     function getWETHUSDTPrice() public view returns (uint256) {
         (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
-        uint256 price = uint256(sqrtPriceX96).mul(sqrtPriceX96).div(10e6).mul(10e18).div(2**192);
+        uint256 price = uint256(sqrtPriceX96).mul(sqrtPriceX96).mul(10e18).div(10e6).div(2**192);
         return price;
     }
 
