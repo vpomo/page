@@ -35,12 +35,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         hre.ethers.utils.getAddress(token.address),
         500
     );
-    let WETHUSDTPrice = await token.getWETHUSDTPrice();
-    let USDTPAGEPrice = await token.getUSDTPAGEPrice();
     console.log("WETH / USDT Pool Address", WETHUSDTPoolAddress);
     console.log("USDT / PAGE Pool Address", USDTPAGEPoolAddress);
-    console.log("WETH / USDT Price is ", WETHUSDTPrice.toString());
-    console.log("USDT / PAGE Price is ", USDTPAGEPrice.toString());
     const TokenWETHUSDTAddress = await token.wethusdtPool();
     const TokenUSDTPAGEAddress = await token.usdtpagePool();
     if (
@@ -51,18 +47,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             hre.ethers.utils.getAddress(WETHUSDTPoolAddress)
         );
         console.log("token.usdtpagePool", await token.usdtpagePool());
-        WETHUSDTPrice = await token.getWETHUSDTPrice();
+        const WETHUSDTPrice = await token.getWETHUSDTPrice();
         console.log("WETH / USDT Price is ", WETHUSDTPrice.toString());
     }
     if (
-        USDTPAGEPrice !== nullAddress &&
-        USDTPAGEPrice !== TokenUSDTPAGEAddress
+        USDTPAGEPoolAddress !== nullAddress &&
+        USDTPAGEPoolAddress !== TokenUSDTPAGEAddress
     ) {
         await token.setUSDTPAGEPool(
             hre.ethers.utils.getAddress(USDTPAGEPoolAddress)
         );
         console.log("token.wethusdtPool", await token.wethusdtPool());
-        USDTPAGEPrice = await token.getUSDTPAGEPrice();
+        const USDTPAGEPrice = await token.getUSDTPAGEPrice();
         console.log("USDT / PAGE Price is ", USDTPAGEPrice.toString());
     }
 };
