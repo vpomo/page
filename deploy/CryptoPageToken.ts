@@ -12,17 +12,18 @@ const USDTAddress =
     process.env.USDT_ADDRESS || "0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02";
 const WETHAddress = process.env.WETH_ADDRESS || tokenBAddress;
 
+const nullAddress = "0x0000000000000000000000000000000000000000";
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = hre.deployments;
     const { deployer } = await hre.ethers.getNamedSigners();
-    /*
+    
     await deploy("PageToken", {
         from: deployer.address,
         args: [process.env.TREASURY_ADDRESS || deployer.address],
         log: true,
         deterministicDeployment: false,
     });
-    */
     const token = await hre.ethers.getContract("PageToken");
     const factory = await hre.ethers.getContractAt(FactoryABI, factoryAddress);
     const WETHUSDTPoolAddress = await factory.getPool(
@@ -35,14 +36,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         hre.ethers.utils.getAddress(token.address),
         500
     );
-    
-    await token.setWETHUSDTPool(
-        hre.ethers.utils.getAddress(WETHUSDTPoolAddress)
-    );
-    
-    await token.setUSDTPAGEPool(
-        hre.ethers.utils.getAddress(USDTPAGEPoolAddress)
-    );
+    let WETHUSDTPrice = await token.getWETHUSDTPrice();
+    let USDTPAGEPrice = await token.getUSDTPAGEPrice();
+    console.log('WETH / USDT Pool Address', WETHUSDTPoolAddress)
+    console.log('USDT / PAGE Pool Address', USDTPAGEPoolAddress)
+    console.log("WETH / USDT Price is ", WETHUSDTPrice.toString());
+    console.log("USDT / PAGE Price is ", USDTPAGEPrice.toString());
+    if (WETHUSDTPoolAddress !== nullAddress) {
+        await token.setWETHUSDTPool(
+            hre.ethers.utils.getAddress(WETHUSDTPoolAddress)
+        );
+        console.log("token.usdtpagePool", await token.usdtpagePool());
+        WETHUSDTPrice = await token.getWETHUSDTPrice();
+        console.log("WETH / USDT Price is ", WETHUSDTPrice.toString());
+    }
+    if (USDTPAGEPrice !== nullAddress) {
+        await token.setUSDTPAGEPool(
+            hre.ethers.utils.getAddress(USDTPAGEPoolAddress)
+        );
+        console.log("token.wethusdtPool", await token.wethusdtPool());
+        USDTPAGEPrice = await token.getUSDTPAGEPrice();
+        console.log("USDT / PAGE Price is ", USDTPAGEPrice.toString());
+    }
 };
 func.tags = ["PageToken"];
 export default func;

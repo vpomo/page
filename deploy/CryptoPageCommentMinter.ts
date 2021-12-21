@@ -4,7 +4,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = hre.deployments;
     const { deployer } = await hre.ethers.getNamedSigners();
-    /*
     const token = await hre.ethers.getContract("PageToken");
     await deploy("PageCommentMinter", {
         from: deployer.address,
@@ -15,7 +14,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         deterministicDeployment: false,
     });
-    */
 };
 func.tags = ["PageCommentMinter"];
 func.dependencies = ["PageToken"];
