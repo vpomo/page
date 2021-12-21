@@ -10,7 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         deterministicDeployment: false,
     });
-    const commentMinter = await hre.ethers.getContract("PageToken");
+    const commentMinter = await hre.ethers.getContract("PageCommentMinter");
     await commentMinter.initialize(process.env.TREASURY_ADDRESS, token.address);
 };
 func.tags = ["PageCommentMinter"];
