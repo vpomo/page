@@ -29,7 +29,8 @@ const pinateAPISecret = process.env.PINATA_API_SECRET;
 
 // networks RPC URLs
 const mainnetRPCURL =
-    process.env.MAINNET_RPC_URL || `https://mainnet.infura.io/v3/${infuraAPIKey}`;
+    process.env.MAINNET_RPC_URL ||
+    `https://mainnet.infura.io/v3/${infuraAPIKey}`;
 const rinkebyRPCURL =
     process.env.RINKEBY_RPC_URL ||
     `https://rinkeby.infura.io/v3/${infuraAPIKey}`;
@@ -63,7 +64,7 @@ const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: "0.8.0",
+                version: "0.8.3",
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -74,7 +75,11 @@ const config: HardhatUserConfig = {
         ],
     },
     networks: {
-        hardhat: {},
+        hardhat: {
+            // forking: {
+            //     url: 'https://eth-rinkeby.alchemyapi.io/v2/90cSMyQK85W8_-e_7k7te9DycD_v1zEb'
+            // }
+        },
         ganache: {
             url: "http://127.0.0.1:7545",
             accounts: { mnemonic },
@@ -95,8 +100,8 @@ const config: HardhatUserConfig = {
         },
         mainnet: {
             url: mainnetRPCURL,
-            accounts: { mnemonic }
-        }
+            accounts: { mnemonic },
+        },
     },
     etherscan: {
         apiKey: etherscanAPIKEY,
