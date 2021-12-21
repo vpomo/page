@@ -9,21 +9,27 @@ import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
 import {
-    MockToken,
-    MockToken__factory,
+    MockUSDTToken,
+    MockUSDTToken__factory,
+    MockWETHToken,
+    MockWETHToken__factory,
     PageToken,
     PageToken__factory,
+    UniswapV2Pair,
+    UniswapV2Pair__factory,
 } from "../types";
 
 describe("PageToken", function () {
     const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
     const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
     let token: PageToken;
-    let mockToken: MockToken;
+    let mockUSDTToken: MockUSDTToken;
+    let mockWETHToken: MockWETHToken;
     let signers: Signer[];
     let alice: Address;
     let bob: Address;
     let carol: Address;
+    let uniswapv2pair: UniswapV2Pair;
 
     beforeEach(async function () {
         signers = await ethers.getSigners();
@@ -34,29 +40,58 @@ describe("PageToken", function () {
         const tokenFactory = (await ethers.getContractFactory(
             "PageToken"
         )) as PageToken__factory;
-        const mockTokenFactory = (await ethers.getContractFactory(
-            "MockToken"
-        )) as MockToken__factory;
+        const mockMETHTokenFactory = (await ethers.getContractFactory(
+            "MockWETHToken"
+        )) as MockWETHToken__factory;
+        const mockUSDTTokenFactory = (await ethers.getContractFactory(
+            "MockUSDTToken"
+        )) as MockUSDTToken__factory;
         const factoryFactory = new ethers.ContractFactory(
             FACTORY_ABI,
             FACTORY_BYTECODE,
             signers[0]
         );
+        const uniswapV2PairFactory: UniswapV2Pair__factory =
+            await ethers.getContractFactory("UniswapV2Pair");
+        uniswapv2pair = await uniswapV2PairFactory.deploy();
         const factory = await factoryFactory.deploy();
-        mockToken = await mockTokenFactory.deploy();
-        token = await tokenFactory.deploy(treasury);
+        mockWETHToken = await mockMETHTokenFactory.deploy();
+        mockWETHToken.decimals();
+        mockUSDTToken = await mockUSDTTokenFactory.deploy();
+        mockUSDTToken.decimals();
+        token = await tokenFactory.deploy();
+        uniswapv2pair.initialize(mockUSDTToken.address, token.address);
         await token.deployed();
-        await factory.createPool(factory.address, mockToken.address, 3000);
-        const pool = await factory.getPool(
-            factory.address,
-            mockToken.address,
+        await token.initialize(treasury);
+
+        await factory.createPool(
+            mockWETHToken.address,
+            mockUSDTToken.address,
             3000
         );
-        const poolContract = await ethers.getContractAt(POOL_ABI, pool);
-        const asd = ethers.utils.parseEther("1119999999999")
-        await token.setUSDTPAGEPool(pool);
-        await token.setWETHUSDTPool(pool);
-        await poolContract.initialize(asd);
+        await factory.createPool(mockUSDTToken.address, token.address, 3000);
+        const WEUTHUSDTPoolAddress = await factory.getPool(
+            mockWETHToken.address,
+            mockUSDTToken.address,
+            3000
+        );
+        const USDTPAGEPoolAddress = await factory.getPool(
+            mockUSDTToken.address,
+            token.address,
+            3000
+        );
+        const WEUTHUSDTPoolContract = await ethers.getContractAt(
+            POOL_ABI,
+            WEUTHUSDTPoolAddress
+        );
+        const USDTPAGEPoolContract = await ethers.getContractAt(
+            POOL_ABI,
+            USDTPAGEPoolAddress
+        );
+        await token.setWETHUSDTPool(WEUTHUSDTPoolAddress);
+        await token.setUSDTPAGEPool(USDTPAGEPoolAddress);
+        await WEUTHUSDTPoolContract.initialize(ethers.utils.parseEther("1"));
+        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1"));
         await token.grantRole(MINTER_ROLE, token.address);
         await token.grantRole(MINTER_ROLE, alice);
         await token.grantRole(BURNER_ROLE, alice);
@@ -83,7 +118,7 @@ describe("PageToken", function () {
         const aliceBal = await token.balanceOf(alice);
         const bobBal = await token.balanceOf(bob);
         const carolBal = await token.balanceOf(carol);
-        expect(totalSupply).to.equal("10000000000000000000001100");
+        expect(totalSupply).to.equal("50000000000000000000001100");
         expect(aliceBal).to.equal("100");
         expect(bobBal).to.equal("1000");
         expect(carolBal).to.equal("0");
@@ -119,9 +154,6 @@ describe("PageToken", function () {
     it("Should Be Available Price", async function () {
         const wethusdtPrice = await token.getWETHUSDTPrice();
         const usdtpagePrice = await token.getUSDTPAGEPrice();
-        // console.log('wethusdtPrice', wethusdtPrice.toString());
-        // console.log('wethusdtPrice', usdtpagePrice.toString());
-        // expect(price.toString(), "10");
     });
 
     it("Should Be Burnable Only For Owner", async function () {
@@ -135,4 +167,5 @@ describe("PageToken", function () {
             `AccessControl: account ${bob.toLowerCase()} is missing role ${role}`
         );
     });
+
 });

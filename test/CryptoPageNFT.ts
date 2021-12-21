@@ -9,8 +9,10 @@ import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
 import {
-    MockToken,
-    MockToken__factory,
+    MockUSDTToken,
+    MockUSDTToken__factory,
+    MockWETHToken,
+    MockWETHToken__factory,
     PageCommentMinter,
     PageCommentMinter__factory,
     PageNFT,
@@ -23,11 +25,11 @@ describe("PageNFT", function () {
     const tokenURI = "https://ipfs.io/ipfs/fakeIPFSHash";
     let nft: PageNFT;
     let token: PageToken;
-    let mockToken: MockToken;
+    let mockUSDTToken: MockUSDTToken;
+    let mockWETHToken: MockWETHToken;
     let commentMinter: PageCommentMinter;
     let commentMinterFactory: PageCommentMinter__factory;
     let tokenFactory: PageToken__factory;
-    let mockTokenFactory: MockToken__factory;
     let nftFactory: PageNFT__factory;
     let signers: Signer[];
     let alice: Signer;
@@ -44,55 +46,71 @@ describe("PageNFT", function () {
         tokenFactory = (await ethers.getContractFactory(
             "PageToken"
         )) as PageToken__factory;
-        mockTokenFactory = (await ethers.getContractFactory(
-            "MockToken"
-        )) as MockToken__factory;
         commentMinterFactory = (await ethers.getContractFactory(
             "PageCommentMinter"
         )) as PageCommentMinter__factory;
         nftFactory = (await ethers.getContractFactory(
             "PageNFT"
         )) as PageNFT__factory;
-
+        const mockMETHTokenFactory = (await ethers.getContractFactory(
+            "MockWETHToken"
+        )) as MockWETHToken__factory;
+        const mockUSDTTokenFactory = (await ethers.getContractFactory(
+            "MockUSDTToken"
+        )) as MockUSDTToken__factory;
         const factoryFactory = new ethers.ContractFactory(
             FACTORY_ABI,
             FACTORY_BYTECODE,
             signers[0]
         );
         const factory = await factoryFactory.deploy();
-        await factory.deployed();
         const treasury = await alice.getAddress();
+        commentMinter = await commentMinterFactory.deploy();
         const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
         const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
-        mockToken = await mockTokenFactory.deploy();
-        await mockToken.deployed();
-
-        token = await tokenFactory.deploy(treasury);
+        mockWETHToken = await mockMETHTokenFactory.deploy();
+        mockUSDTToken = await mockUSDTTokenFactory.deploy();
+        nft = await nftFactory.deploy();
+        token = await tokenFactory.deploy();
+        await factory.deployed();
         await token.deployed();
-        await factory.createPool(factory.address, mockToken.address, 3000);
-        const pool = await factory.getPool(
-            factory.address,
-            mockToken.address,
+        await token.initialize(treasury);
+        await commentMinter.initialize(treasury, token.address);
+        await nft.initialize(treasury, token.address, commentMinter.address);
+        await factory.createPool(
+            mockWETHToken.address,
+            mockUSDTToken.address,
             3000
         );
-        await token.setUSDTPAGEPool(pool);
-        await token.setWETHUSDTPool(pool);
-        const poolContract = await ethers.getContractAt(POOL_ABI, pool);
-        await poolContract.initialize(ethers.utils.parseEther("1000000000000"));
-        commentMinter = await commentMinterFactory.deploy(
-            treasury,
-            token.address
+        await factory.createPool(mockUSDTToken.address, token.address, 3000);
+        const WEUTHUSDTPoolAddress = await factory.getPool(
+            mockWETHToken.address,
+            mockUSDTToken.address,
+            3000
         );
-        nft = await nftFactory.deploy(
-            treasury,
+        const USDTPAGEPoolAddress = await factory.getPool(
+            mockUSDTToken.address,
             token.address,
-            commentMinter.address
+            3000
         );
-        await nft.deployed();
-        await token.grantRole(MINTER_ROLE, commentMinter.address);
+        const WEUTHUSDTPoolContract = await ethers.getContractAt(
+            POOL_ABI,
+            WEUTHUSDTPoolAddress
+        );
+        const USDTPAGEPoolContract = await ethers.getContractAt(
+            POOL_ABI,
+            USDTPAGEPoolAddress
+        );
+        await token.setWETHUSDTPool(WEUTHUSDTPoolAddress);
+        await token.setUSDTPAGEPool(USDTPAGEPoolAddress);
+        await WEUTHUSDTPoolContract.initialize(1000000000000);
+        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1"));
+        await token.grantRole(MINTER_ROLE, await alice.getAddress());
+        await token.grantRole(BURNER_ROLE, await alice.getAddress());
         await token.grantRole(MINTER_ROLE, nft.address);
         await token.grantRole(BURNER_ROLE, nft.address);
-        await token.grantRole(MINTER_ROLE, token.address);
+        await token.grantRole(MINTER_ROLE, commentMinter.address);
+        await token.grantRole(BURNER_ROLE, commentMinter.address);
     });
 
     it("Should Have Correct Name And Symbol", async function () {
@@ -120,6 +138,7 @@ describe("PageNFT", function () {
 
     it("Should Only Allow Owner Of Contract To Burn NFT", async function () {
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
+        const balance = await token.balanceOf(aliceAddress); 
         await nft.burn(0);
         await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
         await expect(nft.connect(bob).burn(1)).to.be.revertedWith(
@@ -159,8 +178,8 @@ describe("PageNFT", function () {
             "Hello, World!",
             false
         );
-        const balance = await token.balanceOf(await bob.getAddress())
-        await token.connect(bob).transfer(aliceAddress, balance)
+        const balance = await token.balanceOf(await bob.getAddress());
+        await token.connect(bob).transfer(aliceAddress, balance);
         await expect(nft.connect(bob).burn(0)).to.be.revertedWith(
             "not enought balance"
         );
@@ -175,10 +194,6 @@ describe("PageNFT", function () {
         ).to.be.revertedWith(
             "ERC721: transfer caller is not owner or approved"
         );
-    });
-
-    it("Should Allow To Call GetBaseURL", async function () {
-        await expect(nft.connect(bob).getBaseURL(), "https://ipfs.io/ipfs");
     });
 
     it("Should Be Available Set Only Valid Treasury Only For Owner", async function () {

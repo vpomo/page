@@ -12,8 +12,10 @@ import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
 import {
-    MockToken,
-    MockToken__factory,
+    MockUSDTToken,
+    MockUSDTToken__factory,
+    MockWETHToken,
+    MockWETHToken__factory,
     PageCommentMinter,
     PageCommentMinter__factory,
     PageNFT,
@@ -27,16 +29,14 @@ describe("PageCommentMinter", async function () {
     let address: Address;
     let accounts: Signer[];
     let token: PageToken;
-    let mockToken: MockToken;
+    let mockUSDTToken: MockUSDTToken;
+    let mockWETHToken: MockWETHToken;
     let commentMinter: PageCommentMinter;
     let nft: PageNFT;
     beforeEach(async function () {
         accounts = await ethers.getSigners();
         address = await accounts[0].getAddress();
         const treasury = await accounts[9].getAddress();
-        const mockTokenFactory = (await ethers.getContractFactory(
-            "MockToken"
-        )) as MockToken__factory;
         const tokenFactory = (await ethers.getContractFactory(
             "PageToken"
         )) as PageToken__factory;
@@ -46,43 +46,65 @@ describe("PageCommentMinter", async function () {
         const nftFactory = (await ethers.getContractFactory(
             "PageNFT"
         )) as PageNFT__factory;
+        const mockMETHTokenFactory = (await ethers.getContractFactory(
+            "MockWETHToken"
+        )) as MockWETHToken__factory;
+        const mockUSDTTokenFactory = (await ethers.getContractFactory(
+            "MockUSDTToken"
+        )) as MockUSDTToken__factory;
         const factoryFactory = new ethers.ContractFactory(
             FACTORY_ABI,
             FACTORY_BYTECODE,
             accounts[0]
         );
         const factory = await factoryFactory.deploy();
-        await factory.deployed();
-        mockToken = await mockTokenFactory.deploy();
-        await mockToken.deployed();
-        token = await tokenFactory.deploy(treasury);
-        await token.deployed();
-        await factory.createPool(factory.address, mockToken.address, 3000);
-        const pool = await factory.getPool(
-            factory.address,
-            mockToken.address,
-            3000
-        );
-        await token.setUSDTPAGEPool(pool);
-        await token.setWETHUSDTPool(pool);
-        const poolContract = await ethers.getContractAt(POOL_ABI, pool);
-        await poolContract.initialize(ethers.utils.parseEther("1"));
-        commentMinter = await commentMinterFactory.deploy(
-            address,
-            token.address
-        );
-        nft = await nftFactory.deploy(
-            address,
-            token.address,
-            commentMinter.address
-        );
         const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
         const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
-        await token.grantRole(MINTER_ROLE, commentMinter.address);
-        await token.grantRole(BURNER_ROLE, commentMinter.address);
+        commentMinter = await commentMinterFactory.deploy();
+        mockWETHToken = await mockMETHTokenFactory.deploy();
+        mockUSDTToken = await mockUSDTTokenFactory.deploy();
+        token = await tokenFactory.deploy();
+        nft = await nftFactory.deploy();
+        await token.deployed();
+        await factory.deployed();
+        await token.initialize(treasury);
+        await commentMinter.initialize(treasury, token.address);
+        await factory.createPool(
+            mockWETHToken.address,
+            mockUSDTToken.address,
+            3000
+        );
+        await factory.createPool(mockUSDTToken.address, token.address, 3000);
+        const WEUTHUSDTPoolAddress = await factory.getPool(
+            mockWETHToken.address,
+            mockUSDTToken.address,
+            3000
+        );
+        const USDTPAGEPoolAddress = await factory.getPool(
+            mockUSDTToken.address,
+            token.address,
+            3000
+        );
+        const WEUTHUSDTPoolContract = await ethers.getContractAt(
+            POOL_ABI,
+            WEUTHUSDTPoolAddress
+        );
+        const USDTPAGEPoolContract = await ethers.getContractAt(
+            POOL_ABI,
+            USDTPAGEPoolAddress
+        );
+        await token.setWETHUSDTPool(WEUTHUSDTPoolAddress);
+        await token.setUSDTPAGEPool(USDTPAGEPoolAddress);
+        await WEUTHUSDTPoolContract.initialize(ethers.utils.parseEther("1"));
+        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1"));
+        await token.grantRole(MINTER_ROLE, address);
+        await token.grantRole(BURNER_ROLE, address);
+        await nft.deployed();
+        await nft.initialize(address, token.address, commentMinter.address);
         await token.grantRole(MINTER_ROLE, nft.address);
         await token.grantRole(BURNER_ROLE, nft.address);
-        await nft.deployed();
+        await token.grantRole(MINTER_ROLE, commentMinter.address);
+        await token.grantRole(BURNER_ROLE, commentMinter.address);
     });
 
     describe("After Deployment", function () {
