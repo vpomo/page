@@ -101,7 +101,7 @@ const config: HardhatUserConfig = {
         mainnet: {
             url: mainnetRPCURL,
             accounts: { mnemonic },
-            gasPrice: 225000000000,
+            gasPrice: 555000000000,
         },
     },
     etherscan: {
