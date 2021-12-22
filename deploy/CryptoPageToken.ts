@@ -46,7 +46,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         await token.setWETHUSDTPool(
             hre.ethers.utils.getAddress(WETHUSDTPoolAddress)
         );
-        console.log("token.usdtpagePool", await token.usdtpagePool());
+        console.log("token.wethusdtPool", await token.wethusdtPool());
         const WETHUSDTPrice = await token.getWETHUSDTPrice();
         console.log("WETH / USDT Price is ", WETHUSDTPrice.toString());
     }
@@ -57,7 +57,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         await token.setUSDTPAGEPool(
             hre.ethers.utils.getAddress(USDTPAGEPoolAddress)
         );
-        console.log("token.wethusdtPool", await token.wethusdtPool());
+        console.log("token.usdtpagePool", await token.usdtpagePool());
         const USDTPAGEPrice = await token.getUSDTPAGEPrice();
         console.log("USDT / PAGE Price is ", USDTPAGEPrice.toString());
     }
