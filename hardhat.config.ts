@@ -20,10 +20,10 @@ dotenv.config();
 const defaultNetwork: string = process.env.NETWORK || "hardhat";
 const mnemonic = process.env.MNEMONIC || "your mnemonic";
 
-const infuraAPIKey = process.env.INFURA_API_KEY || "your Infura API Key";
+const infuraAPIKey = process.env.RINKEBY_INFURA_KEY || "your Infura API Key";
 const infuraAPISecret = process.env.INFURA_API_KEY;
 // optional
-const privateKEY = process.env.PRIVATE_KEY || "your private key";
+const privateKEY = process.env.RINKEBY_DEPLOYER_PRIV_KEY || "your private key";
 const pinataAPIKEY = process.env.PINATA_API_KEY;
 const pinateAPISecret = process.env.PINATA_API_SECRET;
 
@@ -86,9 +86,7 @@ const config: HardhatUserConfig = {
         },
         rinkeby: {
             url: rinkebyRPCURL,
-            accounts: { mnemonic },
-            gas: 21000000,
-            gasPrice: 80000000000
+            accounts: [privateKEY],
         },
         kovan: {
             url: kovanRPCURL,

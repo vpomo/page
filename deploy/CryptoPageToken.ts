@@ -21,6 +21,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer.address,
         log: true,
         deterministicDeployment: false,
+        gasPrice: hre.ethers.utils.parseUnits("50", "gwei"),
+        gasLimit: 2000000,//1562038 gas
     });
     const token = await hre.ethers.getContract("PageToken");
     // await token.initialize(process.env.TREASURY_ADDRESS);
@@ -28,12 +30,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const WETHUSDTPoolAddress = await factory.getPool(
         hre.ethers.utils.getAddress(WETHAddress),
         hre.ethers.utils.getAddress(USDTAddress),
-        500
+        1000
     );
     const USDTPAGEPoolAddress = await factory.getPool(
         hre.ethers.utils.getAddress(USDTAddress),
         hre.ethers.utils.getAddress(token.address),
-        500
+        1000
     );
     console.log("WETH / USDT Pool Address", WETHUSDTPoolAddress);
     console.log("USDT / PAGE Pool Address", USDTPAGEPoolAddress);
