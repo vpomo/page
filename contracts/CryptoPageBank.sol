@@ -5,47 +5,59 @@ pragma solidity ^0.8.3;
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageCommentDeployer.sol";
-import "./interfaces/ICryptoPageNFT.sol";
 
-contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
-    mapping(address => uint256) private _balances;
-
+contract PageBank is OwnableUpgradeable, IPageBank {
     using SafeMathUpgradeable for uint256;
 
     address public treasury;
-    uint256 public fee;
-
+    address public nft;
+    address public commentDeployer;
+    uint256 public treasuryFee;
     IPageToken public token;
-    IPageNFT public nft;
-    IPageCommentDeployer public commentDeployer;
     IUniswapV3Pool public usdtpagePool;
     IUniswapV3Pool public wethusdtPool;
 
-    bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 private constant TRANSFERER_ROLE = keccak256("TRANSFERER_ROLE");
-    bytes32 private constant COMMENTER_ROLE = keccak256("COMMENTER_ROLE");
+    mapping(address => uint256) private _balances;
+
+    modifier onlyNFT() {
+        require(
+            _msgSender() == nft,
+            "PageBank. Only PageNFT can call this function"
+        );
+        _;
+    }
+
+    modifier onlyCommentDeployer() {
+        require(
+            _msgSender() == commentDeployer,
+            "PageBank. Only PageCommentDeployer can call this function"
+        );
+        _;
+    }
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
-    /// @param _fee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
+    /// @param _nft Address of ERC721 contract
+    /// @param _commentDeployer Address of PageCommentDeployer contract
+    /// @param _treasuryFee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
     function initialize(
         address _treasury,
+        address _token,
         address _nft,
-        address _commentMinter,
-        uint256 _fee
+        address _commentDeployer,
+        uint256 _treasuryFee
     ) public initializer {
         __Ownable_init();
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         treasury = _treasury;
-        fee = _fee;
-        nft = IPageNFT(_nft);
-        commentDeployer = IPageCommentDeployer(_commentMinter);
+        token = IPageToken(_token);
+        nft = _nft;
+        treasuryFee = _treasuryFee;
+        commentDeployer = _commentDeployer;
     }
 
     /// @notice Function for calling from PageNFT.safeMint
@@ -55,8 +67,11 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         public
         payable
         override
-        onlyRole(MINTER_ROLE)
-        returns (uint256)
+        onlyNFT
+        returns (
+            // onlyRole(MINTER_ROLE)
+            uint256
+        )
     {
         uint256 amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
@@ -73,7 +88,7 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         address from,
         address to,
         uint256 gas
-    ) public payable override onlyRole(MINTER_ROLE) returns (uint256) {
+    ) public payable override onlyNFT returns (uint256) {
         require(_msgSender() == from, "Only for owner");
         uint256 amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
@@ -91,7 +106,7 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         address to,
         uint256 gas,
         uint256 burnPrice
-    ) public payable override onlyRole(BURNER_ROLE) {
+    ) public payable override onlyNFT {
         uint256 amount = _calculateAmount(gas);
         burnPrice = _calculateAmount(burnPrice);
         amount = burnPrice.add(amount);
@@ -107,7 +122,7 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         address from,
         address to,
         uint256 gas
-    ) public payable override onlyRole(TRANSFERER_ROLE) {
+    ) public payable override onlyNFT {
         uint256 amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
         amount = amount.div(2);
@@ -124,7 +139,7 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         address from,
         address to,
         uint256 gas
-    ) public payable override onlyRole(COMMENTER_ROLE) returns (uint256) {
+    ) public payable override onlyCommentDeployer returns (uint256) {
         uint256 basicAmount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(basicAmount);
         uint256 amount = basicAmount.div(2);
@@ -177,8 +192,8 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     /// @param _to Address to which to add
     /// @param _amount Amount that needs to add
     function _addBalance(address _to, uint256 _amount)
-        public
-        override
+        private
+        
         returns (uint256)
     {
         _balances[_to] += _amount;
@@ -189,8 +204,8 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     /// @param _to Address to which to substraction
     /// @param _amount Amount that needs to substraction
     function _subBalance(address _to, uint256 _amount)
-        public
-        override
+        private
+        
         returns (uint256)
     {
         _balances[_to] += _amount;
@@ -200,7 +215,7 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     /// @notice Set amount to _balances
     /// @param _to Address to which to set
     /// @param _amount Amount that needs to set
-    function _setBalance(address _to, uint256 _amount) public override {
+    function _setBalance(address _to, uint256 _amount) private  {
         _balances[_to] = _amount;
     }
 
@@ -208,9 +223,8 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     /// @param gas Comment author's address
     /// @return PAGE token's count
     function _calculateAmount(uint256 gas)
-        public
+        private
         view
-        override
         returns (uint256)
     {
         return
@@ -227,6 +241,6 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         view
         returns (uint256)
     {
-        return amount.div(10000).mul(fee);
+        return amount.div(10000).mul(treasuryFee);
     }
 }

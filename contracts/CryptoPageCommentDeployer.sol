@@ -42,9 +42,8 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
     /// @param _tokenId Id of ERC721 Token
     /// @return Boolean
     function _exists(address _nft, uint256 _tokenId)
-        public
+        private
         view
-        override
         returns (bool)
     {
         return commentsByERC721[_nft].contains(_tokenId);
@@ -55,9 +54,8 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
     /// @param _tokenId Id of ERC721 Token
     /// @return PageComment
     function _get(address _nft, uint256 _tokenId)
-        public
+        private
         view
-        override
         returns (address)
     {
         return commentsByERC721[_nft].get(_tokenId);
@@ -68,8 +66,7 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
     /// @param _tokenId Id of ERC721 Token
     /// @return PageComment
     function _set(address _nft, uint256 _tokenId)
-        public
-        override
+        private
         returns (address)
     {
         PageComment comment = new PageComment();
@@ -128,7 +125,7 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
         address _author,
         string memory _text,
         bool _like
-    ) public override returns (uint256) {
+    ) private returns (uint256) {
         bool exists = _exists(_nft, _tokenId);
         if (exists) {
             return

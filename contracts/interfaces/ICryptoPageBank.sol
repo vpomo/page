@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.3;
 
-import "@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol";
-
-interface IPageBank is IAccessControlUpgradeable {
+interface IPageBank {
     function mint(address to, uint256 gas) external payable returns (uint256);
 
     function mintFor(
@@ -31,23 +29,12 @@ interface IPageBank is IAccessControlUpgradeable {
         uint256 gas
     ) external payable returns (uint256);
 
-    function setUSDTPAGEPool(address _usdtpagePool) external;
-
-    function setWETHUSDTPool(address _wethusdtPool) external;
-
     function getWETHUSDTPrice() external view returns (uint256);
 
     function getUSDTPAGEPrice() external view returns (uint256);
 
-    function _addBalance(address _to, uint256 _amount)
-        external
-        returns (uint256);
+    function setUSDTPAGEPool(address _usdtpagePool) external;
 
-    function _subBalance(address _to, uint256 _amount)
-        external
-        returns (uint256);
+    function setWETHUSDTPool(address _wethusdtPool) external;
 
-    function _setBalance(address _to, uint256 _amount) external;
-
-    function _calculateAmount(uint256 _gas) external view returns (uint256);
 }
