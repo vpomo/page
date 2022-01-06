@@ -16,8 +16,8 @@ import {
     MockUSDTToken__factory,
     MockWETHToken,
     MockWETHToken__factory,
-    PageCommentMinter,
-    PageCommentMinter__factory,
+    PageCommentDeployer,
+    PageCommentDeployer__factory,
     PageNFT,
     PageNFT__factory,
     PageToken,
@@ -25,6 +25,7 @@ import {
 } from "../types";
 
 describe("PageCommentMinter", async function () {
+    /*
     const tokenURI = "https://ipfs.io/ipfs/fakeIPFSHash";
     let address: Address;
     let accounts: Signer[];
@@ -155,4 +156,5 @@ describe("PageCommentMinter", async function () {
             ).to.be.revertedWith("setTreasuryAddress: is zero address");
         });
     });
+    */
 });

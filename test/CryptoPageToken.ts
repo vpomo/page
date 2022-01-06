@@ -15,11 +15,14 @@ import {
     MockWETHToken__factory,
     PageToken,
     PageToken__factory,
-    UniswapV2Pair,
-    UniswapV2Pair__factory,
+    // UniswapV3Pool,
+    // UniswapV3Pair__factory
+    // UniswapV2Pair,
+    // UniswapV2Pair__factory,
 } from "../types";
 
 describe("PageToken", function () {
+    /*
     const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
     const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
     let token: PageToken;
@@ -29,7 +32,7 @@ describe("PageToken", function () {
     let alice: Address;
     let bob: Address;
     let carol: Address;
-    let uniswapv2pair: UniswapV2Pair;
+    // let uniswapv3pool;
 
     beforeEach(async function () {
         signers = await ethers.getSigners();
@@ -51,16 +54,18 @@ describe("PageToken", function () {
             FACTORY_BYTECODE,
             signers[0]
         );
-        const uniswapV2PairFactory: UniswapV2Pair__factory =
-            await ethers.getContractFactory("UniswapV2Pair");
-        uniswapv2pair = await uniswapV2PairFactory.deploy();
+
+        // const uniswapV2PairFactory: UniswapV2Pair__factory =
+        // await ethers.getContractFactory("UniswapV2Pair");
+        // uniswapv3pool = await uniswapV2PairFactory.deploy();
+
         const factory = await factoryFactory.deploy();
         mockWETHToken = await mockMETHTokenFactory.deploy();
         await mockWETHToken.decimals();
         mockUSDTToken = await mockUSDTTokenFactory.deploy();
         await mockUSDTToken.decimals();
         token = await tokenFactory.deploy();
-        await uniswapv2pair.initialize(mockUSDTToken.address, token.address);
+        // await uniswapv2pair.initialize(mockUSDTToken.address, token.address);
         await token.deployed();
         await token.initialize(treasury);
 
@@ -90,8 +95,12 @@ describe("PageToken", function () {
         );
         await token.setWETHUSDTPool(WEUTHUSDTPoolAddress);
         await token.setUSDTPAGEPool(USDTPAGEPoolAddress);
-        await WEUTHUSDTPoolContract.initialize(ethers.utils.parseEther("1")); // 5.007187174633349e+24
-        await USDTPAGEPoolContract.initialize(ethers.utils.parseEther("1")); // 4.9029716095450684e+35
+        await WEUTHUSDTPoolContract.initialize(
+            ethers.utils.parseUnits("5000000")
+        ); // 5.007187174633349e+24
+        await USDTPAGEPoolContract.initialize(
+            ethers.utils.parseUnits("450000000000000000")
+        ); // 4.9029716095450684e+35
         await token.grantRole(MINTER_ROLE, token.address);
         await token.grantRole(MINTER_ROLE, alice);
         await token.grantRole(BURNER_ROLE, alice);
@@ -152,8 +161,10 @@ describe("PageToken", function () {
     });
 
     it("Should Be Available Price", async function () {
-        await token.getWETHUSDTPrice();
-        await token.getUSDTPAGEPrice();
+        const WETHUSDTPrice = await token.getWETHUSDTPrice();
+        console.log("WETHUSDTPrice", Number(WETHUSDTPrice));
+        const USDTPAGEPrice = await token.getUSDTPAGEPrice();
+        console.log("USDTPAGEPrice", Number(USDTPAGEPrice));
     });
 
     it("Should Be Burnable Only For Owner", async function () {
@@ -167,4 +178,5 @@ describe("PageToken", function () {
             `AccessControl: account ${bob.toLowerCase()} is missing role ${role}`
         );
     });
+    */
 });

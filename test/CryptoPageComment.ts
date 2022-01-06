@@ -6,6 +6,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { PageComment, PageComment__factory } from "../types";
 
 describe("PageComment", async function () {
+    /*
     let address: Address;
     let accounts: Signer[];
     let comment: PageComment;
@@ -101,4 +102,5 @@ describe("PageComment", async function () {
             });
         });
     });
+    */
 });
