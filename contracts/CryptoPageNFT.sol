@@ -7,160 +7,155 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import "./CryptoPageCommentMinter.sol";
-import "./CryptoPageComment.sol";
-import "./CryptoPageToken.sol";
+import "./interfaces/ICryptoPageCommentDeployer.sol";
+import "./interfaces/ICryptoPageComment.sol";
+import "./interfaces/ICryptoPageToken.sol";
+import "./interfaces/ICryptoPageNFT.sol";
+import "./interfaces/ICryptoPageBank.sol";
+import "./CryptoPageBank.sol";
 
-contract PageNFT is OwnableUpgradeable, ERC721URIStorageUpgradeable {
+contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeMathUpgradeable for uint256;
 
     CountersUpgradeable.Counter private _tokenIdCounter;
-    PageToken private token;
-    PageCommentMinter private commentMinter;
+    IPageCommentDeployer private commentDeployer;
+    IPageBank private bank;
 
-    string public baseURL = "https://ipfs.io/ipfs/";
+    string private _name;
+    string private _symbol;
+
+    string public baseURL;
     address public treasury;
-    uint256 public fee = 1000;
+    uint256 public fee;
 
     mapping(uint256 => address) private commentsById;
     mapping(uint256 => uint256) private pricesById;
     mapping(uint256 => address) private creatorById;
 
+    /// @notice Initial function
+    /// @param _commentDeployer Address of our PageCommentMinter contract
+    /// @param _bank Address of our PageBank contract
+    /// @param _baseURL BaseURL of tokenURI, i.e. https://ipfs.io/ipfs/
+    /// @param _fee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
     function initialize(
-        address _treasury,
-        address _token,
-        address _commentMinter
+        address _commentDeployer,
+        address _bank,
+        string memory _baseURL,
+        uint256 _fee
     ) public payable initializer {
         __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
-        __Ownable_init_unchained();
-        treasury = _treasury;
-        token = PageToken(_token);
-        commentMinter = PageCommentMinter(_commentMinter);
+        // __Ownable_init_unchained();
+        commentDeployer = IPageCommentDeployer(_commentDeployer);
+        bank = IPageBank(_bank);
+        baseURL = _baseURL;
+        fee = _fee;
     }
 
+    /// @notice Mint PAGE.NFT token
+    /// @param _owner Address of token owner
+    /// @param _tokenURI URI of token
+    /// @return TokenId
     function safeMint(address _owner, string memory _tokenURI)
         public
+        override
         returns (uint256)
     {
-        uint256 amount = gasleft()
-            .mul(tx.gasprice)
-            .mul(token.getWETHUSDTPrice())
-            .mul(token.getUSDTPAGEPrice())
-            .div(10000)
-            .mul(8000);
-        uint256 tokenId = _mint(_owner, _tokenURI);
-        uint256 treasuryAmount = amount.div(10000).mul(fee);
-        uint256 ownerAmount = amount.sub(treasuryAmount);
-        pricesById[tokenId] = amount;
-
-        token.mint(treasury, treasuryAmount);
-        if (msg.sender == _owner) {
-            token.mint(_owner, ownerAmount);
+        uint256 gasBefore = gasleft();
+        uint256 tokenId = _safeMint(_owner, _tokenURI);
+        uint256 gasAfter = gasBefore - gasleft();
+        uint256 price;
+        if (_owner == msg.sender) {
+            price = bank.mint(_owner, gasAfter);
         } else {
-            uint256 senderAmount = ownerAmount.div(2);
-            token.mint(_owner, senderAmount);
-            token.mint(msg.sender, senderAmount);
+            price = bank.mintFor(msg.sender, _owner, gasAfter);
         }
-
-        return (tokenId);
+        pricesById[tokenId] = price;
+        return tokenId;
     }
 
-    function transferFrom(
+    /// @notice Mint PAGE.NFT token
+    /// @param _owner Address of token owner
+    /// @param _tokenURI URI of token
+    /// @return TokenId
+    function _safeMint(address _owner, string memory _tokenURI)
+        private
+        returns (uint256)
+    {
+        uint256 tokenId = _mint(_owner, _tokenURI);
+        return tokenId;
+    }
+
+    /// @notice Burn PAGE.NFT token
+    /// @param _tokenId Id of token
+    function safeBurn(uint256 _tokenId) public override {
+        uint256 gasBefore = gasleft();
+        uint256 burnPrice;
+        bool commentsExists = commentDeployer.isExists(address(this), _tokenId);
+        if (commentsExists) {
+            IPageComment commentContract = IPageComment(
+                commentDeployer.getCommentContract(address(this), _tokenId)
+            );
+            IPageComment.Comment[] memory comments = commentContract
+                .getComments();
+            for (uint256 i = 0; i < comments.length; i++) {
+                IPageComment.Comment memory comment = comments[i];
+                burnPrice.add(comment.price.mul(2));
+            }
+        }
+        uint256 gasAfter = gasBefore - gasleft();
+        bank.burn(msg.sender, gasAfter, burnPrice);
+        _safeBurn(_tokenId);
+    }
+
+    /// @notice Transfer PAGE.NFT token
+    /// @param from Approved or owner of token
+    /// @param to Receiver of token
+    /// @param tokenId Id of token
+    function safeTransferFrom(
         address from,
         address to,
         uint256 tokenId
-    ) public override {
-        uint256 amount = gasleft()
-            .mul(tx.gasprice)
-            .mul(token.getWETHUSDTPrice())
-            .mul(token.getUSDTPAGEPrice())
-            .div(10000)
-            .mul(8000);
-
+    ) public override(ERC721Upgradeable, IERC721Upgradeable) {
+        uint256 gasBefore = gasleft();
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
             "ERC721: transfer caller is not owner or approved"
         );
-        uint256 accountAmount = amount.div(10000).mul(3000);
-        uint256 treasuryAmount = amount.div(10000).mul(1000);
-        _transfer(from, to, tokenId);
-        token.mint(msg.sender, accountAmount);
-        token.mint(creatorById[tokenId], accountAmount);
-        token.mint(treasury, treasuryAmount);
+        _safeTransfer(from, to, tokenId, "");
+        uint256 gasAfter = gasBefore - gasleft();
+        bank.transferFrom(from, to, gasAfter);
     }
 
-    function burn(uint256 _tokenId) public {
-        uint256 price = token.getWETHUSDTPrice().mul(token.getUSDTPAGEPrice());
-        uint256 burnPrice = gasleft()
-            .mul(tx.gasprice)
-            .mul(price)
-            .div(10000)
-            .mul(8000);
-        require(
-            ownerOf(_tokenId) == msg.sender,
-            "It's possible only for owner"
-        );
-        bool commentsExists = commentMinter.isExists(address(this), _tokenId);
-        if (commentsExists) {
-            PageComment commentContract = commentMinter.getContract(
-                address(this),
-                _tokenId
-            );
-            PageComment.Comment[] memory comments = commentContract
-                .getComments();
-            for (uint256 i = 0; i < comments.length; i++) {
-                PageComment.Comment memory comment = comments[i];
-                burnPrice.add(comment.price.mul(2).mul(price));
-            }
-        }
-        require(
-            token.balanceOf(msg.sender) >= burnPrice,
-            "not enought balance"
-        );
+    /// @notice Burn PAGE.NFT token
+    /// @param _tokenId Id of token
+    function _safeBurn(uint256 _tokenId) private {
         _burn(_tokenId);
-        token.burn(msg.sender, burnPrice);
     }
 
-    function _mint(address owner, string memory _tokenURI)
+    /// @notice Mint PAGE.NFT token
+    /// @param _owner Address of token owner
+    /// @param _tokenURI URI of token
+    /// @return TokenId
+    function _mint(address _owner, string memory _tokenURI)
         private
         returns (uint256)
     {
         uint256 tokenId = _tokenIdCounter.current();
-        creatorById[tokenId] = owner;
-        _safeMint(owner, tokenId);
+        creatorById[tokenId] = _owner;
+        _safeMint(_owner, tokenId);
         _setTokenURI(tokenId, _tokenURI);
         _tokenIdCounter.increment();
         return tokenId;
     }
 
-    function setTreasury(address _treasury) public onlyOwner {
-        require(_treasury != address(0), "setTreasury: is zero address");
-        treasury = _treasury;
-    }
-
-    function setFee(uint256 _percent) public onlyOwner {
-        require(_percent >= 10, "setMintFee: minimum mint fee percent is 0.1%");
-        require(
-            _percent <= 3000,
-            "setMintFee: maximum mint fee percent is 30%"
-        );
-        fee = _percent;
-    }
-
-    function tokenPrice(uint256 tokenId) public view returns (uint256) {
-        require(tokenId <= _tokenIdCounter.current(), "No token with this Id");
+    function tokenPrice(uint256 tokenId)
+        public
+        view
+        override
+        returns (uint256)
+    {
         return pricesById[tokenId];
-    }
-
-    function getFee() public view returns (uint256) {
-        return fee;
-    }
-
-    function getTreasury() public view returns (address) {
-        return treasury;
     }
 }

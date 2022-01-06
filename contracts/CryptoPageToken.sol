@@ -2,63 +2,41 @@
 
 pragma solidity ^0.8.3;
 
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract PageToken is
-    OwnableUpgradeable,
-    AccessControlUpgradeable,
-    ERC20Upgradeable
-{
-    using SafeMathUpgradeable for uint256;
+import "./interfaces/ICryptoPageToken.sol";
 
-    bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant BURNER_ROLE = keccak256("BURNER_ROLE");
+contract PageToken is ERC20Upgradeable, IPageToken {
+    address private bank;
 
-    IUniswapV3Pool public usdtpagePool;
-    IUniswapV3Pool public wethusdtPool;
+    modifier onlyBank() {
+        require(
+            _msgSender() == address(bank),
+            "PageToken. Only bank can call this function"
+        );
+        _;
+    }
 
-    function initialize(address _treasury) public initializer {
-        __Ownable_init();
+    /// @notice Initial function
+    /// @param _treasury treasury address for initial mint
+    /// @param _bank Address of our PageBank contract
+    function initialize(address _treasury, address _bank) public initializer {
         __ERC20_init("Crypto.Page", "PAGE");
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _mint(_treasury, 5e25);
+        bank = _bank;
     }
 
-    function setUSDTPAGEPool(address _usdtpagePool) public onlyOwner {
-        usdtpagePool = IUniswapV3Pool(_usdtpagePool);
-    }
-
-    function setWETHUSDTPool(address _wethusdtPool) public onlyOwner {
-        wethusdtPool = IUniswapV3Pool(_wethusdtPool);
-    }
-
-    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+    /// @notice Mint PAGE tokens
+    /// @param to Address of token holder
+    /// @param amount How many to be minted
+    function mint(address to, uint256 amount) public override onlyBank {
         _mint(to, amount);
     }
 
-    function burn(address to, uint256 amount) public onlyRole(BURNER_ROLE) {
+    /// @notice Burn PAGE tokens
+    /// @param to Address of token holder
+    /// @param amount How many to be burned
+    function burn(address to, uint256 amount) public override onlyBank {
         _burn(to, amount);
-    }
-
-    function getWETHUSDTPrice() public view returns (uint256) {
-        (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
-        uint256 price = uint256(sqrtPriceX96).mul(sqrtPriceX96).mul(10e18).div(10e6).div(2**192);
-        return price;
-    }
-
-    function getUSDTPAGEPrice() external view returns (uint256) {
-        (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
-        uint256 price = uint256(sqrtPriceX96).mul(sqrtPriceX96).div(10e18).mul(10e6).div(2**192);
-        if (price > 100) {
-            price = 100;
-        }
-        return price;
     }
 }
