@@ -11,7 +11,7 @@ contract PageToken is ERC20Upgradeable, IPageToken {
 
     modifier onlyBank() {
         require(
-            _msgSender() == address(bank),
+            _msgSender() == bank,
             "PageToken. Only bank can call this function"
         );
         _;
