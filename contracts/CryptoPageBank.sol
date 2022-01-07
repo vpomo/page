@@ -78,7 +78,9 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         commentDeployer = _commentDeployer;
         IUniswapV3Factory factory = IUniswapV3Factory(_factory);
         wethusdtPool = IUniswapV3Pool(factory.getPool(weth, usdt, 3000));
-        usdtpagePool = IUniswapV3Pool(factory.createPool(usdt, address(token), 3000));
+        usdtpagePool = IUniswapV3Pool(
+            factory.createPool(usdt, address(token), 3000)
+        );
     }
 
     /// @notice Function for calling from PageNFT.safeMint
