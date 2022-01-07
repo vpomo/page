@@ -7,6 +7,10 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 import "./interfaces/ICryptoPageComment.sol";
 
+/// @title Contract for storage and interaction of comments for ERC721 tokens
+/// @author Crypto.Page Team
+/// @notice Contract designed to store comments of one specific token
+/// @dev These contracts are deployed by the `CryptoPageCommentDeployer` contract
 contract PageComment {
     using SafeMathUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -19,12 +23,22 @@ contract PageComment {
         uint256 price;
     }
 
+    /// Stores all comments ids
     uint256[] public commentsIds;
-
+    /// Stores the Сomment struct by id
     mapping(uint256 => Comment) public commentsById;
+    /// Stores the comment ids by author's address
+    mapping(address => uint256[]) public commentsOf;
 
     CountersUpgradeable.Counter private _totalLikes;
 
+    /// @notice The event is emmited when creating a new comment
+    /// @dev Emmited occurs in the _createComment function
+    /// @param id Comment id
+    /// @param author Commenth author
+    /// @param text Comment text
+    /// @param like Comment reaction (like or dislike)
+    /// @param price Price in PAGE tokens
     event NewComment(
         uint256 id,
         address author,
@@ -33,10 +47,17 @@ contract PageComment {
         uint256 price
     );
 
+    /// @notice Set price for comment by id
+    /// @param id Comment id
+    /// @param price Comment price in PAGE tokens
     function setPrice(uint256 id, uint256 price) internal {
         commentsById[id].price = price;
     }
 
+    /// @notice Internal function for creating comment with author param
+    /// @param author Address of comment's author
+    /// @param text Comment text
+    /// @param like Comment reaction
     function setComment(
         address author,
         string memory text,
@@ -56,9 +77,9 @@ contract PageComment {
         uint256 price
     ) internal returns (uint256) {
         uint256 id = commentsIds.length;
-
         commentsIds.push(id);
         commentsById[id] = Comment(id, author, text, like, price);
+        commentsOf[msg.sender].push(id);
 
         if (like) {
             _totalLikes.increment();
@@ -76,17 +97,18 @@ contract PageComment {
         public
         returns (uint256)
     {
+        require(msg.sender != address(0), "Address can't be null");
         return _createComment(msg.sender, text, like, 0);
     }
 
     /// @notice Return id's of all comments
-    /// @return comments Array of Comment structs
+    /// @return Array of Comment structs
     function getCommentsIds() public view returns (uint256[] memory) {
         return commentsIds;
     }
 
     /// @notice Return comments by id's
-    /// @return comments Array of Comment structs
+    /// @return Array of Comment structs
     function getCommentsByIds(uint256[] memory _ids)
         public
         view
@@ -108,7 +130,7 @@ contract PageComment {
     }
 
     /// @notice Return all comments
-    /// @return comments Array of Comment structs
+    /// @return Array of Comment structs
     function getComments() public view returns (Comment[] memory) {
         Comment[] memory comments;
         if (commentsIds.length > 0) {
@@ -118,9 +140,8 @@ contract PageComment {
     }
 
     /// @notice Return comment by id
-    /// @return Comment Count of dislikes
+    /// @return Comment struct
     function getCommentById(uint256 id) public view returns (Comment memory) {
-        // require(id <= commentsIds.length, "No comment with this ID");
         return commentsById[id];
     }
 
@@ -162,5 +183,22 @@ contract PageComment {
         likes = _likes;
         dislikes = _dislikes;
         comments = getComments();
+    }
+
+    /// @notice Return comments by author's address
+    /// @param author Address of author
+    /// @return Comments Array of Comment structs
+    function getCommentsOf(address author)
+        public
+        view
+        returns (Comment[] memory)
+    {
+        require(msg.sender != address(0), "Address can't be null");
+        uint256[] memory ids = commentsOf[author];
+        Comment[] memory comments;
+        if (ids.length > 0) {
+            comments = getCommentsByIds(ids);
+        }
+        return comments;
     }
 }
