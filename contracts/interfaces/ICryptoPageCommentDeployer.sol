@@ -3,22 +3,22 @@
 pragma solidity ^0.8.3;
 
 interface IPageCommentDeployer {
-    function initialize(address _token, address _bank) external payable;
+    function initialize(address _bank) external payable;
 
-    function isExists(address _nft, uint256 _tokenId)
+    function isExists(address nft, uint256 tokenId)
         external
         view
         returns (bool);
 
     function createComment(
-        address _nft,
-        uint256 _tokenId,
-        address _author,
-        string memory _text,
-        bool _like
+        address nft,
+        uint256 tokenId,
+        address author,
+        string memory text,
+        bool like
     ) external;
 
-    function getCommentContract(address _nft, uint256 _tokenId)
+    function getCommentContract(address nft, uint256 tokenId)
         external
         view
         returns (address);

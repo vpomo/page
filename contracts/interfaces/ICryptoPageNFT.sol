@@ -11,6 +11,5 @@ interface IPageNFT is IERC721MetadataUpgradeable {
 
     function safeBurn(uint256 _tokenId) external;
 
-    // function safeTransferFrom(address from, address to, uint256 tokenId) external;
     function tokenPrice(uint256 tokenId) external view returns (uint256);
 }

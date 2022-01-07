@@ -33,8 +33,7 @@ interface IPageBank {
 
     function getUSDTPAGEPrice() external view returns (uint256);
 
-    function setUSDTPAGEPool(address _usdtpagePool) external;
+    // function setUSDTPAGEPool(address _usdtpagePool) external;
 
-    function setWETHUSDTPool(address _wethusdtPool) external;
-
+    // function setWETHUSDTPool(address _wethusdtPool) external;
 }
