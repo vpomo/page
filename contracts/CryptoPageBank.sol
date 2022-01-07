@@ -78,7 +78,9 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         commentDeployer = _commentDeployer;
         IUniswapV3Factory factory = IUniswapV3Factory(_factory);
         wethusdtPool = IUniswapV3Pool(factory.getPool(weth, usdt, 3000));
-        usdtpagePool = IUniswapV3Pool(factory.createPool(usdt, address(token), 3000));
+        usdtpagePool = IUniswapV3Pool(
+            factory.createPool(usdt, address(token), 3000)
+        );
     }
 
     /// @notice Function for calling from PageNFT.safeMint
@@ -200,13 +202,13 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
     // function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
-        // usdtpagePool = IUniswapV3Pool(_usdtpagePool);
+    // usdtpagePool = IUniswapV3Pool(_usdtpagePool);
     // }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _wethusdtPool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
     // function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
-        // wethusdtPool = IUniswapV3Pool(_wethusdtPool);
+    // wethusdtPool = IUniswapV3Pool(_wethusdtPool);
     // }
 
     /// @notice Add amount to _balances
@@ -243,7 +245,7 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     /// @return PAGE token's count
     function _calculateAmount(uint256 _gas) private view returns (uint256) {
         return
-        _gas.mul(tx.gasprice).mul(getWETHUSDTPrice()).mul(
+            _gas.mul(tx.gasprice).mul(getWETHUSDTPrice()).mul(
                 getUSDTPAGEPrice()
             );
     }

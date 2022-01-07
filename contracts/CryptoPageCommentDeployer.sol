@@ -95,13 +95,7 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
         uint256 gasBefore = gasleft();
         require(_msgSender() != address(0), "Address can't be null");
         require(author != address(0), "Address can't be null");
-        uint256 commentId = _createComment(
-            nft,
-            tokenId,
-            author,
-            text,
-            like
-        );
+        uint256 commentId = _createComment(nft, tokenId, author, text, like);
         uint256 gasAfter = gasleft() - gasBefore;
         uint256 price = bank.comment(_msgSender(), author, gasAfter);
         IPageComment(_get(nft, tokenId)).setPrice(commentId, price);

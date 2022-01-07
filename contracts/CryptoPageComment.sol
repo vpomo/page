@@ -18,13 +18,13 @@ contract PageComment {
     struct Comment {
         uint256 id;
         address author;
-        string text;
+        bytes32 ipfsHash; //This MUST be an base58 decoded hash. The reason of it is an IPFS hash consumes 46 bytes, which can't be stored at a single 32 bytes slot
         bool like;
         uint256 price;
     }
 
     /// Stores all comments ids
-    uint256[] public commentsIds;
+    uint256[] public commentsIdsArray;
     /// Stores the Сomment struct by id
     mapping(uint256 => Comment) public commentsById;
     /// Stores the comment ids by author's address
@@ -36,13 +36,13 @@ contract PageComment {
     /// @dev Emmited occurs in the _createComment function
     /// @param id Comment id
     /// @param author Commenth author
-    /// @param text Comment text
+    /// @param ipfsHash Comment text
     /// @param like Comment reaction (like or dislike)
     /// @param price Price in PAGE tokens
     event NewComment(
         uint256 id,
         address author,
-        string text,
+        bytes32 ipfsHash, // This MUST be an base58 decoded hash. The reason of it is an IPFS hash consumes 46 bytes, which can't be stored at a single 32 bytes slot
         bool like,
         uint256 price
     );
@@ -56,75 +56,78 @@ contract PageComment {
 
     /// @notice Internal function for creating comment with author param
     /// @param author Address of comment's author
-    /// @param text Comment text
+    /// @param ipfsHash IPFS hash
     /// @param like Positive or negative reaction to comment
     function setComment(
         address author,
-        string memory text,
+        bytes32 ipfsHash,
         bool like
     ) internal returns (uint256) {
-        return _createComment(author, text, like, 0);
+        return _createComment(author, ipfsHash, like, 0);
     }
 
     /// @notice Create comment for any ERC721 Token
     /// @param _author Author of comment
-    /// @param _text Text of comment
+    /// @param _ipfsHash IPFS hash
     /// @param _like Positive or negative reaction to comment
     /// @param _price Price in PAGE tokens
     function _createComment(
         address _author,
-        string memory _text,
+        bytes32 _ipfsHash,
         bool _like,
         uint256 _price
     ) internal returns (uint256) {
-        uint256 id = commentsIds.length;
-        commentsIds.push(id);
-        commentsById[id] = Comment(id, _author, _text, _like, _price);
+        uint256 id = commentsIdsArray.length;
+        commentsIdsArray.push(id);
+        commentsById[id] = Comment(id, _author, _ipfsHash, _like, _price);
         commentsOf[msg.sender].push(id);
 
         if (_like) {
             _totalLikes.increment();
         }
 
-        emit NewComment(id, _author, _text, _like, _price);
+        emit NewComment(id, _author, _ipfsHash, _like, _price);
 
         return id;
     }
 
     /// @notice Create comment for any ERC721 Token
-    /// @param text Text of comment
+    /// @param ipfsHash IPFS hash
     /// @param like Positive or negative reaction to comment
-    function createComment(string memory text, bool like)
+    function createComment(bytes32 ipfsHash, bool like)
         public
         returns (uint256)
     {
         require(msg.sender != address(0), "Address can't be null");
-        return _createComment(msg.sender, text, like, 0);
+        return _createComment(msg.sender, ipfsHash, like, 0);
     }
 
     /// @notice Return id's of all comments
     /// @return Array of Comment structs
     function getCommentsIds() public view returns (uint256[] memory) {
-        return commentsIds;
+        return commentsIdsArray;
     }
 
     /// @notice Return comments by id's
     /// @return Array of Comment structs
-    function getCommentsByIds(uint256[] memory _ids)
+    function getCommentsByIds(uint256[] memory ids)
         public
         view
         returns (Comment[] memory)
     {
-        require(_ids.length > 0, "_ids length must be more than zero");
+        require(ids.length > 0, "ids length must be more than zero");
         require(
-            _ids.length <= commentsIds.length,
-            "_ids length must be less or equal commentsIds"
+            ids.length <= commentsIdsArray.length,
+            "ids length must be less or equal commentsIdsArray"
         );
 
-        Comment[] memory comments = new Comment[](_ids.length);
-        for (uint256 i = 0; i < _ids.length; i++) {
-            require(_ids[i] <= commentsIds.length, "No comment with this ID");
-            Comment storage comment = commentsById[_ids[i]];
+        Comment[] memory comments = new Comment[](ids.length);
+        for (uint256 i = 0; i < ids.length; i++) {
+            require(
+                ids[i] <= commentsIdsArray.length,
+                "No comment with this ID"
+            );
+            Comment storage comment = commentsById[ids[i]];
             comments[i] = comment;
         }
         return comments;
@@ -133,10 +136,9 @@ contract PageComment {
     /// @notice Return all comments
     /// @return Array of Comment structs
     function getComments() public view returns (Comment[] memory) {
+        require(commentsIdsArray.length > 0, "commentsIds array is empty");
         Comment[] memory comments;
-        if (commentsIds.length > 0) {
-            comments = getCommentsByIds(commentsIds);
-        }
+        comments = getCommentsByIds(commentsIdsArray);
         return comments;
     }
 
@@ -159,9 +161,9 @@ contract PageComment {
             uint256 dislikes
         )
     {
-        total = commentsIds.length;
+        total = commentsIdsArray.length;
         likes = _totalLikes.current();
-        dislikes = total - likes;
+        dislikes = total.sub(likes);
     }
 
     /// @notice Return statistic with comments

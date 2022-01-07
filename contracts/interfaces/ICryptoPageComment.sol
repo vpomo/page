@@ -6,7 +6,7 @@ interface IPageComment {
     struct Comment {
         uint256 id;
         address author;
-        string text;
+        bytes32 ipfsHash;
         bool like;
         uint256 price;
     }
@@ -14,7 +14,7 @@ interface IPageComment {
     event NewComment(
         uint256 id,
         address author,
-        string text,
+        bytes32 ipfsHash,
         bool like,
         uint256 price
     );
@@ -29,13 +29,13 @@ interface IPageComment {
 
     function createComment(
         address author,
-        string memory text,
+        bytes32 ipfsHash,
         bool like
     ) external returns (uint256);
 
     function getCommentsIds() external view returns (uint256[] memory);
 
-    function getCommentsByIds(uint256[] memory _ids)
+    function getCommentsByIds(uint256[] memory ids)
         external
         view
         returns (Comment[] memory);
