@@ -14,12 +14,12 @@ contract PageComment {
     struct Comment {
         uint256 id;
         address author;
-        string text;
+        bytes32 ipfsCommentHash; //This MUST be an base58 decoded hash. The reason of it is an IPFS hash consumes 46 bytes, which can't be stored at a single 32 bytes slot
         bool like;
         uint256 price;
     }
 
-    uint256[] public commentsIds;
+    uint256[] public commentsIdsArray;
 
     mapping(uint256 => Comment) public commentsById;
 
@@ -28,7 +28,7 @@ contract PageComment {
     event NewComment(
         uint256 id,
         address author,
-        string text,
+        bytes32 ipfsCommentHash, //This MUST be an base58 decoded hash. The reason of it is an IPFS hash consumes 46 bytes, which can't be stored at a single 32 bytes slot
         bool like,
         uint256 price
     );
@@ -39,7 +39,7 @@ contract PageComment {
 
     function setComment(
         address author,
-        string memory text,
+        bytes32 memory text,
         bool like
     ) internal returns (uint256) {
         return _createComment(author, text, like, 0);
@@ -51,13 +51,13 @@ contract PageComment {
     /// @param like Positive or negative reaction to comment
     function _createComment(
         address author,
-        string memory text,
+        bytes32 memory text,
         bool like,
         uint256 price
     ) internal returns (uint256) {
-        uint256 id = commentsIds.length;
+        uint256 id = commentsIdsArray.length;
 
-        commentsIds.push(id);
+        commentsIdsArray.push(id);
         commentsById[id] = Comment(id, author, text, like, price);
 
         if (like) {
@@ -72,7 +72,7 @@ contract PageComment {
     /// @notice Create comment for any ERC721 Token
     /// @param text Text of comment
     /// @param like Positive or negative reaction to comment
-    function createComment(string memory text, bool like)
+    function createComment(bytes32 memory text, bool like)
         public
         returns (uint256)
     {
@@ -82,7 +82,7 @@ contract PageComment {
     /// @notice Return id's of all comments
     /// @return comments Array of Comment structs
     function getCommentsIds() public view returns (uint256[] memory) {
-        return commentsIds;
+        return commentsIdsArray;
     }
 
     /// @notice Return comments by id's
@@ -94,13 +94,13 @@ contract PageComment {
     {
         require(_ids.length > 0, "_ids length must be more than zero");
         require(
-            _ids.length <= commentsIds.length,
-            "_ids length must be less or equal commentsIds"
+            _ids.length <= commentsIdsArray.length,
+            "_ids length must be less or equal commentsIdsArray"
         );
 
         Comment[] memory comments = new Comment[](_ids.length);
         for (uint256 i = 0; i < _ids.length; i++) {
-            require(_ids[i] <= commentsIds.length, "No comment with this ID");
+            // require(_ids[i] <= commentsIdsArray.length, "No comment with this ID"); –––––––––– Это условие не требуется, т.к. этот вариант уже отсеян в стр. 99: (require(_ids.length <= commentsIdsArray.length))
             Comment storage comment = commentsById[_ids[i]];
             comments[i] = comment;
         }
@@ -110,17 +110,16 @@ contract PageComment {
     /// @notice Return all comments
     /// @return comments Array of Comment structs
     function getComments() public view returns (Comment[] memory) {
+        require(commentsIdsArray.length > 0, "commentsIds array is empty");
         Comment[] memory comments;
-        if (commentsIds.length > 0) {
-            comments = getCommentsByIds(commentsIds);
-        }
+        comments = getCommentsByIds(commentsIdsArray);
         return comments;
     }
 
     /// @notice Return comment by id
     /// @return Comment Count of dislikes
     function getCommentById(uint256 id) public view returns (Comment memory) {
-        // require(id <= commentsIds.length, "No comment with this ID");
+        // require(id <= commentsIdsArray.length, "No comment with this ID");
         return commentsById[id];
     }
 
@@ -137,9 +136,9 @@ contract PageComment {
             uint256 dislikes
         )
     {
-        total = commentsIds.length;
+        total = commentsIdsArray.length;
         likes = _totalLikes.current();
-        dislikes = total - likes;
+        dislikes = total.sub(likes);
     }
 
     /// @notice Return statistic with comments
