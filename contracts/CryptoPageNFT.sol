@@ -13,20 +13,20 @@ import "./interfaces/ICryptoPageNFT.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./CryptoPageBank.sol";
 
+/// @title Contract of PAGE.NFT token
+/// @author Crypto.Page Team
+/// @notice
+/// @dev
 contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeMathUpgradeable for uint256;
 
-    CountersUpgradeable.Counter private _tokenIdCounter;
-    IPageCommentDeployer private commentDeployer;
-    IPageBank private bank;
-
+    CountersUpgradeable.Counter public _tokenIdCounter;
+    IPageCommentDeployer public commentDeployer;
+    IPageBank public bank;
     string private _name;
     string private _symbol;
-
     string public baseURL;
-    address public treasury;
-    uint256 public fee;
 
     mapping(uint256 => address) private commentsById;
     mapping(uint256 => uint256) private pricesById;
@@ -36,19 +36,16 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     /// @param _commentDeployer Address of our PageCommentMinter contract
     /// @param _bank Address of our PageBank contract
     /// @param _baseURL BaseURL of tokenURI, i.e. https://ipfs.io/ipfs/
-    /// @param _fee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
     function initialize(
         address _commentDeployer,
         address _bank,
-        string memory _baseURL,
-        uint256 _fee
+        string memory _baseURL
     ) public payable initializer {
         __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
         // __Ownable_init_unchained();
         commentDeployer = IPageCommentDeployer(_commentDeployer);
         bank = IPageBank(_bank);
         baseURL = _baseURL;
-        fee = _fee;
     }
 
     /// @notice Mint PAGE.NFT token
@@ -60,14 +57,18 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         override
         returns (uint256)
     {
+        // Check gas left before call _safeMint
         uint256 gasBefore = gasleft();
+        require(_msgSender() != address(0), "Address can't be null");
+        require(_owner != address(0), "Address can't be null");
         uint256 tokenId = _safeMint(_owner, _tokenURI);
+        // And calculate amount of gas spent on the function execution
         uint256 gasAfter = gasBefore - gasleft();
         uint256 price;
-        if (_owner == msg.sender) {
+        if (_owner == _msgSender()) {
             price = bank.mint(_owner, gasAfter);
         } else {
-            price = bank.mintFor(msg.sender, _owner, gasAfter);
+            price = bank.mintFor(_msgSender(), _owner, gasAfter);
         }
         pricesById[tokenId] = price;
         return tokenId;
@@ -86,25 +87,33 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     }
 
     /// @notice Burn PAGE.NFT token
-    /// @param _tokenId Id of token
-    function safeBurn(uint256 _tokenId) public override {
+    /// @param tokenId Id of token
+    function safeBurn(uint256 tokenId) public override {
+        // Check the amount of gas before counting awards for comments
         uint256 gasBefore = gasleft();
-        uint256 burnPrice;
-        bool commentsExists = commentDeployer.isExists(address(this), _tokenId);
+        require(ownerOf(tokenId) == _msgSender(), "Allower only for owner");
+        uint256 commentsReward;
+        bool commentsExists = commentDeployer.isExists(address(this), tokenId);
         if (commentsExists) {
             IPageComment commentContract = IPageComment(
-                commentDeployer.getCommentContract(address(this), _tokenId)
+                commentDeployer.getCommentContract(address(this), tokenId)
             );
             IPageComment.Comment[] memory comments = commentContract
                 .getComments();
             for (uint256 i = 0; i < comments.length; i++) {
                 IPageComment.Comment memory comment = comments[i];
-                burnPrice.add(comment.price.mul(2));
+                // If author of the comment is not sender
+                // Need to calculate 45% of comment.price
+                // This is an equivalent reward for comment
+                if (comment.author != _msgSender()) {
+                    commentsReward.add(comment.price.div(100).mul(45));
+                }
             }
         }
+        // Check the amount of gas after counting awards for comments
         uint256 gasAfter = gasBefore - gasleft();
-        bank.burn(msg.sender, gasAfter, burnPrice);
-        _safeBurn(_tokenId);
+        bank.burn(_msgSender(), gasAfter, commentsReward);
+        _safeBurn(tokenId);
     }
 
     /// @notice Transfer PAGE.NFT token
@@ -117,6 +126,8 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         uint256 tokenId
     ) public override(ERC721Upgradeable, IERC721Upgradeable) {
         uint256 gasBefore = gasleft();
+        require(from != address(0), "Address can't be null");
+        require(to != address(0), "Address can't be null");
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
             "ERC721: transfer caller is not owner or approved"
@@ -148,6 +159,9 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         return tokenId;
     }
 
+    /// @notice Return price of token
+    /// @param tokenId URI of token
+    /// @return Price of PAGE.NFT token in PAGE tokens
     function tokenPrice(uint256 tokenId)
         public
         view

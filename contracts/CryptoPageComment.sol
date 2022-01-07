@@ -57,7 +57,7 @@ contract PageComment {
     /// @notice Internal function for creating comment with author param
     /// @param author Address of comment's author
     /// @param text Comment text
-    /// @param like Comment reaction
+    /// @param like Positive or negative reaction to comment
     function setComment(
         address author,
         string memory text,
@@ -67,25 +67,26 @@ contract PageComment {
     }
 
     /// @notice Create comment for any ERC721 Token
-    /// @param author Author of comment
-    /// @param text Text of comment
-    /// @param like Positive or negative reaction to comment
+    /// @param _author Author of comment
+    /// @param _text Text of comment
+    /// @param _like Positive or negative reaction to comment
+    /// @param _price Price in PAGE tokens
     function _createComment(
-        address author,
-        string memory text,
-        bool like,
-        uint256 price
+        address _author,
+        string memory _text,
+        bool _like,
+        uint256 _price
     ) internal returns (uint256) {
         uint256 id = commentsIds.length;
         commentsIds.push(id);
-        commentsById[id] = Comment(id, author, text, like, price);
+        commentsById[id] = Comment(id, _author, _text, _like, _price);
         commentsOf[msg.sender].push(id);
 
-        if (like) {
+        if (_like) {
             _totalLikes.increment();
         }
 
-        emit NewComment(id, author, text, like, price);
+        emit NewComment(id, _author, _text, _like, _price);
 
         return id;
     }

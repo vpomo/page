@@ -78,9 +78,7 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         commentDeployer = _commentDeployer;
         IUniswapV3Factory factory = IUniswapV3Factory(_factory);
         wethusdtPool = IUniswapV3Pool(factory.getPool(weth, usdt, 3000));
-        usdtpagePool = IUniswapV3Pool(
-            factory.createPool(usdt, address(token), 3000)
-        );
+        usdtpagePool = IUniswapV3Pool(factory.createPool(usdt, address(token), 3000));
     }
 
     /// @notice Function for calling from PageNFT.safeMint
@@ -201,15 +199,15 @@ contract PageBank is OwnableUpgradeable, IPageBank {
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
-        usdtpagePool = IUniswapV3Pool(_usdtpagePool);
-    }
+    // function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
+        // usdtpagePool = IUniswapV3Pool(_usdtpagePool);
+    // }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _wethusdtPool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
-        wethusdtPool = IUniswapV3Pool(_wethusdtPool);
-    }
+    // function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
+        // wethusdtPool = IUniswapV3Pool(_wethusdtPool);
+    // }
 
     /// @notice Add amount to _balances
     /// @param _to Address to which to add
@@ -241,23 +239,23 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     }
 
     /// @notice Returns gas multiplied by token's prices and gas price.
-    /// @param gas Comment author's address
+    /// @param _gas Comment author's address
     /// @return PAGE token's count
-    function _calculateAmount(uint256 gas) private view returns (uint256) {
+    function _calculateAmount(uint256 _gas) private view returns (uint256) {
         return
-            gas.mul(tx.gasprice).mul(getWETHUSDTPrice()).mul(
+        _gas.mul(tx.gasprice).mul(getWETHUSDTPrice()).mul(
                 getUSDTPAGEPrice()
             );
     }
 
     /// @notice Returns amount divided by treasury fee
-    /// @param amount Amount for dividing
+    /// @param _amount Amount for dividing
     /// @return PAGE token's count
-    function _calculateTreasuryAmount(uint256 amount)
+    function _calculateTreasuryAmount(uint256 _amount)
         private
         view
         returns (uint256)
     {
-        return amount.div(10000).mul(treasuryFee);
+        return _amount.div(10000).mul(treasuryFee);
     }
 }
