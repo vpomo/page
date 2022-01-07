@@ -6,8 +6,12 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 import "./interfaces/ICryptoPageToken.sol";
 
+/// @title Contract of PAGE token
+/// @author Crypto.Page Team
+/// @notice
+/// @dev Only bank can mint and burn tokens
 contract PageToken is ERC20Upgradeable, IPageToken {
-    address private bank;
+    address public bank;
 
     modifier onlyBank() {
         require(
