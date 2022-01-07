@@ -9,10 +9,13 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./interfaces/ICryptoPageComment.sol";
 import "./interfaces/ICryptoPageCommentDeployer.sol";
-import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./CryptoPageComment.sol";
 
+/// @title The contract deploys CryptoPageComment contracts
+/// @author Crypto.Page Team
+/// @notice Compensates gas from each new comment
+/// @dev Storage CryptoPageComment, ERC721 contracts addresses and tokenIds
 contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
     using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
     using SafeMathUpgradeable for uint256;
@@ -20,20 +23,12 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
     mapping(address => EnumerableMapUpgradeable.UintToAddressMap)
         private commentsByERC721;
 
-    IPageToken public token;
     IPageBank public bank;
 
     /// @notice Initial function
-    /// @param _token Address of our PageToken contract
     /// @param _bank Address of our PageBank contract
-    function initialize(address _token, address _bank)
-        public
-        payable
-        override
-        initializer
-    {
+    function initialize(address _bank) public payable override initializer {
         __Ownable_init();
-        token = IPageToken(_token);
         bank = IPageBank(_bank);
     }
 
@@ -65,52 +60,51 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
     /// @param _nft Address of ERC721 Contract
     /// @param _tokenId Id of ERC721 Token
     /// @return PageComment
-    function _set(address _nft, uint256 _tokenId)
-        private
-        returns (address)
-    {
+    function _set(address _nft, uint256 _tokenId) private returns (address) {
         PageComment comment = new PageComment();
         commentsByERC721[_nft].set(_tokenId, address(comment));
         return address(comment);
     }
 
     /// @notice Return true if PageComment contract exists
-    /// @param _nft Address of ERC721 Contract
-    /// @param _tokenId Id of ERC721 Token
+    /// @param nft Address of ERC721 Contract
+    /// @param tokenId Id of ERC721 Token
     /// @return Boolean
-    function isExists(address _nft, uint256 _tokenId)
+    function isExists(address nft, uint256 tokenId)
         public
         view
         override
         returns (bool)
     {
-        return _exists(_nft, _tokenId);
+        return _exists(nft, tokenId);
     }
 
     /// @notice Create comment for any ERC721 Token
-    /// @param _nft Address of ERC721 Contract
-    /// @param _tokenId Id of ERC721 Token
-    /// @param _author Author of comment
-    /// @param _text Text of comment
-    /// @param _like Positive or negative reaction to comment
+    /// @param nft Address of ERC721 Contract
+    /// @param tokenId Id of ERC721 Token
+    /// @param author Author of comment
+    /// @param text Text of comment
+    /// @param like Positive or negative reaction to comment
     function createComment(
-        address _nft,
-        uint256 _tokenId,
-        address _author,
-        string memory _text,
-        bool _like
+        address nft,
+        uint256 tokenId,
+        address author,
+        string memory text,
+        bool like
     ) public override {
         uint256 gasBefore = gasleft();
+        require(_msgSender() != address(0), "Address can't be null");
+        require(author != address(0), "Address can't be null");
         uint256 commentId = _createComment(
-            _nft,
-            _tokenId,
-            _author,
-            _text,
-            _like
+            nft,
+            tokenId,
+            author,
+            text,
+            like
         );
         uint256 gasAfter = gasleft() - gasBefore;
-        uint256 price = bank.comment(_msgSender(), _author, gasAfter);
-        IPageComment(_get(_nft, _tokenId)).setPrice(commentId, price);
+        uint256 price = bank.comment(_msgSender(), author, gasAfter);
+        IPageComment(_get(nft, tokenId)).setPrice(commentId, price);
     }
 
     /// @notice Create comment for any ERC721 Token
@@ -149,16 +143,16 @@ contract PageCommentDeployer is OwnableUpgradeable, IPageCommentDeployer {
     }
 
     /// @notice Return PageComment contract
-    /// @param _nft Address of ERC721 Contract
-    /// @param _tokenId Id of ERC721 Token
+    /// @param nft Address of ERC721 Contract
+    /// @param tokenId Id of ERC721 Token
     /// @return PageComment
-    function getCommentContract(address _nft, uint256 _tokenId)
+    function getCommentContract(address nft, uint256 tokenId)
         public
         view
         override
         returns (address)
     {
-        require(_exists(_nft, _tokenId), "NFT contract does not exist");
-        return _get(_nft, _tokenId);
+        require(_exists(nft, tokenId), "NFT contract does not exist");
+        return _get(nft, tokenId);
     }
 }
