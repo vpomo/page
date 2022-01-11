@@ -49,27 +49,20 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     }
 
     /// @notice Mint PAGE.NFT token
-    /// @param _owner Address of token owner
-    /// @param _tokenURI URI of token
+    /// @param owner Address of token owner
+    /// @param tokenURI URI of token
     /// @return TokenId
-    function safeMint(address _owner, string memory _tokenURI)
+    function safeMint(address owner, string memory tokenURI)
         public
         override
         returns (uint256)
     {
-        // Check gas left before call _safeMint
         uint256 gasBefore = gasleft();
         require(_msgSender() != address(0), "Address can't be null");
-        require(_owner != address(0), "Address can't be null");
-        uint256 tokenId = _safeMint(_owner, _tokenURI);
-        // And calculate amount of gas spent on the function execution
-        uint256 gasAfter = gasBefore - gasleft();
-        uint256 price;
-        if (_owner == _msgSender()) {
-            price = bank.mint(_owner, gasAfter);
-        } else {
-            price = bank.mintFor(_msgSender(), _owner, gasAfter);
-        }
+        require(owner != address(0), "Address can't be null");
+        uint256 tokenId = _safeMint(owner, tokenURI);
+        uint256 gas = gasBefore - gasleft();
+        uint256 price = bank.calculateMint(_msgSender(), owner, gas);
         pricesById[tokenId] = price;
         return tokenId;
     }
@@ -112,7 +105,7 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         }
         // Check the amount of gas after counting awards for comments
         uint256 gasAfter = gasBefore - gasleft();
-        bank.burn(_msgSender(), gasAfter, commentsReward);
+        bank.calculateBurn(_msgSender(), gasAfter, commentsReward);
         _safeBurn(tokenId);
     }
 
@@ -133,8 +126,8 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
             "ERC721: transfer caller is not owner or approved"
         );
         _safeTransfer(from, to, tokenId, "");
-        uint256 gasAfter = gasBefore - gasleft();
-        bank.transferFrom(from, to, gasAfter);
+        uint256 amount = gasBefore - gasleft();
+        bank.calculateMint(from, to, amount);
     }
 
     /// @notice Burn PAGE.NFT token

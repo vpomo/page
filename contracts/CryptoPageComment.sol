@@ -2,9 +2,13 @@
 
 pragma solidity ^0.8.3;
 
+import "hardhat/console.sol";
+
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
+import "./interfaces/ICryptoPageNFT.sol";
+import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageComment.sol";
 
 /// @title Contract for storage and interaction of comments for ERC721 tokens
@@ -15,6 +19,16 @@ contract PageComment {
     using SafeMathUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
+    constructor(
+        address _nft,
+        uint256 _tokenId,
+        address _bank
+    ) {
+        nft = IPageNFT(_nft);
+        tokenId = _tokenId;
+        bank = IPageBank(_bank);
+    }
+
     struct Comment {
         uint256 id;
         address author;
@@ -22,6 +36,11 @@ contract PageComment {
         bool like;
         uint256 price;
     }
+
+    IPageNFT public nft;
+    IPageBank public bank;
+
+    uint256 public tokenId;
 
     /// Stores all comments ids
     uint256[] public commentsIdsArray;
@@ -47,46 +66,54 @@ contract PageComment {
         uint256 price
     );
 
+    /*
     /// @notice Set price for comment by id
     /// @param id Comment id
     /// @param price Comment price in PAGE tokens
-    function setPrice(uint256 id, uint256 price) internal {
-        commentsById[id].price = price;
-    }
-
+    // function setPrice(uint256 id, uint256 price) internal {
+    // commentsById[id].price = price;
+    // }
+    
     /// @notice Internal function for creating comment with author param
     /// @param author Address of comment's author
     /// @param ipfsHash IPFS hash
     /// @param like Positive or negative reaction to comment
+    
     function setComment(
         address author,
         bytes32 ipfsHash,
         bool like
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         return _createComment(author, ipfsHash, like, 0);
     }
+    */
 
     /// @notice Create comment for any ERC721 Token
     /// @param _author Author of comment
     /// @param _ipfsHash IPFS hash
     /// @param _like Positive or negative reaction to comment
-    /// @param _price Price in PAGE tokens
+    // @param _price Price in PAGE tokens
     function _createComment(
         address _author,
         bytes32 _ipfsHash,
-        bool _like,
-        uint256 _price
-    ) internal returns (uint256) {
+        bool _like
+    )
+        internal
+        returns (
+            // uint256 _price
+            uint256
+        )
+    {
         uint256 id = commentsIdsArray.length;
         commentsIdsArray.push(id);
-        commentsById[id] = Comment(id, _author, _ipfsHash, _like, _price);
+        commentsById[id] = Comment(id, _author, _ipfsHash, _like, 0);
         commentsOf[msg.sender].push(id);
 
         if (_like) {
             _totalLikes.increment();
         }
 
-        emit NewComment(id, _author, _ipfsHash, _like, _price);
+        emit NewComment(id, _author, _ipfsHash, _like, 0);
 
         return id;
     }
@@ -98,8 +125,19 @@ contract PageComment {
         public
         returns (uint256)
     {
+        uint256 gasBefore = gasleft();
         require(msg.sender != address(0), "Address can't be null");
-        return _createComment(msg.sender, ipfsHash, like, 0);
+        uint256 id = _createComment(msg.sender, ipfsHash, like);
+        uint256 gas = gasBefore - gasleft();
+        // uint256 price = bank.calculateMint(
+        commentsById[id].price = bank.calculateMint(
+            msg.sender,
+            IPageNFT(nft).ownerOf(id),
+            gas
+        );
+
+        // return _createComment(msg.sender, ipfsHash, like, 0);
+        return id;
     }
 
     /// @notice Return id's of all comments
@@ -136,15 +174,17 @@ contract PageComment {
     /// @notice Return all comments
     /// @return Array of Comment structs
     function getComments() public view returns (Comment[] memory) {
-        require(commentsIdsArray.length > 0, "commentsIds array is empty");
         Comment[] memory comments;
-        comments = getCommentsByIds(commentsIdsArray);
+        if (commentsIdsArray.length > 0) {
+            comments = getCommentsByIds(commentsIdsArray);
+        }
         return comments;
     }
 
     /// @notice Return comment by id
     /// @return Comment struct
     function getCommentById(uint256 id) public view returns (Comment memory) {
+        require(id < commentsIdsArray.length, "No comment with this ID");
         return commentsById[id];
     }
 

@@ -2,8 +2,10 @@
 
 pragma solidity ^0.8.3;
 
+import "hardhat/console.sol";
+
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+// import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -33,13 +35,14 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     // UniswapV3Pool interface for WETH / USDT pool
     IUniswapV3Pool private wethusdtPool;
 
-    address private weth;
-    address private usdt;
+    // address private weth;
+    // address private usdt;
 
     // Storage balance per address
     mapping(address => uint256) private _balances;
 
     /// Modifier for functions that can call only from CryptoPageNFT address
+    /*
     modifier onlyNFT() {
         require(
             _msgSender() == nft,
@@ -56,6 +59,7 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         );
         _;
     }
+    */
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
@@ -67,8 +71,7 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         address _token,
         address _nft,
         address _commentDeployer,
-        uint256 _treasuryFee,
-        address _factory
+        uint256 _treasuryFee
     ) public initializer {
         __Ownable_init();
         treasury = _treasury;
@@ -76,16 +79,59 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         nft = _nft;
         treasuryFee = _treasuryFee;
         commentDeployer = _commentDeployer;
-        IUniswapV3Factory factory = IUniswapV3Factory(_factory);
-        wethusdtPool = IUniswapV3Pool(factory.getPool(weth, usdt, 3000));
-        usdtpagePool = IUniswapV3Pool(
-            factory.createPool(usdt, address(token), 3000)
-        );
+    }
+
+    function calculateMint(
+        address sender,
+        address receiver,
+        uint256 amount
+    ) public override returns (uint256) {
+        amount = _calculateAmount(amount);
+        uint256 treasuryAmount = _calculateTreasuryAmount(amount);
+        if (sender == receiver) {
+            amount += _refund(sender);
+            _setBalance(treasury, _addBalance(treasury, treasuryAmount));
+            token.mint(sender, amount);
+        } else {
+            _setBalance(treasury, _addBalance(treasury, treasuryAmount));
+            _setBalance(receiver, _addBalance(receiver, amount));
+            amount = amount.sub(2);
+            token.mint(sender, amount += _refund(sender));
+        }
+        return amount;
+    }
+
+    function calculateBurn(
+        address receiver,
+        uint256 gas,
+        uint256 commentsReward
+    ) public override returns (uint256) {
+        uint256 amount = _calculateAmount(gas);
+        console.log("amount is %s", amount);
+        commentsReward = _calculateAmount(commentsReward);
+        if (amount > commentsReward) {
+            amount = amount.sub(commentsReward);
+        }
+        console.log("balance of %s", receiver);
+        console.log("is %s", token.balanceOf(receiver));
+        token.burn(receiver, amount);
+        return amount;
+    }
+
+    function withdraw(uint256 amount) public payable override {
+        require(_balances[_msgSender()] >= amount, "Not enough balance");
+        _subBalance(_msgSender(), amount);
+        token.mint(_msgSender(), amount);
+    }
+
+    function balanceOf() public view override returns (uint256) {
+        return _balances[_msgSender()];
     }
 
     /// @notice Function for calling from PageNFT.safeMint
     /// @param to Address for minting
     /// @param gas Amount of gas spent on the execution PageNFT.safeMint function
+    /*
     function mint(address to, uint256 gas)
         public
         payable
@@ -95,8 +141,11 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     {
         uint256 amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
+
+        amount += _refund(to);
         token.mint(to, amount);
         _setBalance(treasury, _addBalance(treasury, treasuryAmount));
+        console.log("balance of treausry", _balances[treasury]);
         return amount;
     }
 
@@ -113,9 +162,9 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         uint256 amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
         amount = amount.div(2);
-        token.mint(to, amount);
+        token.mint(from, amount += _refund(from));
         _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-        _setBalance(from, _addBalance(from, amount));
+        _setBalance(to, _addBalance(to, amount));
         return amount;
     }
 
@@ -128,12 +177,13 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         uint256 commentsReward
     ) public payable override onlyNFT {
         uint256 amount = _calculateAmount(gas);
+        console.log("amount is %s", amount);
         commentsReward = _calculateAmount(commentsReward);
-        if (commentsReward > amount) {
-            amount = commentsReward.sub(amount);
+        if (amount > commentsReward) {
+            amount = amount.sub(commentsReward);
         }
-
-        require(token.balanceOf(_msgSender()) >= amount, "not enought balance");
+        console.log("balance of %s", to);
+        console.log("is %s", token.balanceOf(to));
         token.burn(to, amount);
     }
 
@@ -151,9 +201,9 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         amount = amount.div(2);
         _setBalance(to, _addBalance(to, amount));
         _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-        token.mint(from, amount);
+        token.mint(from, amount += _refund(to));
     }
-
+    
     /// @notice Function for calling from PageNFT.createComment
     /// @param from Comment author's address
     /// @param to Recipient address
@@ -168,13 +218,14 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         uint256 amount = basicAmount.div(2);
         _setBalance(from, _addBalance(from, amount));
         _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-        token.mint(to, amount);
+        token.mint(to, amount += _refund(to));
         return basicAmount;
     }
-
+    */
     /// @notice Returns WETH / USDT price from UniswapV3
     /// @return WETH / USDT price
     function getWETHUSDTPrice() public view override returns (uint256) {
+        /*
         (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
         uint256 price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
@@ -182,11 +233,14 @@ contract PageBank is OwnableUpgradeable, IPageBank {
             .div(10e6)
             .div(2**192);
         return price;
+        */
+        return 3500;
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @return USDT / PAGE price
     function getUSDTPAGEPrice() public view override returns (uint256) {
+        /*
         (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
         uint256 price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
@@ -197,19 +251,30 @@ contract PageBank is OwnableUpgradeable, IPageBank {
             price = 100;
         }
         return price;
+        */
+        return 50;
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    // function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
-    // usdtpagePool = IUniswapV3Pool(_usdtpagePool);
-    // }
+    function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
+        usdtpagePool = IUniswapV3Pool(_usdtpagePool);
+    }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _wethusdtPool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    // function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
-    // wethusdtPool = IUniswapV3Pool(_wethusdtPool);
-    // }
+    function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
+        wethusdtPool = IUniswapV3Pool(_wethusdtPool);
+    }
+
+    /// @notice Return amount from _balance and set 0
+    /// @param _to Address of tokens holder
+    /// @return Amount of PAGE tokens
+    function _refund(address _to) private returns (uint256) {
+        uint256 balance = _balances[_to];
+        _balances[_to] = 0;
+        return balance;
+    }
 
     /// @notice Add amount to _balances
     /// @param _to Address to which to add
@@ -218,7 +283,7 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         private
         returns (uint256)
     {
-        _balances[_to] += _amount;
+        _balances[_to] = _balances[_to].add(_amount);
         return _balances[_to];
     }
 
@@ -229,7 +294,7 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         private
         returns (uint256)
     {
-        _balances[_to] += _amount;
+        _balances[_to] = _balances[_to].sub(_amount);
         return _balances[_to];
     }
 

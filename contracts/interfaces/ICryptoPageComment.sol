@@ -19,14 +19,14 @@ interface IPageComment {
         uint256 price
     );
 
-    function setPrice(uint256 id, uint256 price) external;
-
+    // function setPrice(uint256 id, uint256 price) external;
+    /*
     function setComment(
         address author,
-        string memory text,
+        bytes32 ipfsHash,
         bool like
     ) external returns (uint256);
-
+    */
     function createComment(
         address author,
         bytes32 ipfsHash,
