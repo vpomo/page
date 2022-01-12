@@ -42,7 +42,6 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         string memory _baseURL
     ) public payable initializer {
         __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
-        // __Ownable_init_unchained();
         commentDeployer = IPageCommentDeployer(_commentDeployer);
         bank = IPageBank(_bank);
         baseURL = _baseURL;

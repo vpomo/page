@@ -5,7 +5,6 @@ pragma solidity ^0.8.3;
 import "hardhat/console.sol";
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-// import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -40,26 +39,6 @@ contract PageBank is OwnableUpgradeable, IPageBank {
 
     // Storage balance per address
     mapping(address => uint256) private _balances;
-
-    /// Modifier for functions that can call only from CryptoPageNFT address
-    /*
-    modifier onlyNFT() {
-        require(
-            _msgSender() == nft,
-            "PageBank. Only PageNFT can call this function"
-        );
-        _;
-    }
-
-    /// Modifier for functions that can call only from CryptoPageCommentDeployer address
-    modifier onlyCommentDeployer() {
-        require(
-            _msgSender() == commentDeployer,
-            "PageBank. Only PageCommentDeployer can call this function"
-        );
-        _;
-    }
-    */
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
@@ -128,100 +107,6 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         return _balances[_msgSender()];
     }
 
-    /// @notice Function for calling from PageNFT.safeMint
-    /// @param to Address for minting
-    /// @param gas Amount of gas spent on the execution PageNFT.safeMint function
-    /*
-    function mint(address to, uint256 gas)
-        public
-        payable
-        override
-        onlyNFT
-        returns (uint256)
-    {
-        uint256 amount = _calculateAmount(gas);
-        uint256 treasuryAmount = _calculateTreasuryAmount(amount);
-
-        amount += _refund(to);
-        token.mint(to, amount);
-        _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-        console.log("balance of treausry", _balances[treasury]);
-        return amount;
-    }
-
-    /// @notice Function for calling from PageNFT.safeMint for another address
-    /// @param from Sender's address
-    /// @param to Owner's address of PAGE.NFT token
-    /// @param gas Amount of gas spent on the execution PageNFT.safeMint function
-    function mintFor(
-        address from,
-        address to,
-        uint256 gas
-    ) public payable override onlyNFT returns (uint256) {
-        require(_msgSender() == from, "Only for owner");
-        uint256 amount = _calculateAmount(gas);
-        uint256 treasuryAmount = _calculateTreasuryAmount(amount);
-        amount = amount.div(2);
-        token.mint(from, amount += _refund(from));
-        _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-        _setBalance(to, _addBalance(to, amount));
-        return amount;
-    }
-
-    /// @notice Function for calling from PageNFT.safeBurn
-    /// @param to Owner's address of PAGE.NFT token
-    /// @param commentsReward Amount of gas spent on the execution PageNFT.safeBurn function
-    function burn(
-        address to,
-        uint256 gas,
-        uint256 commentsReward
-    ) public payable override onlyNFT {
-        uint256 amount = _calculateAmount(gas);
-        console.log("amount is %s", amount);
-        commentsReward = _calculateAmount(commentsReward);
-        if (amount > commentsReward) {
-            amount = amount.sub(commentsReward);
-        }
-        console.log("balance of %s", to);
-        console.log("is %s", token.balanceOf(to));
-        token.burn(to, amount);
-    }
-
-    /// @notice Function for calling from PageNFT.safeTransferFrom
-    /// @param from Owner's address of PAGE.NFT token
-    /// @param to Recipient address
-    /// @param gas Amount of gas spent on the execution PageNFT.safeTransferFrom function
-    function transferFrom(
-        address from,
-        address to,
-        uint256 gas
-    ) public payable override onlyNFT {
-        uint256 amount = _calculateAmount(gas);
-        uint256 treasuryAmount = _calculateTreasuryAmount(amount);
-        amount = amount.div(2);
-        _setBalance(to, _addBalance(to, amount));
-        _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-        token.mint(from, amount += _refund(to));
-    }
-    
-    /// @notice Function for calling from PageNFT.createComment
-    /// @param from Comment author's address
-    /// @param to Recipient address
-    /// @param gas Amount of gas spent on the execution PageNFT.createComment function
-    function comment(
-        address from,
-        address to,
-        uint256 gas
-    ) public payable override onlyCommentDeployer returns (uint256) {
-        uint256 basicAmount = _calculateAmount(gas);
-        uint256 treasuryAmount = _calculateTreasuryAmount(basicAmount);
-        uint256 amount = basicAmount.div(2);
-        _setBalance(from, _addBalance(from, amount));
-        _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-        token.mint(to, amount += _refund(to));
-        return basicAmount;
-    }
-    */
     /// @notice Returns WETH / USDT price from UniswapV3
     /// @return WETH / USDT price
     function getWETHUSDTPrice() public view override returns (uint256) {
