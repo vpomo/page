@@ -3,33 +3,6 @@
 pragma solidity ^0.8.3;
 
 interface IPageBank {
-    /*
-    function mint(address to, uint256 gas) external payable returns (uint256);
-
-    function mintFor(
-        address from,
-        address to,
-        uint256 gas
-    ) external payable returns (uint256);
-
-    function burn(
-        address to,
-        uint256 gas,
-        uint256 burnPrice
-    ) external payable;
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 gas
-    ) external payable;
-
-    function comment(
-        address from,
-        address to,
-        uint256 gas
-    ) external payable returns (uint256);
-    */
     function calculateMint(
         address sender,
         address receiver,
@@ -49,6 +22,8 @@ interface IPageBank {
     function setUSDTPAGEPool(address _usdtpagePool) external;
 
     function setWETHUSDTPool(address _wethusdtPool) external;
+
+    function setToken(address _address) external;
 
     function withdraw(uint256 amount) external payable;
 

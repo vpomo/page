@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.3;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
 interface IPageComment {
     struct Comment {
         uint256 id;
@@ -19,32 +21,36 @@ interface IPageComment {
         uint256 price
     );
 
-    // function setPrice(uint256 id, uint256 price) external;
-    /*
-    function setComment(
-        address author,
-        bytes32 ipfsHash,
-        bool like
-    ) external returns (uint256);
-    */
     function createComment(
-        address author,
+        address nft,
+        uint256 tokenId,
         bytes32 ipfsHash,
         bool like
     ) external returns (uint256);
 
-    function getCommentsIds() external view returns (uint256[] memory);
+    function getCommentsIds(address nft, uint256 tokenId)
+        external
+        view
+        returns (uint256[] memory);
 
-    function getCommentsByIds(uint256[] memory ids)
+    function getCommentsByIds(
+        address nft,
+        uint256 tokenId,
+        uint256[] memory ids
+    ) external view returns (Comment[] memory);
+
+    function getComments(address nft, uint256 tokenId)
         external
         view
         returns (Comment[] memory);
 
-    function getComments() external view returns (Comment[] memory);
+    function getCommentById(
+        address nft,
+        uint256 tokenId,
+        uint256 id
+    ) external view returns (Comment memory);
 
-    function getCommentById(uint256 id) external view returns (Comment memory);
-
-    function getStatistic()
+    function getStatistic(address nft, uint256 tokenId)
         external
         view
         returns (
@@ -53,7 +59,7 @@ interface IPageComment {
             uint256 dislikes
         );
 
-    function getStatisticWithComments()
+    function getStatisticWithComments(address nft, uint256 tokenId)
         external
         view
         returns (

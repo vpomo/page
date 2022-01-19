@@ -5,8 +5,8 @@ pragma solidity ^0.8.3;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import "./interfaces/ICryptoPageCommentDeployer.sol";
 import "./interfaces/ICryptoPageComment.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageNFT.sol";
@@ -22,7 +22,8 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     using SafeMathUpgradeable for uint256;
 
     CountersUpgradeable.Counter public _tokenIdCounter;
-    IPageCommentDeployer public commentDeployer;
+    // IPageCommentDeployer public commentDeployer;
+    IPageComment public comment;
     IPageBank public bank;
     string private _name;
     string private _symbol;
@@ -33,16 +34,16 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     mapping(uint256 => address) private creatorById;
 
     /// @notice Initial function
-    /// @param _commentDeployer Address of our PageCommentMinter contract
+    /// @param _comment Address of our PageCommentMinter contract
     /// @param _bank Address of our PageBank contract
     /// @param _baseURL BaseURL of tokenURI, i.e. https://ipfs.io/ipfs/
     function initialize(
-        address _commentDeployer,
+        address _comment,
         address _bank,
         string memory _baseURL
     ) public payable initializer {
         __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
-        commentDeployer = IPageCommentDeployer(_commentDeployer);
+        comment = IPageComment(_comment);
         bank = IPageBank(_bank);
         baseURL = _baseURL;
     }
@@ -57,7 +58,6 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         returns (uint256)
     {
         uint256 gasBefore = gasleft();
-        require(_msgSender() != address(0), "Address can't be null");
         require(owner != address(0), "Address can't be null");
         uint256 tokenId = _safeMint(owner, tokenURI);
         uint256 gas = gasBefore - gasleft();
@@ -84,14 +84,32 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         // Check the amount of gas before counting awards for comments
         uint256 gasBefore = gasleft();
         require(ownerOf(tokenId) == _msgSender(), "Allower only for owner");
-        uint256 commentsReward;
-        bool commentsExists = commentDeployer.isExists(address(this), tokenId);
+        uint256 commentsReward = 0;
+        IPageComment.Comment[] memory comments = comment.getComments(
+            address(this),
+            tokenId
+        );
+        for (uint256 i = 0; i < comments.length; i++) {
+            IPageComment.Comment memory commentInstance = comments[i];
+            // If author of the comment is not sender
+            // Need to calculate 45% of comment.price
+            // This is an equivalent reward for comment
+            if (commentInstance.author != _msgSender()) {
+                commentsReward.add(commentInstance.price.div(100).mul(45));
+            }
+        }
+        // bool commentsExists = comment.isExists(address(this), tokenId);
+        /*
         if (commentsExists) {
-            IPageComment commentContract = IPageComment(
-                commentDeployer.getCommentContract(address(this), tokenId)
+            // commentDeployer.isExists(address(this), tokenId)) {
+            address commentContractAddress = commentDeployer.getCommentContract(
+                address(this),
+                tokenId
             );
-            IPageComment.Comment[] memory comments = commentContract
-                .getComments();
+            // console.log("commentContractAddress is %s", commentContractAddress);
+            // IPageComment commentContract = IPageComment(commentContractAddress);
+            IPageComment.Comment[] memory comments = getComments();
+            console.log("comment id %s", comments[0].id);
             for (uint256 i = 0; i < comments.length; i++) {
                 IPageComment.Comment memory comment = comments[i];
                 // If author of the comment is not sender
@@ -102,6 +120,7 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
                 }
             }
         }
+        */
         // Check the amount of gas after counting awards for comments
         uint256 gasAfter = gasBefore - gasleft();
         bank.calculateBurn(_msgSender(), gasAfter, commentsReward);
@@ -112,11 +131,12 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     /// @param from Approved or owner of token
     /// @param to Receiver of token
     /// @param tokenId Id of token
-    function safeTransferFrom(
+    function safeTransferFrom2(
         address from,
         address to,
         uint256 tokenId
-    ) public override(ERC721Upgradeable, IERC721Upgradeable) {
+    ) public override {
+        // ) public override(IERC721Upgradeable, ERC721Upgradeable) {
         uint256 gasBefore = gasleft();
         require(from != address(0), "Address can't be null");
         require(to != address(0), "Address can't be null");

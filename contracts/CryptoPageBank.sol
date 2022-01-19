@@ -2,22 +2,25 @@
 
 pragma solidity ^0.8.3;
 
-import "hardhat/console.sol";
-
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageToken.sol";
-import "./interfaces/ICryptoPageCommentDeployer.sol";
 
 /// @title The contract calculates amount and mint / burn PAGE tokens
 /// @author Crypto.Page Team
 /// @notice
 /// @dev
-contract PageBank is OwnableUpgradeable, IPageBank {
+contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+
     using SafeMathUpgradeable for uint256;
+
+    mapping(address => bool) public whitelist;
 
     /// Address of Crypto.Page treasury
     address public treasury;
@@ -34,37 +37,27 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     // UniswapV3Pool interface for WETH / USDT pool
     IUniswapV3Pool private wethusdtPool;
 
-    // address private weth;
-    // address private usdt;
-
     // Storage balance per address
     mapping(address => uint256) private _balances;
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
-    /// @param _nft Address of ERC721 contract
-    /// @param _commentDeployer Address of PageCommentDeployer contract
     /// @param _treasuryFee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
-    function initialize(
-        address _treasury,
-        address _token,
-        address _nft,
-        address _commentDeployer,
-        uint256 _treasuryFee
-    ) public initializer {
+    function initialize(address _treasury, uint256 _treasuryFee)
+        public
+        initializer
+    {
         __Ownable_init();
         treasury = _treasury;
-        token = IPageToken(_token);
-        nft = _nft;
         treasuryFee = _treasuryFee;
-        commentDeployer = _commentDeployer;
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     function calculateMint(
         address sender,
         address receiver,
         uint256 amount
-    ) public override returns (uint256) {
+    ) public override onlyRole(MINTER_ROLE) returns (uint256) {
         amount = _calculateAmount(amount);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
         if (sender == receiver) {
@@ -74,8 +67,9 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         } else {
             _setBalance(treasury, _addBalance(treasury, treasuryAmount));
             _setBalance(receiver, _addBalance(receiver, amount));
-            amount = amount.sub(2);
-            token.mint(sender, amount += _refund(sender));
+            amount = amount.div(2);
+            uint256 newAmount = amount += _refund(sender);
+            token.mint(sender, newAmount);
         }
         return amount;
     }
@@ -84,15 +78,12 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         address receiver,
         uint256 gas,
         uint256 commentsReward
-    ) public override returns (uint256) {
+    ) public override onlyRole(BURNER_ROLE) returns (uint256) {
         uint256 amount = _calculateAmount(gas);
-        console.log("amount is %s", amount);
         commentsReward = _calculateAmount(commentsReward);
         if (amount > commentsReward) {
             amount = amount.sub(commentsReward);
         }
-        console.log("balance of %s", receiver);
-        console.log("is %s", token.balanceOf(receiver));
         token.burn(receiver, amount);
         return amount;
     }
@@ -110,22 +101,19 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     /// @notice Returns WETH / USDT price from UniswapV3
     /// @return WETH / USDT price
     function getWETHUSDTPrice() public view override returns (uint256) {
-        /*
         (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
         uint256 price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
             .mul(10e18)
             .div(10e6)
             .div(2**192);
+        // return 3600;
         return price;
-        */
-        return 3500;
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @return USDT / PAGE price
     function getUSDTPAGEPrice() public view override returns (uint256) {
-        /*
         (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
         uint256 price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
@@ -135,9 +123,8 @@ contract PageBank is OwnableUpgradeable, IPageBank {
         if (price > 100) {
             price = 100;
         }
+        // return 60;
         return price;
-        */
-        return 50;
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
@@ -150,6 +137,10 @@ contract PageBank is OwnableUpgradeable, IPageBank {
     /// @param _wethusdtPool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
     function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
         wethusdtPool = IUniswapV3Pool(_wethusdtPool);
+    }
+
+    function setToken(address _address) public override onlyOwner {
+        token = IPageToken(_address);
     }
 
     /// @notice Return amount from _balance and set 0

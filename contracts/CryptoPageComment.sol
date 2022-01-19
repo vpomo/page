@@ -2,12 +2,11 @@
 
 pragma solidity ^0.8.3;
 
-import "hardhat/console.sol";
-
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageComment.sol";
 
@@ -18,16 +17,15 @@ import "./interfaces/ICryptoPageComment.sol";
 contract PageComment {
     using SafeMathUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
+    using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
 
-    constructor(
-        address _nft,
-        uint256 _tokenId,
-        address _bank
-    ) {
-        nft = _nft;
-        tokenId = _tokenId;
-        bank = IPageBank(_bank);
-    }
+    /// Stores all comments ids
+    mapping(bytes32 => uint256[]) public commentsIdsArray;
+    mapping(bytes32 => mapping(uint256 => Comment)) public commentsById;
+    mapping(bytes32 => CountersUpgradeable.Counter) private _totalLikes;
+    mapping(bytes32 => mapping(address => uint256[])) public commentsOf;
+    mapping(address => EnumerableMapUpgradeable.UintToAddressMap)
+        private commentsByERC721;
 
     struct Comment {
         uint256 id;
@@ -37,18 +35,11 @@ contract PageComment {
         uint256 price;
     }
 
-    address public nft;
-    uint256 public tokenId;
     IPageBank public bank;
 
-    /// Stores all comments ids
-    uint256[] public commentsIdsArray;
-    /// Stores the Сomment struct by id
-    mapping(uint256 => Comment) public commentsById;
-    /// Stores the comment ids by author's address
-    mapping(address => uint256[]) public commentsOf;
-
-    CountersUpgradeable.Counter private _totalLikes;
+    constructor(address _bank) {
+        bank = IPageBank(_bank);
+    }
 
     /// @notice The event is emmited when creating a new comment
     /// @dev Emmited occurs in the _createComment function
@@ -66,71 +57,70 @@ contract PageComment {
     );
 
     /// @notice Create comment for any ERC721 Token
-    /// @param _author Author of comment
-    /// @param _ipfsHash IPFS hash
-    /// @param _like Positive or negative reaction to comment
-    function _createComment(
-        address _author,
-        bytes32 _ipfsHash,
-        bool _like
-    ) internal returns (uint256) {
-        uint256 id = commentsIdsArray.length;
-        commentsIdsArray.push(id);
-        commentsById[id] = Comment(id, _author, _ipfsHash, _like, 0);
-        commentsOf[msg.sender].push(id);
-        if (_like) {
-            _totalLikes.increment();
-        }
-        emit NewComment(id, _author, _ipfsHash, _like, 0);
-
-        return id;
-    }
-
-    /// @notice Create comment for any ERC721 Token
     /// @param ipfsHash IPFS hash
     /// @param like Positive or negative reaction to comment
-    function createComment(bytes32 ipfsHash, bool like)
-        public
-        returns (uint256)
-    {
+    function createComment(
+        IERC721 nft,
+        uint256 tokenId,
+        bytes32 ipfsHash,
+        bool like
+    ) public returns (Comment memory) {
         uint256 gasBefore = gasleft();
         require(msg.sender != address(0), "Address can't be null");
-        uint256 id = _createComment(msg.sender, ipfsHash, like);
-        uint256 gas = gasBefore - gasleft();
-        commentsById[id].price = bank.calculateMint(
+        Comment memory comment = _createComment(
+            nft,
+            tokenId,
             msg.sender,
-            IERC721Upgradeable(nft).ownerOf(tokenId),
-            gas
+            ipfsHash,
+            like
         );
-        return id;
+        uint256 gas = gasBefore - gasleft();
+        commentsById[_getBytes32(address(nft), tokenId)][comment.id]
+            .price = bank.calculateMint(msg.sender, nft.ownerOf(tokenId), gas);
+        emit NewComment(
+            comment.id,
+            comment.author,
+            comment.ipfsHash,
+            comment.like,
+            comment.price
+        );
+        return comment;
     }
 
     /// @notice Return id's of all comments
     /// @return Array of Comment structs
-    function getCommentsIds() public view returns (uint256[] memory) {
-        return commentsIdsArray;
+    function getCommentsIds(IERC721 nft, uint256 tokenId)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return commentsIdsArray[_getBytes32(address(nft), tokenId)];
     }
 
     /// @notice Return comments by id's
     /// @return Array of Comment structs
-    function getCommentsByIds(uint256[] memory ids)
-        public
-        view
-        returns (Comment[] memory)
-    {
+    function getCommentsByIds(
+        IERC721 nft,
+        uint256 tokenId,
+        uint256[] memory ids
+    ) public view returns (Comment[] memory) {
         require(ids.length > 0, "ids length must be more than zero");
         require(
-            ids.length <= commentsIdsArray.length,
+            ids.length <=
+                commentsIdsArray[_getBytes32(address(nft), tokenId)].length,
             "ids length must be less or equal commentsIdsArray"
         );
 
         Comment[] memory comments = new Comment[](ids.length);
         for (uint256 i = 0; i < ids.length; i++) {
             require(
-                ids[i] <= commentsIdsArray.length,
+                ids[i] <=
+                    commentsIdsArray[_getBytes32(address(nft), tokenId)].length,
                 "No comment with this ID"
             );
-            Comment storage comment = commentsById[ids[i]];
+            Comment storage comment = commentsById[
+                _getBytes32(address(nft), tokenId)
+            ][ids[i]];
             comments[i] = comment;
         }
         return comments;
@@ -138,26 +128,41 @@ contract PageComment {
 
     /// @notice Return all comments
     /// @return Array of Comment structs
-    function getComments() public view returns (Comment[] memory) {
+    function getComments(IERC721 nft, uint256 tokenId)
+        public
+        view
+        returns (Comment[] memory)
+    {
         Comment[] memory comments;
-        if (commentsIdsArray.length > 0) {
-            comments = getCommentsByIds(commentsIdsArray);
+        if (commentsIdsArray[_getBytes32(address(nft), tokenId)].length > 0) {
+            comments = getCommentsByIds(
+                nft,
+                tokenId,
+                commentsIdsArray[_getBytes32(address(nft), tokenId)]
+            );
         }
         return comments;
     }
 
     /// @notice Return comment by id
     /// @return Comment struct
-    function getCommentById(uint256 id) public view returns (Comment memory) {
-        require(id < commentsIdsArray.length, "No comment with this ID");
-        return commentsById[id];
+    function getCommentById(
+        IERC721 nft,
+        uint256 tokenId,
+        uint256 id
+    ) public view returns (Comment memory) {
+        require(
+            id < commentsIdsArray[_getBytes32(address(nft), tokenId)].length,
+            "No comment with this ID"
+        );
+        return commentsById[_getBytes32(address(nft), tokenId)][id];
     }
 
     /// @notice Return statistic
     /// @return total Count of comments
     /// @return likes Count of likes
     /// @return dislikes Count of dislikes
-    function getStatistic()
+    function getStatistic(IERC721 nft, uint256 tokenId)
         public
         view
         returns (
@@ -166,8 +171,8 @@ contract PageComment {
             uint256 dislikes
         )
     {
-        total = commentsIdsArray.length;
-        likes = _totalLikes.current();
+        total = commentsIdsArray[_getBytes32(address(nft), tokenId)].length;
+        likes = _totalLikes[_getBytes32(address(nft), tokenId)].current();
         dislikes = total.sub(likes);
     }
 
@@ -176,7 +181,7 @@ contract PageComment {
     /// @return likes Count of likes
     /// @return dislikes Count of dislikes
     /// @return comments Array of Comment structs
-    function getStatisticWithComments()
+    function getStatisticWithComments(IERC721 nft, uint256 tokenId)
         public
         view
         returns (
@@ -186,27 +191,71 @@ contract PageComment {
             Comment[] memory comments
         )
     {
-        (uint256 _total, uint256 _likes, uint256 _dislikes) = getStatistic();
+        (uint256 _total, uint256 _likes, uint256 _dislikes) = getStatistic(
+            nft,
+            tokenId
+        );
         total = _total;
         likes = _likes;
         dislikes = _dislikes;
-        comments = getComments();
+        comments = getComments(nft, tokenId);
     }
 
     /// @notice Return comments by author's address
     /// @param author Address of author
     /// @return Comments Array of Comment structs
-    function getCommentsOf(address author)
-        public
-        view
-        returns (Comment[] memory)
-    {
+    function getCommentsOf(
+        IERC721 nft,
+        uint256 tokenId,
+        address author
+    ) public view returns (Comment[] memory) {
         require(msg.sender != address(0), "Address can't be null");
-        uint256[] memory ids = commentsOf[author];
+        uint256[] memory ids = commentsOf[_getBytes32(address(nft), tokenId)][
+            author
+        ];
         Comment[] memory comments;
         if (ids.length > 0) {
-            comments = getCommentsByIds(ids);
+            comments = getCommentsByIds(nft, tokenId, ids);
         }
         return comments;
+    }
+
+    /// @notice Create comment for any ERC721 Token
+    /// @param _author Author of comment
+    /// @param _ipfsHash IPFS hash
+    /// @param _like Positive or negative reaction to comment
+    function _createComment(
+        IERC721 nft,
+        uint256 tokenId,
+        address _author,
+        bytes32 _ipfsHash,
+        bool _like
+    ) internal returns (Comment memory) {
+        uint256 id = commentsIdsArray[_getBytes32(address(nft), tokenId)]
+            .length;
+        commentsIdsArray[_getBytes32(address(nft), tokenId)].push(id);
+        commentsOf[_getBytes32(address(nft), tokenId)][msg.sender].push(id);
+        commentsById[_getBytes32(address(nft), tokenId)][id] = Comment(
+            id,
+            _author,
+            _ipfsHash,
+            _like,
+            0
+        );
+        if (_like) {
+            CountersUpgradeable.Counter storage counter = _totalLikes[
+                _getBytes32(address(nft), tokenId)
+            ];
+            counter.increment();
+        }
+        return commentsById[_getBytes32(address(nft), tokenId)][id];
+    }
+
+    function _getBytes32(address nft, uint256 tokenId)
+        private
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(nft, tokenId));
     }
 }
