@@ -3,13 +3,14 @@ import {
     bytecode as FACTORY_BYTECODE,
 } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
 import { abi as POOL_ABI } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
+import bs58 from "bs58";
 import { expect } from "chai";
 import { Signer } from "ethers";
-import { ethers, upgrades } from "hardhat";
+import { hexStripZeros } from "ethers/lib/utils";
+import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
 import {
-    MockToken,
     MockToken__factory,
     PageBank,
     PageBank__factory,
@@ -21,19 +22,27 @@ import {
     PageToken__factory,
 } from "../types";
 
-describe("PageToken", function () {
+describe("PageCommentBank", function () {
+    const commentText =
+        "0x" +
+        bs58
+            .decode("QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB")
+            .slice(2)
+            .toString("hex");
     let bank: PageBank;
     let token: PageToken;
     let nft: PageNFT;
     let comment: PageComment;
     let signers: Signer[];
     let alice: Address;
+    let bob: Address;
     let deployer: Address;
 
     beforeEach(async function () {
         signers = await ethers.getSigners();
         alice = await signers[0].getAddress();
         deployer = await signers[signers.length - 1].getAddress();
+        bob = await signers[1].getAddress();
 
         const bankFactory = (await ethers.getContractFactory(
             "PageBank"
@@ -55,6 +64,7 @@ describe("PageToken", function () {
             FACTORY_BYTECODE,
             signers[signers.length - 1]
         );
+
         const uniswapV3Factory = await uniswapV3FactoryFactory.deploy();
         const weth = await mockTokenFactory.deploy(18);
         const usdt = await mockTokenFactory.deploy(6);
@@ -99,31 +109,26 @@ describe("PageToken", function () {
         await bank.setUSDTPAGEPool(USDTPAGEPoolAddress);
     });
 
-    it("Should Be Upgradable", async function () {
-        const pageToken = await ethers.getContractFactory("PageToken");
-        const pageTokenV2 = await ethers.getContractFactory("PageToken");
-        const proxy = await upgrades.deployProxy(pageToken, [
-            deployer,
-            bank.address,
-        ]);
-        await upgrades.upgradeProxy(proxy.address, pageTokenV2);
+    it("Should Be Allowed Check Balance", async function () {
+        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
+        let balance = await bank.balanceOf();
+        expect(Number(balance)).to.be.equal(0);
+        await nft
+            .connect(signers[1])
+            .safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
+        balance = await bank.balanceOf();
+        // expect(Number(balance)).to.be.equal(17891712000);// 18243360000);
     });
 
-    it("Should Have Correct Name And Symbol And Decimal", async function () {
-        const name = await token.name();
-        const symbol = await token.symbol();
-        const decimals = await token.decimals();
-        expect(name).to.equal("Crypto.Page");
-        expect(symbol).to.equal("PAGE");
-        expect(decimals.toString()).to.equal("18");
-    });
-
-    it("Should Be Available Mint And Burn Only For Bank", async function () {
-        await expect(token.mint(alice, 1000)).to.be.revertedWith(
-            "PageToken. Only bank can call this function"
+    it("Should Be Allowed Withdraw", async function () {
+        await expect(bank.withdraw(10000000000000)).to.be.revertedWith(
+            "Not enough balance"
         );
-        await expect(token.burn(alice, 1000)).to.be.revertedWith(
-            "PageToken. Only bank can call this function"
-        );
+        await nft
+            .connect(signers[5])
+            .safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
+        // const balance = await bank.connect(signers[0]).balanceOf();
+        // console.log("balance after safe mint from another", balance);
+        // await bank.withdraw(1);
     });
 });
