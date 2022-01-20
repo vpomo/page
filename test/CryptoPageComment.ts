@@ -70,7 +70,7 @@ describe("PageComment", async function () {
 
         token = await tokenFactory.deploy();
         nft = await nftFactory.deploy();
-        comment = await commentFactory.deploy(bank.address);
+        comment = await commentFactory.deploy();
 
         await token.initialize(deployer, bank.address);
         await weth.deployed();
@@ -89,10 +89,9 @@ describe("PageComment", async function () {
         );
         const WETHUSDTPool = new ethers.Contract(WETHUSDTPoolAddress, POOL_ABI);
         const USDTPAGEPool = new ethers.Contract(USDTPAGEPoolAddress, POOL_ABI);
-        // await WETHUSDTPool.initialize(1000000000000);
-        // await USDTPAGEPool.initialize(1000000000000);        
         await token.deployed();
         await bank.initialize(deployer, 1000);
+        await comment.initialize(bank.address);
         await bank.setToken(token.address);
         await bank.grantRole(ethers.utils.id("MINTER_ROLE"), token.address);
         await bank.grantRole(ethers.utils.id("MINTER_ROLE"), nft.address);

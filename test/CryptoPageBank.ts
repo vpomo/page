@@ -6,7 +6,6 @@ import { abi as POOL_ABI } from "@uniswap/v3-core/artifacts/contracts/UniswapV3P
 import bs58 from "bs58";
 import { expect } from "chai";
 import { Signer } from "ethers";
-import { hexStripZeros } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
@@ -72,7 +71,7 @@ describe("PageCommentBank", function () {
         bank = await bankFactory.deploy();
         token = await tokenFactory.deploy();
         nft = await nftFactory.deploy();
-        comment = await commentFactory.deploy(bank.address);
+        comment = await commentFactory.deploy();
 
         await token.initialize(deployer, bank.address);
         await weth.deployed();
@@ -91,10 +90,10 @@ describe("PageCommentBank", function () {
         );
         const WETHUSDTPool = new ethers.Contract(WETHUSDTPoolAddress, POOL_ABI);
         const USDTPAGEPool = new ethers.Contract(USDTPAGEPoolAddress, POOL_ABI);
-        // await WETHUSDTPool.initialize(1000000000000);
-        // await USDTPAGEPool.initialize(1000000000000);
+
         await token.deployed();
         await bank.initialize(deployer, 1000);
+        await comment.initialize(bank.address);
         await bank.setToken(token.address);
         await bank.grantRole(ethers.utils.id("MINTER_ROLE"), token.address);
         await bank.grantRole(ethers.utils.id("MINTER_ROLE"), nft.address);
@@ -117,6 +116,7 @@ describe("PageCommentBank", function () {
             .connect(signers[1])
             .safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
         balance = await bank.balanceOf();
+        console.log("balance is ", Number(balance));
         // expect(Number(balance)).to.be.equal(17891712000);// 18243360000);
     });
 
@@ -127,8 +127,7 @@ describe("PageCommentBank", function () {
         await nft
             .connect(signers[5])
             .safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
-        // const balance = await bank.connect(signers[0]).balanceOf();
-        // console.log("balance after safe mint from another", balance);
+        const balance = await bank.connect(signers[0]).balanceOf();
         // await bank.withdraw(1);
     });
 });
