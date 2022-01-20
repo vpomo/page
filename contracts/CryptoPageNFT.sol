@@ -98,29 +98,6 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
                 commentsReward.add(commentInstance.price.div(100).mul(45));
             }
         }
-        // bool commentsExists = comment.isExists(address(this), tokenId);
-        /*
-        if (commentsExists) {
-            // commentDeployer.isExists(address(this), tokenId)) {
-            address commentContractAddress = commentDeployer.getCommentContract(
-                address(this),
-                tokenId
-            );
-            // console.log("commentContractAddress is %s", commentContractAddress);
-            // IPageComment commentContract = IPageComment(commentContractAddress);
-            IPageComment.Comment[] memory comments = getComments();
-            console.log("comment id %s", comments[0].id);
-            for (uint256 i = 0; i < comments.length; i++) {
-                IPageComment.Comment memory comment = comments[i];
-                // If author of the comment is not sender
-                // Need to calculate 45% of comment.price
-                // This is an equivalent reward for comment
-                if (comment.author != _msgSender()) {
-                    commentsReward.add(comment.price.div(100).mul(45));
-                }
-            }
-        }
-        */
         // Check the amount of gas after counting awards for comments
         uint256 gasAfter = gasBefore - gasleft();
         bank.calculateBurn(_msgSender(), gasAfter, commentsReward);

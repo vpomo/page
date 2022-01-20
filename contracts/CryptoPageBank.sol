@@ -20,8 +20,6 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
 
     using SafeMathUpgradeable for uint256;
 
-    mapping(address => bool) public whitelist;
-
     /// Address of Crypto.Page treasury
     address public treasury;
     /// Address of CryptoPageNFT contract
@@ -53,12 +51,17 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
+    /// @notice Calculate and call burn
+    /// @param sender The address on which the tokens burn
+    /// @param receiver The receiver address
+    /// @param gas Gas
+    /// @return Calculated amount
     function calculateMint(
         address sender,
         address receiver,
-        uint256 amount
+        uint256 gas
     ) public override onlyRole(MINTER_ROLE) returns (uint256) {
-        amount = _calculateAmount(amount);
+        uint256 amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
         if (sender == receiver) {
             amount += _refund(sender);
@@ -74,6 +77,11 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         return amount;
     }
 
+    /// @notice Calculate and call burn
+    /// @param receiver The address on which the tokens burn
+    /// @param gas The amount of gas spent on the function call
+    /// @param commentsReward Reward for comments
+    /// @return Calculated amount
     function calculateBurn(
         address receiver,
         uint256 gas,
@@ -88,12 +96,14 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         return amount;
     }
 
+    /// @notice Withdraw amount from the bank
     function withdraw(uint256 amount) public payable override {
         require(_balances[_msgSender()] >= amount, "Not enough balance");
         _subBalance(_msgSender(), amount);
         token.mint(_msgSender(), amount);
     }
 
+    /// @notice Bank balance of the sender's address
     function balanceOf() public view override returns (uint256) {
         return _balances[_msgSender()];
     }
@@ -107,7 +117,6 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
             .mul(10e18)
             .div(10e6)
             .div(2**192);
-        // return 3600;
         return price;
     }
 
@@ -123,7 +132,6 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         if (price > 100) {
             price = 100;
         }
-        // return 60;
         return price;
     }
 

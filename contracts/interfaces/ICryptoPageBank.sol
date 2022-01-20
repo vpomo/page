@@ -6,7 +6,7 @@ interface IPageBank {
     function calculateMint(
         address sender,
         address receiver,
-        uint256 amount
+        uint256 gas
     ) external returns (uint256);
 
     function calculateBurn(
