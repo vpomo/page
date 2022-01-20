@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageComment.sol";
@@ -14,7 +15,7 @@ import "./interfaces/ICryptoPageComment.sol";
 /// @author Crypto.Page Team
 /// @notice Contract designed to store comments of one specific token
 /// @dev These contracts are deployed by the `CryptoPageCommentDeployer` contract
-contract PageComment {
+contract PageComment is Initializable {
     using SafeMathUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
@@ -37,7 +38,9 @@ contract PageComment {
 
     IPageBank public bank;
 
-    constructor(address _bank) {
+    /// @notice Initial function
+    /// @param _bank Address of our bank
+    function initialize(address _bank) public initializer {
         bank = IPageBank(_bank);
     }
 
