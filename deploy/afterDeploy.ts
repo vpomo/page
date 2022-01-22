@@ -2,69 +2,22 @@ import { abi as FACTORY_ABI } from "@uniswap/v3-core/artifacts/contracts/Uniswap
 import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { PageBank, PageComment, PageNFT, PageToken } from "../types";
-
 const factoryAddress =
     process.env.FACTORY_ADDRESS || "0x1F98431c8aD98523631AE4a59f267346ea31F984";
 const USDTAddress =
-    process.env.USDT_ADDRESS || "0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02";
+    process.env.USDT_ADDRESS || "0x3B00Ef435fA4FcFF5C209a37d1f3dcff37c705aD";
 const WETHAddress =
     process.env.WETH_ADDRESS || "0xc778417E063141139Fce010982780140Aa0cD5Ab";
 const nullAddress = "0x0000000000000000000000000000000000000000";
-const treasuryAddress = process.env.TREASURY_ADDRESS;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const PageBankFactory = await hre.ethers.getContractFactory("PageBank");
-    const PageTokenFactory = await hre.ethers.getContractFactory("PageToken");
-    const PageCommentFactory = await hre.ethers.getContractFactory(
-        "PageComment"
-    );
-    const PageNFTFactory = await hre.ethers.getContractFactory("PageNFT");
-
-    console.log("");
-
-    /*
-     * Deploy CryptoPageBank contract
-     */
-    const bankProxy = (await hre.upgrades.deployProxy(PageBankFactory, [
-        treasuryAddress,
-        1000,
-    ])) as PageBank;
-    await bankProxy.deployed();
-    console.log("PAGE_BANK_PROXY_ADDRESS", bankProxy.address);
-
-    /*
-     * Deploy CryptoPageToken contract
-     */
-    const tokenProxy = (await hre.upgrades.deployProxy(PageTokenFactory, [
-        treasuryAddress,
-        bankProxy.address,
-    ])) as PageToken;
-    await tokenProxy.deployed();
-    console.log("PAGE_TOKEN_PROXY_ADDRESS", tokenProxy.address);
-    await bankProxy.setToken(bankProxy.address);
-
-    /*
-     * Deploy CryptoPageComment contract
-     */
-    const commentProxy = (await hre.upgrades.deployProxy(PageCommentFactory, [
-        bankProxy.address,
-    ])) as PageComment;
-    await commentProxy.deployed();
-    console.log("PAGE_COMMENT_PROXY_ADDRESS", commentProxy.address);
-
-    /*
-     * Deploy CryptoPageNFT contract
-     */
-    const nftProxy = (await hre.upgrades.deployProxy(PageNFTFactory, [
-        commentProxy.address,
-        bankProxy.address,
-        "https://ipfs.io/ipfs/",
-    ])) as PageNFT;
-    await nftProxy.deployed();
-    console.log("PAGE_NFT_PROXY_ADDRESS", nftProxy.address);
+    const bankProxy = await hre.ethers.getContract("PageBank");
+    const tokenProxy = await hre.ethers.getContract("PageToken");
+    const commentProxy = await hre.ethers.getContract("PageComment");
+    const nftProxy = await hre.ethers.getContract("PageNFT");
 
     console.log();
+
     const MINTER_ROLE = hre.ethers.utils.id("MINTER_ROLE");
     const BURNER_ROLE = hre.ethers.utils.id("BURNER_ROLE");
 
@@ -76,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             gasPrice: hre.ethers.utils.parseUnits("1", "gwei"),
             gasLimit: 2500000,
         });
-        console.log("MINTER_ROLE_GRANT_FOR_NFT", nftProxy.address);
+        console.log("Grant MINTER ROLE For CryptoPageNFT", nftProxy.address);
     }
 
     /*
@@ -87,7 +40,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             gasPrice: hre.ethers.utils.parseUnits("1", "gwei"),
             gasLimit: 2500000,
         });
-        console.log("BURNER_ROLE_GRANT_FOR_NFT", nftProxy.address);
+        console.log("Grant BURNER_ROLE For CryptoPageNFT", nftProxy.address);
     }
 
     /*
@@ -98,7 +51,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             gasPrice: hre.ethers.utils.parseUnits("1", "gwei"),
             gasLimit: 2500000,
         });
-        console.log("MINTER_ROLE_GRANT_FOR_COMMENT", commentProxy.address);
+        console.log(
+            "Grant MINTER_ROLE For CryptoPageComment",
+            commentProxy.address
+        );
     }
 
     console.log();
@@ -111,30 +67,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         FACTORY_ABI,
         hre.ethers.getDefaultProvider()
     );
+
+    console.log("uniswapV3Factory", uniswapV3Factory)
+
     const WETHUSDTPoolAddress = await uniswapV3Factory.getPool(
         WETHAddress,
         USDTAddress,
-        500
+        3000
     );
-    console.log("WETH / USDT Pool Address", WETHUSDTPoolAddress);
-
     const USDTPAGEPoolAddress = await uniswapV3Factory.getPool(
         USDTAddress,
         tokenProxy.address,
-        500
+        3000
     );
-
+    console.log("WETH / USDT Pool Address", WETHUSDTPoolAddress);
     console.log("USDT / PAGE Pool Address", USDTPAGEPoolAddress);
 
     if (WETHUSDTPoolAddress !== nullAddress) {
         await bankProxy.setWETHUSDTPool(WETHUSDTPoolAddress.address);
-        console.log("WETH / USDT Pool Was Set Successfully");
+        console.log("WETH / USDT Pool Set Successfully");
     }
     if (USDTPAGEPoolAddress !== nullAddress) {
         await bankProxy.setUSDTPAGEPool(USDTPAGEPoolAddress.address);
-        console.log("USDT / PAGE Pool Was Set Successfully");
+        console.log("USDT / PAGE Pool Set Successfully");
     }
 };
 func.tags = [];
-func.dependencies = [];
+func.dependencies = ["PageBank", "PageToken", "PageComment", "PageNFT"];
 export default func;
