@@ -25,7 +25,7 @@ interface IPageBank {
 
     function setToken(address _address) external;
 
-    function withdraw(uint256 amount) external payable;
+    function withdraw(uint256 amount) external;
 
     function balanceOf() external view returns (uint256);
 }

@@ -20,6 +20,15 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
 
     using SafeMathUpgradeable for uint256;
 
+    event Withdraw(address indexed _to, uint256 indexed _amount);
+    // event Mint(address indexed _to, uint256 indexed _amount);
+    // event Burn(address indexed _to, uint256 indexed _amount);
+    event Deposit(address indexed _to, uint256 indexed _amount);
+    event Burn(address indexed _to, uint256 indexed _amount);
+    event SetWETHUSDTPool(address indexed _pool);
+    event SetUSDTPAGEPool(address indexed _pool);
+    event SetToken(address indexed _token);
+
     /// Address of Crypto.Page treasury
     address public treasury;
     /// Address of CryptoPageNFT contract
@@ -63,24 +72,29 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     ) public override onlyRole(MINTER_ROLE) returns (uint256) {
         uint256 amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
+        uint256 senderBalance = _balances[sender];
         if (sender == receiver) {
-            amount += _refund(sender);
-            _setBalance(treasury, _addBalance(treasury, treasuryAmount));
+            amount += senderBalance;
+            emit Withdraw(sender, senderBalance);
             token.mint(sender, amount);
         } else {
-            _setBalance(treasury, _addBalance(treasury, treasuryAmount));
-            _setBalance(receiver, _addBalance(receiver, amount));
             amount = amount.div(2);
-            uint256 newAmount = amount += _refund(sender);
-            token.mint(sender, newAmount);
+            uint256 recieverAmount = _balances[receiver].add(amount); // _addBalance(receiver, amount);
+            _balances[receiver] = recieverAmount;
+            emit Withdraw(sender, senderBalance);
+            emit Deposit(receiver, recieverAmount);
+            token.mint(sender, amount += senderBalance);
         }
+        // _addBalance(treasury, treasuryAmount);
+        _balances[treasury] = _balances[treasury].add(treasuryAmount);
+        emit Deposit(treasury, treasuryAmount);
         return amount;
     }
 
     /// @notice Calculate and call burn
     /// @param receiver The address on which the tokens burn
     /// @param gas The amount of gas spent on the function call
-    /// @param commentsReward Reward for comments
+    /// @param commentsReward Reward for comments in PAGE tokens
     /// @return Calculated amount
     function calculateBurn(
         address receiver,
@@ -88,19 +102,28 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         uint256 commentsReward
     ) public override onlyRole(BURNER_ROLE) returns (uint256) {
         uint256 amount = _calculateAmount(gas);
-        commentsReward = _calculateAmount(commentsReward);
-        if (amount > commentsReward) {
+        amount = amount.add(_balances[receiver]);
+        if (commentsReward > amount) {
+            commentsReward = commentsReward.sub(amount);
+            require(token.balanceOf(receiver) > commentsReward, "");
+            _balances[receiver] = 0;
+            emit Burn(receiver, _balances[receiver]);
+            token.burn(receiver, commentsReward);
+        } else {
             amount = amount.sub(commentsReward);
+            _balances[receiver] = amount;
+            emit Burn(receiver, commentsReward);
         }
-        token.burn(receiver, amount);
         return amount;
     }
 
     /// @notice Withdraw amount from the bank
-    function withdraw(uint256 amount) public payable override {
+    function withdraw(uint256 amount) public override {
         require(_balances[_msgSender()] >= amount, "Not enough balance");
-        _subBalance(_msgSender(), amount);
+        _balances[_msgSender()] -= amount; 
+        // _subBalance(_msgSender(), amount);
         token.mint(_msgSender(), amount);
+        emit Withdraw(_msgSender(), amount);
     }
 
     /// @notice Bank balance of the sender's address
@@ -139,16 +162,19 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
     function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
         usdtpagePool = IUniswapV3Pool(_usdtpagePool);
+        emit SetUSDTPAGEPool(_usdtpagePool);   
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _wethusdtPool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
     function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
         wethusdtPool = IUniswapV3Pool(_wethusdtPool);
+        emit SetWETHUSDTPool(_wethusdtPool);
     }
 
     function setToken(address _address) public override onlyOwner {
         token = IPageToken(_address);
+        emit SetToken(_address);
     }
 
     /// @notice Return amount from _balance and set 0
