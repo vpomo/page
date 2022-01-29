@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.0;
+pragma solidity 0.8.1;
 
 // import "hardhat/console.sol";
 
@@ -16,7 +16,12 @@ import "./interfaces/ICryptoPageToken.sol";
 /// @author Crypto.Page Team
 /// @notice
 /// @dev
-contract PageBank is Initializable, OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
+contract PageBank is
+    Initializable,
+    OwnableUpgradeable,
+    AccessControlUpgradeable,
+    IPageBank
+{
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
@@ -29,8 +34,8 @@ contract PageBank is Initializable, OwnableUpgradeable, AccessControlUpgradeable
     event Burn(address indexed _to, uint256 indexed _amount);
     event SetWETHUSDTPool(address indexed _pool);
     event SetUSDTPAGEPool(address indexed _pool);
-    event SetWETHUSDTPrice(uint256 indexed _price);
-    event SetUSDTPAGEPrice(uint256 indexed _price);    
+    event SetStaticWETHUSDTPrice(uint256 indexed _price);
+    event SetStaticUSDTPAGEPrice(uint256 indexed _price);
     event SetToken(address indexed _token);
 
     uint256 public staticUSDTPAGEPrice = 60;
@@ -135,28 +140,42 @@ contract PageBank is Initializable, OwnableUpgradeable, AccessControlUpgradeable
     }
 
     /// @notice Returns WETH / USDT price from UniswapV3Pool
-    /// @return WETH / USDT price
     function getWETHUSDTPrice() public view override returns (uint256 price) {
-        try (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();  {
+        try wethusdtPool.slot0() returns (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            uint16 observationCardinalityNext,
+            uint8 feeProtocol,
+            bool unlocked
+        ) {
             price = uint256(sqrtPriceX96)
-            .mul(sqrtPriceX96)
-            .div(10e18)
-            .mul(10e6)
-            .div(2**192);            
+                .mul(sqrtPriceX96)
+                .div(10e18)
+                .mul(10e6)
+                .div(2**192);
         } catch {
             price = staticUSDTPAGEPrice;
         }
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3Pool
-    /// @return USDT / PAGE price
     function getUSDTPAGEPrice() public view override returns (uint256 price) {
-        try (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();  {
+        try usdtpagePool.slot0() returns (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            uint16 observationCardinalityNext,
+            uint8 feeProtocol,
+            bool unlocked
+        ) {
             price = uint256(sqrtPriceX96)
-            .mul(sqrtPriceX96)
-            .div(10e18)
-            .mul(10e6)
-            .div(2**192);            
+                .mul(sqrtPriceX96)
+                .div(10e18)
+                .mul(10e6)
+                .div(2**192);
         } catch {
             price = staticUSDTPAGEPrice;
         }
@@ -180,17 +199,15 @@ contract PageBank is Initializable, OwnableUpgradeable, AccessControlUpgradeable
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
-    /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setStaticUSDTPAGEPrice(address _price) public override onlyOwner {
+    function setStaticUSDTPAGEPrice(uint256 _price) public override onlyOwner {
         staticUSDTPAGEPrice = _price;
-        emit setStaticUSDTPAGEPrice(_price);
+        emit SetStaticUSDTPAGEPrice(_price);
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
-    /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setStaticWETHUSDTPrice(address _price) public override onlyOwner {
+    function setStaticWETHUSDTPrice(uint256 _price) public override onlyOwner {
         staticWETHUSDTPrice = _price;
-        emit setStaticWETHUSDTPrice(_price);
+        emit SetStaticWETHUSDTPrice(_price);
     }
 
     function setToken(address _address) public override onlyOwner {

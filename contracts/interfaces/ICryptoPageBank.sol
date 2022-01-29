@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.0;
+pragma solidity 0.8.1;
 
 interface IPageBank {
     function calculateMint(
@@ -23,9 +23,9 @@ interface IPageBank {
 
     function setWETHUSDTPool(address _wethusdtPool) external;
 
-    function setStaticUSDTPAGEPrice(address _price) external;
+    function setStaticUSDTPAGEPrice(uint256 _price) external;
 
-    function setStaticWETHUSDTPrice(address _price) external;
+    function setStaticWETHUSDTPrice(uint256 _price) external;
 
     function setToken(address _address) external;
 
