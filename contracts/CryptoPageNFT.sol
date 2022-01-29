@@ -19,7 +19,7 @@ import "./CryptoPageBank.sol";
 /// @author Crypto.Page Team
 /// @notice
 /// @dev
-contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
+contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeMathUpgradeable for uint256;
 

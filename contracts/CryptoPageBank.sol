@@ -16,7 +16,7 @@ import "./interfaces/ICryptoPageToken.sol";
 /// @author Crypto.Page Team
 /// @notice
 /// @dev
-contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
+contract PageBank is Initializable, OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
@@ -29,7 +29,12 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     event Burn(address indexed _to, uint256 indexed _amount);
     event SetWETHUSDTPool(address indexed _pool);
     event SetUSDTPAGEPool(address indexed _pool);
+    event SetWETHUSDTPrice(uint256 indexed _price);
+    event SetUSDTPAGEPrice(uint256 indexed _price);    
     event SetToken(address indexed _token);
+
+    uint256 public staticUSDTPAGEPrice = 60;
+    uint256 public staticWETHUSDTPrice = 3600;
 
     /// Address of Crypto.Page treasury
     address public treasury;
@@ -131,37 +136,33 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
 
     /// @notice Returns WETH / USDT price from UniswapV3Pool
     /// @return WETH / USDT price
-    function getWETHUSDTPrice() public view override returns (uint256) {
-        /*
-        (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
-        uint256 price = uint256(sqrtPriceX96)
+    function getWETHUSDTPrice() public view override returns (uint256 price) {
+        try (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();  {
+            price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
-            .mul(10e18)
-            .div(10e6)
-            .div(2**192);
-        */
-        // uint256 price = 3600;
-        // return price;
-        return 3600;
+            .div(10e18)
+            .mul(10e6)
+            .div(2**192);            
+        } catch {
+            price = staticUSDTPAGEPrice;
+        }
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3Pool
     /// @return USDT / PAGE price
-    function getUSDTPAGEPrice() public view override returns (uint256) {
-        /*
-        (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
-        uint256 price = uint256(sqrtPriceX96)
+    function getUSDTPAGEPrice() public view override returns (uint256 price) {
+        try (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();  {
+            price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
             .div(10e18)
             .mul(10e6)
-            .div(2**192);
+            .div(2**192);            
+        } catch {
+            price = staticUSDTPAGEPrice;
+        }
         if (price > 100) {
             price = 100;
         }
-        */
-        // uint256 price = 60;
-        // return price;
-        return 60;
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
@@ -176,6 +177,20 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
         wethusdtPool = IUniswapV3Pool(_wethusdtPool);
         emit SetWETHUSDTPool(_wethusdtPool);
+    }
+
+    /// @notice Returns USDT / PAGE price from UniswapV3
+    /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
+    function setStaticUSDTPAGEPrice(address _price) public override onlyOwner {
+        staticUSDTPAGEPrice = _price;
+        emit setStaticUSDTPAGEPrice(_price);
+    }
+
+    /// @notice Returns USDT / PAGE price from UniswapV3
+    /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
+    function setStaticWETHUSDTPrice(address _price) public override onlyOwner {
+        staticWETHUSDTPrice = _price;
+        emit setStaticWETHUSDTPrice(_price);
     }
 
     function setToken(address _address) public override onlyOwner {
