@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.3;
+pragma solidity 0.8.0;
+
+// import "hardhat/console.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -32,6 +34,7 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     mapping(uint256 => address) private commentsById;
     mapping(uint256 => uint256) private pricesById;
     mapping(uint256 => address) private creatorById;
+    mapping(bytes32 => uint256[]) private tokensIdsByCollectionName;
 
     /// @notice Initial function
     /// @param _comment Address of our PageCommentMinter contract
@@ -51,19 +54,20 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
     /// @notice Mint PAGE.NFT token
     /// @param owner Address of token owner
     /// @param tokenURI URI of token
-    /// @return TokenId
-    function safeMint(address owner, string memory tokenURI)
-        public
-        override
-        returns (uint256)
-    {
+    function safeMint(
+        address owner,
+        string memory tokenURI,
+        bytes32 collectionName
+    ) public override returns (uint256 tokenId) {
         uint256 gasBefore = gasleft();
         require(owner != address(0), "Address can't be null");
-        uint256 tokenId = _safeMint(owner, tokenURI);
+        tokenId = _safeMint(owner, tokenURI);
+        tokensIdsByCollectionName[
+            keccak256(abi.encodePacked(_msgSender(), collectionName))
+        ].push(tokenId);
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.calculateMint(_msgSender(), owner, gas);
         pricesById[tokenId] = price;
-        return tokenId;
     }
 
     /// @notice Mint PAGE.NFT token
@@ -84,12 +88,17 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         // Check the amount of gas before counting awards for comments
         uint256 gasBefore = gasleft();
         require(ownerOf(tokenId) == _msgSender(), "Allower only for owner");
-        uint256 commentsReward = 0;
+        uint256 commentsReward = comment.calculateCommentsReward(
+            address(this),
+            tokenId
+        );
+        // console.log("commentsReward in safeBurn %s", commentsReward);
+        /*
         IPageComment.Comment[] memory comments = comment.getComments(
             address(this),
             tokenId
         );
-        for (uint256 i = 0; i < comments.length; i++) {
+        for (uint256 i = 0; i < comments.length; i++) {Для того
             IPageComment.Comment memory commentInstance = comments[i];
             // If author of the comment is not sender
             // Need to calculate 45% of comment.price
@@ -97,7 +106,8 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
             if (commentInstance.author != _msgSender()) {
                 commentsReward.add(commentInstance.price.div(100).mul(45));
             }
-        }
+         }
+        */
         // Check the amount of gas after counting awards for comments
         uint256 gasAfter = gasBefore - gasleft();
         bank.calculateBurn(_msgSender(), gasAfter, commentsReward);
@@ -158,5 +168,31 @@ contract PageNFT is ERC721URIStorageUpgradeable, IPageNFT {
         returns (uint256)
     {
         return pricesById[tokenId];
+    }
+
+    function getTokensIdsByCollectionName(bytes32 collectionName)
+        public
+        view
+        override
+        returns (uint256[] memory tokenIds)
+    {
+        return tokensIdsByCollectionName[collectionName];
+    }
+
+    function getTokensURIsByCollectionName(bytes32 collectionName)
+        public
+        view
+        override
+        returns (string[] memory tokenURIs)
+    {
+        for (
+            uint256 i = 0;
+            i > tokensIdsByCollectionName[collectionName].length;
+            i++
+        ) {
+            tokenURIs[i] = tokenURI(
+                tokensIdsByCollectionName[collectionName][i]
+            );
+        }
     }
 }

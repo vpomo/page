@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.3;
+pragma solidity 0.8.0;
 
 interface IPageBank {
     function calculateMint(
         address sender,
         address receiver,
         uint256 gas
-    ) external returns (uint256);
+    ) external returns (uint256 amount);
 
     function calculateBurn(
         address receiver,
         uint256 gas,
         uint256 commentsReward
-    ) external returns (uint256);
+    ) external returns (uint256 amount);
 
     function getWETHUSDTPrice() external view returns (uint256);
 
@@ -27,5 +27,5 @@ interface IPageBank {
 
     function withdraw(uint256 amount) external;
 
-    function balanceOf() external view returns (uint256);
+    function balance() external view returns (uint256);
 }

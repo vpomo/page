@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.3;
-
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+pragma solidity 0.8.0;
 
 interface IPageComment {
     struct Comment {
@@ -26,7 +24,7 @@ interface IPageComment {
         uint256 tokenId,
         bytes32 ipfsHash,
         bool like
-    ) external returns (uint256);
+    ) external returns (Comment memory comment);
 
     function getCommentsIds(address nft, uint256 tokenId)
         external
@@ -37,18 +35,18 @@ interface IPageComment {
         address nft,
         uint256 tokenId,
         uint256[] memory ids
-    ) external view returns (Comment[] memory);
+    ) external view returns (Comment[] memory comments);
 
     function getComments(address nft, uint256 tokenId)
         external
         view
-        returns (Comment[] memory);
+        returns (Comment[] memory comments);
 
     function getCommentById(
         address nft,
         uint256 tokenId,
         uint256 id
-    ) external view returns (Comment memory);
+    ) external view returns (Comment memory comment);
 
     function getStatistic(address nft, uint256 tokenId)
         external
@@ -68,4 +66,8 @@ interface IPageComment {
             uint256 dislikes,
             Comment[] memory comments
         );
+
+    function calculateCommentsReward(address nft, uint256 tokenId)
+        external
+        returns (uint256 reward);
 }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.3;
+pragma solidity 0.8.0;
+
+// import "hardhat/console.sol";
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -64,13 +66,12 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     /// @param sender The address on which the tokens burn
     /// @param receiver The receiver address
     /// @param gas Gas
-    /// @return Calculated amount
     function calculateMint(
         address sender,
         address receiver,
         uint256 gas
-    ) public override onlyRole(MINTER_ROLE) returns (uint256) {
-        uint256 amount = _calculateAmount(gas);
+    ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
+        amount = _calculateAmount(gas);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
         uint256 senderBalance = _balances[sender];
         if (sender == receiver) {
@@ -79,30 +80,26 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
             token.mint(sender, amount);
         } else {
             amount = amount.div(2);
-            uint256 recieverAmount = _balances[receiver].add(amount); // _addBalance(receiver, amount);
+            uint256 recieverAmount = _balances[receiver].add(amount);
             _balances[receiver] = recieverAmount;
             emit Withdraw(sender, senderBalance);
             emit Deposit(receiver, recieverAmount);
             token.mint(sender, amount += senderBalance);
         }
-        // _addBalance(treasury, treasuryAmount);
         _balances[treasury] = _balances[treasury].add(treasuryAmount);
         emit Deposit(treasury, treasuryAmount);
-        return amount;
     }
 
     /// @notice Calculate and call burn
     /// @param receiver The address on which the tokens burn
     /// @param gas The amount of gas spent on the function call
     /// @param commentsReward Reward for comments in PAGE tokens
-    /// @return Calculated amount
     function calculateBurn(
         address receiver,
         uint256 gas,
         uint256 commentsReward
-    ) public override onlyRole(BURNER_ROLE) returns (uint256) {
-        uint256 amount = _calculateAmount(gas);
-        amount = amount.add(_balances[receiver]);
+    ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
+        amount = _calculateAmount(gas).add(_balances[receiver]);
         if (commentsReward > amount) {
             commentsReward = commentsReward.sub(amount);
             require(token.balanceOf(receiver) > commentsReward, "");
@@ -112,40 +109,46 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         } else {
             amount = amount.sub(commentsReward);
             _balances[receiver] = amount;
-            emit Burn(receiver, commentsReward);
+            // emit Deposit(receiver, amount - commentsReward);
+            // amount - commentsReward;
+            // emit Deposit(receiver, amount);
+            // emit Burn(receiver, commentsReward);
         }
-        return amount;
     }
 
     /// @notice Withdraw amount from the bank
     function withdraw(uint256 amount) public override {
         require(_balances[_msgSender()] >= amount, "Not enough balance");
-        _balances[_msgSender()] -= amount; 
-        // _subBalance(_msgSender(), amount);
+        _balances[_msgSender()] -= amount;
         token.mint(_msgSender(), amount);
         emit Withdraw(_msgSender(), amount);
     }
 
     /// @notice Bank balance of the sender's address
-    function balanceOf() public view override returns (uint256) {
+    function balance() public view override returns (uint256) {
         return _balances[_msgSender()];
     }
 
-    /// @notice Returns WETH / USDT price from UniswapV3
+    /// @notice Returns WETH / USDT price from UniswapV3Pool
     /// @return WETH / USDT price
     function getWETHUSDTPrice() public view override returns (uint256) {
+        /*
         (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
         uint256 price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
             .mul(10e18)
             .div(10e6)
             .div(2**192);
-        return price;
+        */
+        // uint256 price = 3600;
+        // return price;
+        return 3600;
     }
 
-    /// @notice Returns USDT / PAGE price from UniswapV3
+    /// @notice Returns USDT / PAGE price from UniswapV3Pool
     /// @return USDT / PAGE price
     function getUSDTPAGEPrice() public view override returns (uint256) {
+        /*
         (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
         uint256 price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
@@ -155,14 +158,17 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
         if (price > 100) {
             price = 100;
         }
-        return price;
+        */
+        // uint256 price = 60;
+        // return price;
+        return 60;
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
     function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
         usdtpagePool = IUniswapV3Pool(_usdtpagePool);
-        emit SetUSDTPAGEPool(_usdtpagePool);   
+        emit SetUSDTPAGEPool(_usdtpagePool);
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
@@ -175,44 +181,6 @@ contract PageBank is OwnableUpgradeable, AccessControlUpgradeable, IPageBank {
     function setToken(address _address) public override onlyOwner {
         token = IPageToken(_address);
         emit SetToken(_address);
-    }
-
-    /// @notice Return amount from _balance and set 0
-    /// @param _to Address of tokens holder
-    /// @return Amount of PAGE tokens
-    function _refund(address _to) private returns (uint256) {
-        uint256 balance = _balances[_to];
-        _balances[_to] = 0;
-        return balance;
-    }
-
-    /// @notice Add amount to _balances
-    /// @param _to Address to which to add
-    /// @param _amount Amount that needs to add
-    function _addBalance(address _to, uint256 _amount)
-        private
-        returns (uint256)
-    {
-        _balances[_to] = _balances[_to].add(_amount);
-        return _balances[_to];
-    }
-
-    /// @notice Substraction amount from _balances
-    /// @param _to Address to which to substraction
-    /// @param _amount Amount that needs to substraction
-    function _subBalance(address _to, uint256 _amount)
-        private
-        returns (uint256)
-    {
-        _balances[_to] = _balances[_to].sub(_amount);
-        return _balances[_to];
-    }
-
-    /// @notice Set amount to _balances
-    /// @param _to Address to which to set
-    /// @param _amount Amount that needs to set
-    function _setBalance(address _to, uint256 _amount) private {
-        _balances[_to] = _amount;
     }
 
     /// @notice Returns gas multiplied by token's prices and gas price.

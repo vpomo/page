@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.3;
+pragma solidity 0.8.0;
+
+// import "hardhat/console.sol";
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -23,8 +25,8 @@ contract PageComment is Initializable {
     /// Stores all comments ids
     mapping(bytes32 => uint256[]) public commentsIdsArray;
     mapping(bytes32 => mapping(uint256 => Comment)) public commentsById;
-    mapping(bytes32 => CountersUpgradeable.Counter) private _totalLikes;
     mapping(bytes32 => mapping(address => uint256[])) public commentsOf;
+    mapping(bytes32 => CountersUpgradeable.Counter) private _totalLikes;
     mapping(address => EnumerableMapUpgradeable.UintToAddressMap)
         private commentsByERC721;
 
@@ -67,16 +69,10 @@ contract PageComment is Initializable {
         uint256 tokenId,
         bytes32 ipfsHash,
         bool like
-    ) public returns (Comment memory) {
+    ) public returns (Comment memory comment) {
         uint256 gasBefore = gasleft();
         require(msg.sender != address(0), "Address can't be null");
-        Comment memory comment = _createComment(
-            nft,
-            tokenId,
-            msg.sender,
-            ipfsHash,
-            like
-        );
+        comment = _createComment(nft, tokenId, msg.sender, ipfsHash, like);
         uint256 gas = gasBefore - gasleft();
         commentsById[_getBytes32(address(nft), tokenId)][comment.id]
             .price = bank.calculateMint(msg.sender, nft.ownerOf(tokenId), gas);
@@ -101,12 +97,11 @@ contract PageComment is Initializable {
     }
 
     /// @notice Return comments by id's
-    /// @return Array of Comment structs
     function getCommentsByIds(
         IERC721 nft,
         uint256 tokenId,
         uint256[] memory ids
-    ) public view returns (Comment[] memory) {
+    ) public view returns (Comment[] memory comments) {
         require(ids.length > 0, "ids length must be more than zero");
         require(
             ids.length <=
@@ -114,7 +109,7 @@ contract PageComment is Initializable {
             "ids length must be less or equal commentsIdsArray"
         );
 
-        Comment[] memory comments = new Comment[](ids.length);
+        comments = new Comment[](ids.length);
         for (uint256 i = 0; i < ids.length; i++) {
             require(
                 ids[i] <=
@@ -130,13 +125,12 @@ contract PageComment is Initializable {
     }
 
     /// @notice Return all comments
-    /// @return Array of Comment structs
     function getComments(IERC721 nft, uint256 tokenId)
         public
         view
-        returns (Comment[] memory)
+        returns (Comment[] memory comments)
     {
-        Comment[] memory comments;
+        // Comment[] memory comments;
         if (commentsIdsArray[_getBytes32(address(nft), tokenId)].length > 0) {
             comments = getCommentsByIds(
                 nft,
@@ -144,7 +138,7 @@ contract PageComment is Initializable {
                 commentsIdsArray[_getBytes32(address(nft), tokenId)]
             );
         }
-        return comments;
+        // return comments;
     }
 
     /// @notice Return comment by id
@@ -194,13 +188,7 @@ contract PageComment is Initializable {
             Comment[] memory comments
         )
     {
-        (uint256 _total, uint256 _likes, uint256 _dislikes) = getStatistic(
-            nft,
-            tokenId
-        );
-        total = _total;
-        likes = _likes;
-        dislikes = _dislikes;
+        (total, likes, dislikes) = getStatistic(nft, tokenId);
         comments = getComments(nft, tokenId);
     }
 
@@ -260,5 +248,22 @@ contract PageComment is Initializable {
         returns (bytes32)
     {
         return keccak256(abi.encodePacked(nft, tokenId));
+    }
+
+    function calculateCommentsReward(address nft, uint256 tokenId)
+        public
+        view
+        returns (uint256 reward)
+    {
+        Comment[] memory comments = getComments(IERC721(nft), tokenId);
+        for (uint256 i = 0; i < comments.length; i++) {
+            Comment memory comment = comments[i];
+            // If author of the comment is not sender
+            // Need to calculate 45% of comment.price
+            // This is an equivalent reward for comment
+            if (comment.author != IERC721(nft).ownerOf(tokenId)) {
+                reward = reward.add(comment.price);
+            }
+        }
     }
 }

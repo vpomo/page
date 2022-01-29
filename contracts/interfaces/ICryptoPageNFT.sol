@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.3;
+pragma solidity 0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
-interface IPageNFT is IERC721MetadataUpgradeable {
-    function safeMint(address _owner, string memory _tokenURI)
-        external
-        returns (uint256);
+interface IPageNFT is IERC721Upgradeable {
+    function safeMint(
+        address owner,
+        string memory tokenURI,
+        bytes32 collectionName
+    ) external returns (uint256 tokenId);
 
-    function safeBurn(uint256 _tokenId) external;
+    function safeBurn(uint256 tokenId) external;
 
     function safeTransferFrom2(
         address from,
@@ -17,5 +19,13 @@ interface IPageNFT is IERC721MetadataUpgradeable {
         uint256 tokenId
     ) external;
 
-    function tokenPrice(uint256 tokenId) external view returns (uint256);
+    function tokenPrice(uint256 tokenId) external returns (uint256);
+
+    function getTokensIdsByCollectionName(bytes32 collectionName)
+        external
+        returns (uint256[] memory tokenIds);
+
+    function getTokensURIsByCollectionName(bytes32 collectionName)
+        external
+        returns (string[] memory tokenURIs);
 }
