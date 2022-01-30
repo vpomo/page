@@ -15,7 +15,7 @@ import "./interfaces/ICryptoPageToken.sol";
 /// @title The contract calculates amount and mint / burn PAGE tokens
 /// @author Crypto.Page Team
 /// @notice
-/// @dev
+/// @dev Hello World!
 contract PageBank is
     Initializable,
     OwnableUpgradeable,
@@ -139,31 +139,53 @@ contract PageBank is
         return _balances[_msgSender()];
     }
 
-    function _getWETHUSDTPriceFromPool() private view returns (uint256 price) {
-        (uint160 sqrtPriceX96, , , , , ,) = wethusdtPool.slot0();
-        price = uint256(sqrtPriceX96).mul(sqrtPriceX96).div(10e18).mul(10e6).div(2**192);
+    function getWETHUSDTPriceFromPool()
+        external
+        view
+        override
+        returns (uint256 price)
+    {
+        (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
+        price = uint256(sqrtPriceX96)
+            .mul(sqrtPriceX96)
+            .div(10e18)
+            .mul(10e6)
+            .div(2**192);
     }
 
-    function _getUSDTPAGEPriceFromPool() private view returns (uint256 price) {
-        (uint160 sqrtPriceX96, , , , , ,) = usdtpagePool.slot0();
-        price = uint256(sqrtPriceX96).mul(sqrtPriceX96).div(10e18).mul(10e6).div(2**192);
-    }    
+    function getUSDTPAGEPriceFromPool()
+        external
+        view
+        override
+        returns (uint256 price)
+    {
+        (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
+        price = uint256(sqrtPriceX96)
+            .mul(sqrtPriceX96)
+            .div(10e6)
+            .mul(10e18)
+            .div(2**192);
+    }
 
     /// @notice Returns WETH / USDT price from UniswapV3Pool
     function getWETHUSDTPrice() public view override returns (uint256 price) {
-        try _getWETHUSDTPriceFromPool() returns (uint256 price) {
-            return price
+        try IPageBank(this).getWETHUSDTPriceFromPool() returns (
+            uint256 _price
+        ) {
+            price = _price;
         } catch {
-            price = staticUSDTPAGEPrice;
+            price = staticWETHUSDTPrice;
         }
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3Pool
     function getUSDTPAGEPrice() public view override returns (uint256 price) {
-        try _getUSDTPAGEPriceFromPool() returns (uint256 price) {
-            if (price > 100) {
+        try IPageBank(this).getUSDTPAGEPriceFromPool() returns (
+            uint256 _price
+        ) {
+            if (_price > 100) {
                 price = 100;
-            }            
+            }
         } catch {
             price = staticUSDTPAGEPrice;
         }

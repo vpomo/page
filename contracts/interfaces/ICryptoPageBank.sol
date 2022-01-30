@@ -15,6 +15,10 @@ interface IPageBank {
         uint256 commentsReward
     ) external returns (uint256 amount);
 
+    function getWETHUSDTPriceFromPool() external view returns (uint256 price);
+
+    function getUSDTPAGEPriceFromPool() external view returns (uint256 price);
+
     function getWETHUSDTPrice() external view returns (uint256 price);
 
     function getUSDTPAGEPrice() external view returns (uint256 price);

@@ -37,7 +37,8 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     mapping(uint256 => uint256) private pricesById;
     mapping(uint256 => address) private creatorById;
     mapping(bytes32 => uint256[]) private tokensIdsByCollectionName;
-    mapping(address => EnumerableSetUpgradeable.Bytes32Set) private collectionsByAddress;
+    mapping(address => EnumerableSetUpgradeable.Bytes32Set)
+        private collectionsByAddress;
 
     /// @notice Initial function
     /// @param _comment Address of our PageCommentMinter contract
@@ -68,7 +69,9 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         tokensIdsByCollectionName[
             keccak256(abi.encodePacked(_msgSender(), collectionName))
         ].push(tokenId);
-        collectionsByAddress[_msgSender()].add(keccak256(abi.encodePacked(_msgSender(), collectionName)));
+        collectionsByAddress[_msgSender()].add(
+            keccak256(abi.encodePacked(_msgSender(), collectionName))
+        );
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.calculateMint(_msgSender(), owner, gas);
         pricesById[tokenId] = price;
