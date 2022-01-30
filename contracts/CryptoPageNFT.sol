@@ -6,6 +6,7 @@ pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -22,7 +23,7 @@ import "./CryptoPageBank.sol";
 contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using SafeMathUpgradeable for uint256;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
 
     CountersUpgradeable.Counter public _tokenIdCounter;
     // IPageCommentDeployer public commentDeployer;
@@ -36,7 +37,7 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     mapping(uint256 => uint256) private pricesById;
     mapping(uint256 => address) private creatorById;
     mapping(bytes32 => uint256[]) private tokensIdsByCollectionName;
-    mapping(address => EnumerableSet.Bytes32Set) private collectionsByAddress;
+    mapping(address => EnumerableSetUpgradeable.Bytes32Set) private collectionsByAddress;
 
     /// @notice Initial function
     /// @param _comment Address of our PageCommentMinter contract

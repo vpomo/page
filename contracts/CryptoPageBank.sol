@@ -139,22 +139,20 @@ contract PageBank is
         return _balances[_msgSender()];
     }
 
+    function _getWETHUSDTPriceFromPool() private view returns (uint256 price) {
+        (uint160 sqrtPriceX96, , , , , ,) = wethusdtPool.slot0();
+        price = uint256(sqrtPriceX96).mul(sqrtPriceX96).div(10e18).mul(10e6).div(2**192);
+    }
+
+    function _getUSDTPAGEPriceFromPool() private view returns (uint256 price) {
+        (uint160 sqrtPriceX96, , , , , ,) = usdtpagePool.slot0();
+        price = uint256(sqrtPriceX96).mul(sqrtPriceX96).div(10e18).mul(10e6).div(2**192);
+    }    
+
     /// @notice Returns WETH / USDT price from UniswapV3Pool
     function getWETHUSDTPrice() public view override returns (uint256 price) {
-        try wethusdtPool.slot0() returns (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext,
-            uint8 feeProtocol,
-            bool unlocked
-        ) {
-            price = uint256(sqrtPriceX96)
-                .mul(sqrtPriceX96)
-                .div(10e18)
-                .mul(10e6)
-                .div(2**192);
+        try _getWETHUSDTPriceFromPool() returns (uint256 price) {
+            return price
         } catch {
             price = staticUSDTPAGEPrice;
         }
@@ -162,25 +160,12 @@ contract PageBank is
 
     /// @notice Returns USDT / PAGE price from UniswapV3Pool
     function getUSDTPAGEPrice() public view override returns (uint256 price) {
-        try usdtpagePool.slot0() returns (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext,
-            uint8 feeProtocol,
-            bool unlocked
-        ) {
-            price = uint256(sqrtPriceX96)
-                .mul(sqrtPriceX96)
-                .div(10e18)
-                .mul(10e6)
-                .div(2**192);
+        try _getUSDTPAGEPriceFromPool() returns (uint256 price) {
+            if (price > 100) {
+                price = 100;
+            }            
         } catch {
             price = staticUSDTPAGEPrice;
-        }
-        if (price > 100) {
-            price = 100;
         }
     }
 
