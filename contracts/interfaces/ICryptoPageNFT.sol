@@ -28,4 +28,8 @@ interface IPageNFT is IERC721Upgradeable {
     function getTokensURIsByCollectionName(bytes32 collectionName)
         external
         returns (string[] memory tokenURIs);
+
+    function getCollectionsByAddress(address _address)
+        external
+        returns (bytes32[] memory collectionNames);
 }
