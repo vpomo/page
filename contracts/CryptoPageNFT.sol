@@ -125,24 +125,26 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     }
 
     /// @notice Transfer PAGE.NFT token
-    /// @param from Approved or owner of token
-    /// @param to Receiver of token
-    /// @param tokenId Id of token
-    function safeTransferFrom2(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override {
+    /// @param _from Approved or owner of token
+    /// @param _to Receiver of token
+    /// @param _tokenId Id of token
+    /// @param data Stome data
+    function safeTransferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId,
+        bytes memory data
+    ) public override (IERC721Upgradeable, ERC721Upgradeable) {
         uint256 gasBefore = gasleft();
-        require(from != address(0), "Address can't be null");
-        require(to != address(0), "Address can't be null");
+        require(_from != address(0), "Address can't be null");
+        require(_to != address(0), "Address can't be null");
         require(
-            _isApprovedOrOwner(_msgSender(), tokenId),
+            _isApprovedOrOwner(_msgSender(), _tokenId),
             "ERC721: transfer caller is not owner or approved"
         );
-        _safeTransfer(from, to, tokenId, "");
+        _safeTransfer(_from, _to, _tokenId, data);
         uint256 amount = gasBefore - gasleft();
-        bank.calculateMint(from, to, amount);
+        bank.calculateMint(_from, _to, amount);
     }
 
     /// @notice Burn PAGE.NFT token

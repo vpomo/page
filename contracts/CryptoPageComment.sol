@@ -73,6 +73,11 @@ contract PageComment is Initializable {
     ) public returns (Comment memory comment) {
         uint256 gasBefore = gasleft();
         // require(msg.sender != address(0), "Address can't be null");
+        //
+        //
+        //
+        //
+        //
         comment = _createComment(nft, tokenId, msg.sender, ipfsHash, like);
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.calculateMint(
