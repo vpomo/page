@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.3;
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -28,8 +28,6 @@ contract PageBank is
     using SafeMathUpgradeable for uint256;
 
     event Withdraw(address indexed _to, uint256 indexed _amount);
-    // event Mint(address indexed _to, uint256 indexed _amount);
-    // event Burn(address indexed _to, uint256 indexed _amount);
     event Deposit(address indexed _to, uint256 indexed _amount);
     event Burn(address indexed _to, uint256 indexed _amount);
     event SetWETHUSDTPool(address indexed _pool);
@@ -82,6 +80,7 @@ contract PageBank is
         uint256 gas
     ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = _calculateAmount(gas);
+        console.log("amount in calculateMint %s", amount);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
         uint256 senderBalance = _balances[sender];
         if (sender == receiver) {
@@ -90,8 +89,13 @@ contract PageBank is
             token.mint(sender, amount);
         } else {
             amount = amount.div(2);
+            console.log("amount in calculateMint after divide %s", amount);
             uint256 recieverAmount = _balances[receiver].add(amount);
             _balances[receiver] = recieverAmount;
+            console.log(
+                "_balances[receiver] in calculateMint after divide",
+                _balances[receiver]
+            );
             emit Withdraw(sender, senderBalance);
             emit Deposit(receiver, recieverAmount);
             token.mint(sender, amount += senderBalance);
@@ -110,6 +114,12 @@ contract PageBank is
         uint256 commentsReward
     ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
         amount = _calculateAmount(gas).add(_balances[receiver]);
+        console.log(
+            "_balances[receiver] in calculateBurn %s",
+            _balances[receiver]
+        );
+        console.log("amount  in calculateBurn %s", amount);
+        console.log("commentsReward  in calculateBurn %s", commentsReward);
         if (commentsReward > amount) {
             commentsReward = commentsReward.sub(amount);
             require(token.balanceOf(receiver) > commentsReward, "");
@@ -176,6 +186,9 @@ contract PageBank is
         } catch {
             price = staticWETHUSDTPrice;
         }
+        if (price == 0) {
+            price = staticWETHUSDTPrice;
+        }
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3Pool
@@ -183,11 +196,15 @@ contract PageBank is
         try IPageBank(this).getUSDTPAGEPriceFromPool() returns (
             uint256 _price
         ) {
-            if (_price > 100) {
-                price = 100;
-            }
+            price = _price;
         } catch {
             price = staticUSDTPAGEPrice;
+        }
+        if (price == 0) {
+            price = staticUSDTPAGEPrice;
+        }
+        if (price > 100) {
+            price = 100;
         }
     }
 

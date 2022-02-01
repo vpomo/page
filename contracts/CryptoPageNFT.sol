@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.3;
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -36,7 +36,8 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     mapping(uint256 => address) private commentsById;
     mapping(uint256 => uint256) private pricesById;
     mapping(uint256 => address) private creatorById;
-    mapping(bytes32 => uint256[]) private tokensIdsByCollectionName;
+    mapping(address => mapping(bytes32 => uint256[]))
+        private tokensIdsByCollectionName;
     mapping(address => EnumerableSetUpgradeable.Bytes32Set)
         private collectionsByAddress;
 
@@ -66,12 +67,14 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         uint256 gasBefore = gasleft();
         require(owner != address(0), "Address can't be null");
         tokenId = _safeMint(owner, tokenURI);
-        tokensIdsByCollectionName[
-            keccak256(abi.encodePacked(_msgSender(), collectionName))
-        ].push(tokenId);
-        collectionsByAddress[_msgSender()].add(
-            keccak256(abi.encodePacked(_msgSender(), collectionName))
-        );
+        // bytes32 a = keccak256(abi.encodePacked(_msgSender(), collectionName));
+        // console.log("collectionName %s", a);
+        tokensIdsByCollectionName[_msgSender()][collectionName].push(tokenId);
+        // tokensIdsByCollectionName[
+        // keccak256(abi.encodePacked(_msgSender(), collectionName))
+        // ].push(tokenId);
+        // collectionsByAddress[_msgSender()].add(keccak256(abi.encodePacked(_msgSender(), collectionName)));
+        collectionsByAddress[_msgSender()].add(collectionName);
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.calculateMint(_msgSender(), owner, gas);
         pricesById[tokenId] = price;
@@ -93,13 +96,13 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     /// @param tokenId Id of token
     function safeBurn(uint256 tokenId) public override {
         // Check the amount of gas before counting awards for comments
-        uint256 gasBefore = gasleft();
+        // uint256 gasBefore = gasleft();
         require(ownerOf(tokenId) == _msgSender(), "Allower only for owner");
         uint256 commentsReward = comment.calculateCommentsReward(
             address(this),
             tokenId
         );
-        // console.log("commentsReward in safeBurn %s", commentsReward);
+        console.log("commentsReward in safeBurn %s", commentsReward);
         /*
         IPageComment.Comment[] memory comments = comment.getComments(
             address(this),
@@ -116,8 +119,8 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
          }
         */
         // Check the amount of gas after counting awards for comments
-        uint256 gasAfter = gasBefore - gasleft();
-        bank.calculateBurn(_msgSender(), gasAfter, commentsReward);
+        // uint256 gasAfter = gasBefore - gasleft();
+        bank.calculateBurn(_msgSender(), 0, commentsReward);
         _safeBurn(tokenId);
     }
 
@@ -130,7 +133,6 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         address to,
         uint256 tokenId
     ) public override {
-        // ) public override(IERC721Upgradeable, ERC721Upgradeable) {
         uint256 gasBefore = gasleft();
         require(from != address(0), "Address can't be null");
         require(to != address(0), "Address can't be null");
@@ -177,28 +179,27 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         return pricesById[tokenId];
     }
 
-    function getTokensIdsByCollectionName(bytes32 collectionName)
-        public
-        view
-        override
-        returns (uint256[] memory tokenIds)
-    {
-        return tokensIdsByCollectionName[collectionName];
+    function getTokensIdsByCollectionName(
+        address account,
+        bytes32 collectionName
+    ) public view override returns (uint256[] memory tokenIds) {
+        return tokensIdsByCollectionName[account][collectionName];
     }
 
-    function getTokensURIsByCollectionName(bytes32 collectionName)
-        public
-        view
-        override
-        returns (string[] memory tokenURIs)
-    {
+    function getTokensURIsByCollectionName(
+        address account,
+        bytes32 collectionName
+    ) public view override returns (string[] memory tokenURIs) {
+        tokenURIs = new string[](
+            tokensIdsByCollectionName[account][collectionName].length
+        );
         for (
             uint256 i = 0;
-            i > tokensIdsByCollectionName[collectionName].length;
+            i < tokensIdsByCollectionName[account][collectionName].length;
             i++
         ) {
             tokenURIs[i] = tokenURI(
-                tokensIdsByCollectionName[collectionName][i]
+                tokensIdsByCollectionName[account][collectionName][i]
             );
         }
     }
