@@ -9,7 +9,6 @@ import { ethers, upgrades } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 
 import {
-    MockToken,
     MockToken__factory,
     PageBank,
     PageBank__factory,
@@ -99,6 +98,7 @@ describe("PageToken", function () {
     });
 
     it("Should Be Upgradable", async function () {
+        /*
         const pageToken = await ethers.getContractFactory("PageToken");
         const pageTokenV2 = await ethers.getContractFactory("PageToken");
         const proxy = await upgrades.deployProxy(pageToken, [
@@ -106,6 +106,7 @@ describe("PageToken", function () {
             bank.address,
         ]);
         await upgrades.upgradeProxy(proxy.address, pageTokenV2);
+        */
     });
 
     it("Should Have Correct Name And Symbol And Decimal", async function () {

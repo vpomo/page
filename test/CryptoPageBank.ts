@@ -2,7 +2,6 @@ import {
     abi as FACTORY_ABI,
     bytecode as FACTORY_BYTECODE,
 } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json";
-import { abi as POOL_ABI } from "@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json";
 import bs58 from "bs58";
 import { expect } from "chai";
 import { Signer } from "ethers";
@@ -28,6 +27,8 @@ describe("PageCommentBank", function () {
             .decode("QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB")
             .slice(2)
             .toString("hex");
+    const collectionName =
+        "0xb0379d0047424de9fa43620fd073532a0135cf4a85e8d7bc9ca8aae9bcd8cc4c";
     let bank: PageBank;
     let token: PageToken;
     let nft: PageNFT;
@@ -74,23 +75,6 @@ describe("PageCommentBank", function () {
         comment = await commentFactory.deploy();
 
         await token.initialize(deployer, bank.address);
-        await weth.deployed();
-        await usdt.deployed();
-        await uniswapV3Factory.createPool(weth.address, usdt.address, 3000);
-        await uniswapV3Factory.createPool(usdt.address, token.address, 3000);
-        const WETHUSDTPoolAddress = await uniswapV3Factory.getPool(
-            weth.address,
-            usdt.address,
-            3000
-        );
-        const USDTPAGEPoolAddress = await uniswapV3Factory.getPool(
-            usdt.address,
-            token.address,
-            3000
-        );
-        const WETHUSDTPool = new ethers.Contract(WETHUSDTPoolAddress, POOL_ABI);
-        const USDTPAGEPool = new ethers.Contract(USDTPAGEPoolAddress, POOL_ABI);
-
         await token.deployed();
         await bank.initialize(deployer, 1000);
         await comment.initialize(bank.address);
@@ -104,20 +88,21 @@ describe("PageCommentBank", function () {
             bank.address,
             "https://ipfs.io/ipfs"
         );
-        await bank.setWETHUSDTPool(WETHUSDTPoolAddress);
-        await bank.setUSDTPAGEPool(USDTPAGEPoolAddress);
     });
 
     it("Should Be Allowed Check Balance", async function () {
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
-        let balance = await bank.balanceOf();
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeHash",
+            collectionName
+        );
+        let balance = await bank.balance();
         expect(Number(balance)).to.be.equal(0);
         await nft
             .connect(signers[1])
-            .safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
-        balance = await bank.balanceOf();
-        console.log("balance is ", Number(balance));
-        // expect(Number(balance)).to.be.equal(17891712000);// 18243360000);
+            .safeMint(alice, "https://ipfs.io/ipfs/fakeHash", collectionName);
+        balance = await bank.balance();
+        expect(Number(balance)).to.be.greaterThan(0);
     });
 
     it("Should Be Allowed Withdraw", async function () {
@@ -126,8 +111,19 @@ describe("PageCommentBank", function () {
         );
         await nft
             .connect(signers[5])
-            .safeMint(alice, "https://ipfs.io/ipfs/fakeHash");
-        const balance = await bank.connect(signers[0]).balanceOf();
-        // await bank.withdraw(1);
+            .safeMint(alice, "https://ipfs.io/ipfs/fakeHash", collectionName);
+        const balance = await bank.connect(signers[0]).balance();
+        await bank.withdraw(1);
+    });
+
+    it("Should Set Static USDT / PAGE Price", async function () {
+        await bank.setStaticUSDTPAGEPrice(200);
+        expect(await bank.staticUSDTPAGEPrice()).to.be.equal(200);
+        expect(await bank.getUSDTPAGEPrice()).to.be.equal(100);
+    });
+
+    it("Should Set Static WETH / USDT Price", async function () {
+        await bank.setStaticWETHUSDTPrice(5000);
+        expect(await bank.staticWETHUSDTPrice()).to.be.equal(5000);
     });
 });

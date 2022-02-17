@@ -28,6 +28,8 @@ describe("PageComment", async function () {
             .decode("QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB")
             .slice(2)
             .toString("hex");
+    const collectionName =
+        "0xb0379d0047424de9fa43620fd073532a0135cf4a85e8d7bc9ca8aae9bcd8cc4c";
     let bank: PageBank;
     let token: PageToken;
     let nft: PageNFT;
@@ -104,7 +106,7 @@ describe("PageComment", async function () {
         );
         await bank.setWETHUSDTPool(WETHUSDTPoolAddress);
         await bank.setUSDTPAGEPool(USDTPAGEPoolAddress);
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/");
+        await nft.safeMint(alice, "https://ipfs.io/ipfs/", collectionName);
     });
 
     describe("After Deployment", function () {
@@ -128,9 +130,6 @@ describe("PageComment", async function () {
         });
         it("Should Be Required Id In Ids Equals Or Less Than Total Comments Count", async function () {
             await comment.createComment(nft.address, 0, commentText, true);
-            // await expect(comment.getCommentsByIds(nft.address, 0, [0])).to.be.revertedWith(
-            // "No comment with this ID"
-            // );
             await expect(
                 comment.getCommentsByIds(nft.address, 0, [99, 33])
             ).to.be.revertedWith(
@@ -226,13 +225,19 @@ describe("PageComment", async function () {
             expect(comments.length).to.equal(0);
             await comment.createComment(nft.address, 0, commentText, true);
             comments = await comment.getCommentsOf(nft.address, 0, alice);
-            const f = await comment.getCommentsOf(
-                nft.address,
-                0,
-                "0x0000000000000000000000000000000000000000"
-            );
-            // console.log("f", f);
-            // await expect(comment.getCommentsOf("0x0000000000000000000000000000000000000000")).to.be.revertedWith("Address can't be null");
+        });
+
+        it("Feature test", async function () {
+            const bob = await signers[1].getAddress();
+            await nft.safeMint(bob, "https://ipfs.io/ipfs/", collectionName);
+            for (let i = 0; i < 10; i++) {
+                await comment.createComment(nft.address, 1, commentText, true);
+            }
+            try {
+                await nft.connect(signers[1]).safeBurn(1);
+            } catch (error) {
+                console.log("error", error);
+            }
         });
     });
 });

@@ -28,6 +28,8 @@ describe("PageNFT", function () {
             .decode("QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB")
             .slice(2)
             .toString("hex");
+    const collectionName =
+        "0xb0379d0047424de9fa43620fd073532a0135cf4a85e8d7bc9ca8aae9bcd8cc4c";
     let bank: PageBank;
     let token: PageToken;
     let nft: PageNFT;
@@ -108,7 +110,7 @@ describe("PageNFT", function () {
         await bank.setWETHUSDTPool(WETHUSDTPoolAddress);
         await bank.setUSDTPAGEPool(USDTPAGEPoolAddress);
     });
-
+    /*
     it("Should Be Upgradable", async function () {
         const pageNFT = await ethers.getContractFactory("PageNFT");
         const pageNFTV2 = await ethers.getContractFactory("PageNFT");
@@ -116,10 +118,10 @@ describe("PageNFT", function () {
             comment.address,
             bank.address,
             "https://ipfs.io/ipfs",
-        ]);
+            ]);
         await upgrades.upgradeProxy(proxy.address, pageNFTV2);
     });
-
+    */
     it("Should Have Correct Name And Symbol", async function () {
         const name = await nft.name();
         const symbol = await nft.symbol();
@@ -128,7 +130,11 @@ describe("PageNFT", function () {
     });
 
     it("Should Available TokenPrice", async function () {
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
         const price = await nft.tokenPrice(0);
         await expect(price.toString(), "160032");
         // await expect(nft.tokenPrice(25)).to.be.revertedWith(
@@ -137,9 +143,17 @@ describe("PageNFT", function () {
     });
 
     it("Should Only Allow Owner Of Contract To Burn NFT", async function () {
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
         await nft.safeBurn(0);
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
         await expect(nft.connect(signers[1]).safeBurn(1)).to.be.revertedWith(
             "Allower only for owner"
         );
@@ -147,107 +161,90 @@ describe("PageNFT", function () {
 
     it("Should", async function () {
         const bob = await signers[1];
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
         await nft
             .connect(bob)
-            .safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
-        // const transaction = await commentFactory.deploy(
-        // nft.address,
-        // 0,
-        // bank.address
-        // );
-        // const comment = new ethers.Contract(
-        // transaction.address,
-        // COMMENT_ABI,
-        // ethers.getDefaultProvider()
-        // );
-        // console.log("comment", comment.address);
-        // await comment.connect(signers[1]).createComment(commentText, true);
+            .safeMint(
+                alice,
+                "https://ipfs.io/ipfs/fakeIPFSHash",
+                collectionName
+            );
         await comment
             .connect(bob)
             .createComment(nft.address, 0, commentText, true);
         await nft.safeBurn(0);
-        // await nft.connect(bob).safeBurn(1);
     });
 
     it("Should't Allow Mint For Null Address", async function () {
-        // const bob = await signers[1].getAddress();
         await expect(
             nft.safeMint(
                 "0x0000000000000000000000000000000000000000",
-                "https://ipfs.io/ipfs/fakeIPFSHash"
+                "https://ipfs.io/ipfs/fakeIPFSHash",
+                collectionName
             )
         ).to.be.revertedWith("Address can't be null");
-        // await commentDeployer.deploy(nft.address, 0);
-
-        // await nft
-        // .connect(signers[1])
-        // .safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
-
-        // await commentFactory.deploy(nft.address, 0, bank.address);
-        // await nft.safeBurn(0);
-        // await expect(nft.connect(signers[2]).safeBurn(1)).to.be.revertedWith(
-        // "Allowed only for owner"
-        // );
-        // await nft.safeBurn(1);
     });
 
     it("Should Only Allow Owner Of Contract To Burn NFT", async function () {
         const bob = await signers[1].getAddress();
-        // console.log("alice", alice);
-
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
-        await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
-        // await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
-        // await nft.safeTransferFrom2(alice, bob, 0);
-        // await nft["safeTransferFrom(address,address,uint256)"];
-        // await nft.safeMint(bob, "https://ipfs.io/ipfs/fakeIPFSHash");
-        // await nft.safeMint(bob, "https://ipfs.io/ipfs/fakeIPFSHash");
-        await nft.safeTransferFrom2(alice, bob, 0);
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
+        await nft["safeTransferFrom(address,address,uint256)"](alice, bob, 0);
         const nullAddress = "0x0000000000000000000000000000000000000000";
-        await expect(
-            nft.safeTransferFrom2(nullAddress, bob, 1)
-        ).to.be.revertedWith("Address can't be null");
-        await expect(
-            nft.safeTransferFrom2(alice, nullAddress, 2)
-        ).to.be.revertedWith("Address can't be null");
-        // await nft.safeBurn(0);
-        // await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
-        // const balance = await token.balanceOf(alice);
-        // console.log(ethers.utils.parseEther(String(balance)));
-        // await nft.burn(0);asdasd// aasdsa das dasd asd  asds dsa dsa
-        // await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
-        // await expect(nft.connect(bob).burn(1)).to.be.revertedWith(lsjdfdsj hfdjghsdhgf
-
-        // dfgjdfskjg hjkh
-        //    "It's possible only for owner"
-        // );
+        await expect(nft["safeTransferFrom(address,address,uint256)"](nullAddress, bob, 1)).to.be.revertedWith("Address can't be null");
+        await expect(nft["safeTransferFrom(address,address,uint256)"](alice, nullAddress, 1)).to.be.revertedWith("Address can't be null");
     });
 
-    // it("Should Only Allow Owner Of Contract To Burn NFT", async function () {
-    // const bob = await signers[1].getAddress();
-    // console.log("alice", alice);
-    // await nft.safeMint(alice, "https://ipfs.io/ipfs/fakeIPFSHash");
-    // const comment = await commentFactory.deploy(nft.address, 0, bank.address);
-    // await comment.createComment(commentText, true);
-    // await nft.safeBurn(0);
-    // comment.createComment(commentText, false);
-    // const commentAddress await commentDeployer.deploy(nft.address, 0);
-    // await commentDeployer
-    // .connect(signers[1])
-    // .createComment(commentText, true);
-    // await nft.safeMint(bob, "https://ipfs.io/ipfs/fakeIPFSHash");
-    // await nft.safeMint(bob, "https://ipfs.io/ipfs/fakeIPFSHash");
+    it("Should Allowed Get Collections By Address", async function () {
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
+        const collections = await nft.getCollectionsByAddress(alice);
+        expect(collections[0]).to.be.equal(collectionName);
+    });
 
-    // await nft.safeBurn(0);
+    it("Should Allowed Get TokensIds By CollectionName", async function () {
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
+        const tokensIds = await nft.getTokensIdsByCollectionName(
+            alice,
+            collectionName
+        );
+        expect(tokensIds[0]).to.be.equal(0);
+    });
 
-    // await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
-    // const balance = await token.balanceOf(alice);
-    // console.log(ethers.utils.parseEther(String(balance)));
-    // await nft.burn(0);
-    // await nft.safeMint(aliceAddress, "https://ipfs.io/ipfs/fakeIPFSHash");
-    // await expect(nft.connect(bob).burn(1)).to.be.revertedWith(
-    //    "It's possible only for owner"
-    // );
+    it("Should Allowed Get TokensURIs By CollectionName", async function () {
+        await nft.safeMint(
+            alice,
+            "https://ipfs.io/ipfs/fakeIPFSHash",
+            collectionName
+        );
+        const tokenURIs = await nft.getTokensURIsByCollectionName(
+            alice,
+            collectionName
+        );
+        expect(tokenURIs[0]).to.be.equal("https://ipfs.io/ipfs/fakeIPFSHash");
+    });
 });
