@@ -80,14 +80,14 @@ contract PageComment is Initializable {
         //
         comment = _createComment(nft, tokenId, msg.sender, ipfsHash, like);
         uint256 gas = gasBefore - gasleft();
-        uint256 price = bank.calculateMint(
+        uint256 price = bank.processMint(
             msg.sender,
             nft.ownerOf(tokenId),
             gas
         );
         console.log("price in createComment %s", price);
         commentsById[_getBytes32(address(nft), tokenId)][comment.id]
-            .price = price; // bank.calculateMint(msg.sender, nft.ownerOf(tokenId), gas);
+            .price = price; // bank.processMint(msg.sender, nft.ownerOf(tokenId), gas);
         emit NewComment(
             comment.id,
             comment.author,

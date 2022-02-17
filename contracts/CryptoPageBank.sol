@@ -15,7 +15,7 @@ import "./interfaces/ICryptoPageToken.sol";
 /// @title The contract calculates amount and mint / burn PAGE tokens
 /// @author Crypto.Page Team
 /// @notice
-/// @dev Hello World!
+/// @dev 
 contract PageBank is
     Initializable,
     OwnableUpgradeable,
@@ -59,29 +59,33 @@ contract PageBank is
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
+    /// @param _admin Address of admin
     /// @param _treasuryFee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
-    function initialize(address _treasury, uint256 _treasuryFee)
+    function initialize(address _treasury, address _admin, uint256 _treasuryFee)
         public
         initializer
     {
         __Ownable_init();
+        require(_treasury != address(0), "Wrong address");
+        require(_admin != address(0), "Wrong address");
         treasury = _treasury;
+        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+
         treasuryFee = _treasuryFee;
-        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     /// @notice Calculate and call burn
     /// @param sender The address on which the tokens burn
     /// @param receiver The receiver address
     /// @param gas Gas
-    function calculateMint(
+    function processMint(
         address sender,
         address receiver,
         uint256 gas
     ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
-        amount = _calculateAmount(gas);
-        console.log("amount in calculateMint %s", amount);
-        uint256 treasuryAmount = _calculateTreasuryAmount(amount);
+        amount = convertGasToTokenAmount(gas);
+        console.log("amount in processMint %s", amount);
+        uint256 treasuryAmount = calculateTreasuryAmount(amount);
         uint256 senderBalance = _balances[sender];
         if (sender == receiver) {
             amount += senderBalance;
@@ -89,11 +93,11 @@ contract PageBank is
             token.mint(sender, amount);
         } else {
             amount = amount.div(2);
-            console.log("amount in calculateMint after divide %s", amount);
+            console.log("amount in processMint after divide %s", amount);
             uint256 recieverAmount = _balances[receiver].add(amount);
             _balances[receiver] = recieverAmount;
             console.log(
-                "_balances[receiver] in calculateMint after divide",
+                "_balances[receiver] in processMint after divide",
                 _balances[receiver]
             );
             emit Withdraw(sender, senderBalance);
@@ -108,18 +112,18 @@ contract PageBank is
     /// @param receiver The address on which the tokens burn
     /// @param gas The amount of gas spent on the function call
     /// @param commentsReward Reward for comments in PAGE tokens
-    function calculateBurn(
+    function processBurn(
         address receiver,
         uint256 gas,
         uint256 commentsReward
     ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
-        amount = _calculateAmount(gas).add(_balances[receiver]);
+        amount = convertGasToTokenAmount(gas).add(_balances[receiver]);
         console.log(
-            "_balances[receiver] in calculateBurn %s",
+            "_balances[receiver] in processBurn %s",
             _balances[receiver]
         );
-        console.log("amount  in calculateBurn %s", amount);
-        console.log("commentsReward  in calculateBurn %s", commentsReward);
+        console.log("amount  in processBurn %s", amount);
+        console.log("commentsReward  in processBurn %s", commentsReward);
         if (commentsReward > amount) {
             commentsReward = commentsReward.sub(amount);
             require(token.balanceOf(receiver) > commentsReward, "");
@@ -242,7 +246,7 @@ contract PageBank is
     /// @notice Returns gas multiplied by token's prices and gas price.
     /// @param _gas Comment author's address
     /// @return PAGE token's count
-    function _calculateAmount(uint256 _gas) private view returns (uint256) {
+    function convertGasToTokenAmount(uint256 _gas) private view returns (uint256) {
         return
             _gas.mul(tx.gasprice).mul(getWETHUSDTPrice()).mul(
                 getUSDTPAGEPrice()
@@ -252,7 +256,7 @@ contract PageBank is
     /// @notice Returns amount divided by treasury fee
     /// @param _amount Amount for dividing
     /// @return PAGE token's count
-    function _calculateTreasuryAmount(uint256 _amount)
+    function calculateTreasuryAmount(uint256 _amount)
         private
         view
         returns (uint256)

@@ -3,13 +3,13 @@
 pragma solidity 0.8.3;
 
 interface IPageBank {
-    function calculateMint(
+    function processMint(
         address sender,
         address receiver,
         uint256 gas
     ) external returns (uint256 amount);
 
-    function calculateBurn(
+    function processBurn(
         address receiver,
         uint256 gas,
         uint256 commentsReward

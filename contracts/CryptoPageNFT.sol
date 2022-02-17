@@ -76,7 +76,7 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         // collectionsByAddress[_msgSender()].add(keccak256(abi.encodePacked(_msgSender(), collectionName)));
         collectionsByAddress[_msgSender()].add(collectionName);
         uint256 gas = gasBefore - gasleft();
-        uint256 price = bank.calculateMint(_msgSender(), owner, gas);
+        uint256 price = bank.processMint(_msgSender(), owner, gas);
         pricesById[tokenId] = price;
     }
 
@@ -120,7 +120,7 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         */
         // Check the amount of gas after counting awards for comments
         // uint256 gasAfter = gasBefore - gasleft();
-        bank.calculateBurn(_msgSender(), 0, commentsReward);
+        bank.processBurn(_msgSender(), 0, commentsReward);
         _safeBurn(tokenId);
     }
 
@@ -144,7 +144,7 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         );
         _safeTransfer(_from, _to, _tokenId, data);
         uint256 amount = gasBefore - gasleft();
-        bank.calculateMint(_from, _to, amount);
+        bank.processMint(_from, _to, amount);
     }
 
     /// @notice Burn PAGE.NFT token
