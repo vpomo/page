@@ -2,8 +2,6 @@
 
 pragma solidity 0.8.3;
 
-import "hardhat/console.sol";
-
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -80,22 +78,16 @@ contract PageBank is
         uint256 gas
     ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = _calculateAmount(gas);
-        console.log("amount in calculateMint %s", amount);
         uint256 treasuryAmount = _calculateTreasuryAmount(amount);
         uint256 senderBalance = _balances[sender];
         if (sender == receiver) {
             amount += senderBalance;
             emit Withdraw(sender, senderBalance);
             token.mint(sender, amount);
-        } else {
+         } else {
             amount = amount.div(2);
-            console.log("amount in calculateMint after divide %s", amount);
             uint256 recieverAmount = _balances[receiver].add(amount);
             _balances[receiver] = recieverAmount;
-            console.log(
-                "_balances[receiver] in calculateMint after divide",
-                _balances[receiver]
-            );
             emit Withdraw(sender, senderBalance);
             emit Deposit(receiver, recieverAmount);
             token.mint(sender, amount += senderBalance);
@@ -114,12 +106,6 @@ contract PageBank is
         uint256 commentsReward
     ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
         amount = _calculateAmount(gas).add(_balances[receiver]);
-        console.log(
-            "_balances[receiver] in calculateBurn %s",
-            _balances[receiver]
-        );
-        console.log("amount  in calculateBurn %s", amount);
-        console.log("commentsReward  in calculateBurn %s", commentsReward);
         if (commentsReward > amount) {
             commentsReward = commentsReward.sub(amount);
             require(token.balanceOf(receiver) > commentsReward, "");
@@ -129,10 +115,6 @@ contract PageBank is
         } else {
             amount = amount.sub(commentsReward);
             _balances[receiver] = amount;
-            // emit Deposit(receiver, amount - commentsReward);
-            // amount - commentsReward;
-            // emit Deposit(receiver, amount);
-            // emit Burn(receiver, commentsReward);
         }
     }
 

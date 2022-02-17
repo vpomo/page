@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.3;
 
-import "hardhat/console.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -67,13 +66,7 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         uint256 gasBefore = gasleft();
         require(owner != address(0), "Address can't be null");
         tokenId = _safeMint(owner, tokenURI);
-        // bytes32 a = keccak256(abi.encodePacked(_msgSender(), collectionName));
-        // console.log("collectionName %s", a);
         tokensIdsByCollectionName[_msgSender()][collectionName].push(tokenId);
-        // tokensIdsByCollectionName[
-        // keccak256(abi.encodePacked(_msgSender(), collectionName))
-        // ].push(tokenId);
-        // collectionsByAddress[_msgSender()].add(keccak256(abi.encodePacked(_msgSender(), collectionName)));
         collectionsByAddress[_msgSender()].add(collectionName);
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.calculateMint(_msgSender(), owner, gas);
@@ -102,22 +95,6 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
             address(this),
             tokenId
         );
-        console.log("commentsReward in safeBurn %s", commentsReward);
-        /*
-        IPageComment.Comment[] memory comments = comment.getComments(
-            address(this),
-            tokenId
-        );
-        for (uint256 i = 0; i < comments.length; i++) {Для того
-            IPageComment.Comment memory commentInstance = comments[i];
-            // If author of the comment is not sender
-            // Need to calculate 45% of comment.price
-            // This is an equivalent reward for comment
-            if (commentInstance.author != _msgSender()) {
-                commentsReward.add(commentInstance.price.div(100).mul(45));
-            }
-         }
-        */
         // Check the amount of gas after counting awards for comments
         // uint256 gasAfter = gasBefore - gasleft();
         bank.calculateBurn(_msgSender(), 0, commentsReward);

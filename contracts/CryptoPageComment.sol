@@ -2,8 +2,6 @@
 
 pragma solidity 0.8.3;
 
-import "hardhat/console.sol";
-
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -13,7 +11,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageComment.sol";
 
-// event Burn(address indexed _to, uint256 indexed _amount);
 /// @title Contract for storage and interaction of comments for ERC721 tokens
 /// @author Crypto.Page Team
 /// @notice Contract designed to store comments of one specific token
@@ -73,11 +70,6 @@ contract PageComment is Initializable {
     ) public returns (Comment memory comment) {
         uint256 gasBefore = gasleft();
         // require(msg.sender != address(0), "Address can't be null");
-        //
-        //
-        //
-        //
-        //
         comment = _createComment(nft, tokenId, msg.sender, ipfsHash, like);
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.calculateMint(
@@ -85,7 +77,6 @@ contract PageComment is Initializable {
             nft.ownerOf(tokenId),
             gas
         );
-        console.log("price in createComment %s", price);
         commentsById[_getBytes32(address(nft), tokenId)][comment.id]
             .price = price; // bank.calculateMint(msg.sender, nft.ownerOf(tokenId), gas);
         emit NewComment(
@@ -142,7 +133,6 @@ contract PageComment is Initializable {
         view
         returns (Comment[] memory comments)
     {
-        // Comment[] memory comments;
         if (commentsIdsArray[_getBytes32(address(nft), tokenId)].length > 0) {
             comments = getCommentsByIds(
                 nft,
@@ -150,7 +140,6 @@ contract PageComment is Initializable {
                 commentsIdsArray[_getBytes32(address(nft), tokenId)]
             );
         }
-        // return comments;
     }
 
     /// @notice Return comment by id
@@ -268,14 +257,11 @@ contract PageComment is Initializable {
         returns (uint256 reward)
     {
         Comment[] memory comments = getComments(IERC721(nft), tokenId);
-        console.log("comments.length %s", comments.length);
         for (uint256 i = 0; i < comments.length; i++) {
             Comment memory comment = comments[i];
             // If author of the comment is not sender
             // Need to calculate 45% of comment.price
             // This is an equivalent reward for comment
-            // console.log("comment price %s", comment.price);
-            // console.log("reward %s", reward);
             if (comment.author != IERC721(nft).ownerOf(tokenId)) {
                 reward = reward.add(comment.price).mul(2); //.div(100).mul(45));
             }
