@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.11;
 
 import "hardhat/console.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "./interfaces/ICryptoPageComment.sol";
@@ -19,10 +18,9 @@ import "./CryptoPageBank.sol";
 /// @title Contract of PAGE.NFT token
 /// @author Crypto.Page Team
 /// @notice
-/// @dev
+/// @dev //https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/tree/master/contracts
 contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     using CountersUpgradeable for CountersUpgradeable.Counter;
-    using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
 
     CountersUpgradeable.Counter public _tokenIdCounter;
@@ -33,7 +31,6 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     string private _symbol;
     string public baseURL;
 
-    mapping(uint256 => address) private commentsById;
     mapping(uint256 => uint256) private pricesById;
     mapping(uint256 => address) private creatorById;
     mapping(address => mapping(bytes32 => uint256[]))

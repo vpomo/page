@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.11;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Upgradeable.sol";
 
 interface IPageNFT is IERC721Upgradeable {
     function safeMint(

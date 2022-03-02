@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.11;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Upgradeable.sol";
 
 import "./interfaces/ICryptoPageToken.sol";
 
@@ -26,6 +26,8 @@ contract PageToken is ERC20Upgradeable, IPageToken {
     /// @param _bank Address of our PageBank contract
     function initialize(address _treasury, address _bank) public initializer {
         __ERC20_init("Crypto.Page", "PAGE");
+        require(_treasury != address(0), "PageToken. Address cannot be zero");
+        require(_bank != address(0), "PageToken. Address cannot be zero");
         _mint(_treasury, 5e25);
         bank = _bank;
     }

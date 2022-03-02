@@ -1,0 +1,14 @@
+networks:
+  default: mainnet-fork
+
+autofetch_sources: True
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts-upgradeable@4.5.1
+
+# path remapping to support imports from GitHub/NPM
+compiler:
+  solc:
+    version: 0.8.11
+    remappings:
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts-upgradeable@4.5.1"
