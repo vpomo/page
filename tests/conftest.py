@@ -27,7 +27,14 @@ def helpers():
 
 
 @pytest.fixture(scope="module")
-def pageToken(PageToken, treasury, deployer, admin):
+def pageBank(PageBank, treasury, deployer, admin):
+    instanсe = PageBank.deploy({'from': deployer})
+    instanсe.initialize(treasury, admin, 100)
+    return instanсe
+
+
+@pytest.fixture(scope="module")
+def pageToken(PageToken, treasury, deployer, pageBank):
     instanсe = PageToken.deploy({'from': deployer})
-    instanсe.initialize(treasury, admin)
+    instanсe.initialize(treasury, pageBank)
     return instanсe

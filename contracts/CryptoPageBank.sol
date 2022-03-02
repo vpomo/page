@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.1;
+pragma solidity 0.8.11;
 
-import "hardhat/console.sol";
-
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@uniswap/contracts/interfaces/IUniswapV3Pool.sol";
+import "@openzeppelin/contracts/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageToken.sol";
@@ -84,7 +82,6 @@ contract PageBank is
         uint256 gas
     ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas);
-        console.log("amount in processMint %s", amount);
         uint256 treasuryAmount = calculateTreasuryAmount(amount);
         uint256 senderBalance = _balances[sender];
         if (sender == receiver) {
@@ -93,13 +90,8 @@ contract PageBank is
             token.mint(sender, amount);
         } else {
             amount = amount.div(2);
-            console.log("amount in processMint after divide %s", amount);
             uint256 recieverAmount = _balances[receiver].add(amount);
             _balances[receiver] = recieverAmount;
-            console.log(
-                "_balances[receiver] in processMint after divide",
-                _balances[receiver]
-            );
             emit Withdraw(sender, senderBalance);
             emit Deposit(receiver, recieverAmount);
             token.mint(sender, amount += senderBalance);
@@ -118,12 +110,6 @@ contract PageBank is
         uint256 commentsReward
     ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas).add(_balances[receiver]);
-        console.log(
-            "_balances[receiver] in processBurn %s",
-            _balances[receiver]
-        );
-        console.log("amount  in processBurn %s", amount);
-        console.log("commentsReward  in processBurn %s", commentsReward);
         if (commentsReward > amount) {
             commentsReward = commentsReward.sub(amount);
             require(token.balanceOf(receiver) > commentsReward, "");
@@ -149,7 +135,7 @@ contract PageBank is
     }
 
     /// @notice Bank balance of the sender's address
-    function balance() public view override returns (uint256) {
+    function balanceOf() public view override returns (uint256) {
         return _balances[_msgSender()];
     }
 
