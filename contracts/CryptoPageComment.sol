@@ -2,14 +2,11 @@
 
 pragma solidity 0.8.11;
 
-import "hardhat/console.sol";
-
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableMapUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageComment.sol";
 
@@ -66,7 +63,7 @@ contract PageComment is Initializable {
     /// @param ipfsHash IPFS hash
     /// @param like Positive or negative reaction to comment
     function createComment(
-        IERC721 nft,
+        IERC721Upgradeable nft,
         uint256 tokenId,
         bytes32 ipfsHash,
         bool like
@@ -85,7 +82,6 @@ contract PageComment is Initializable {
             nft.ownerOf(tokenId),
             gas
         );
-        console.log("price in createComment %s", price);
         commentsById[_getBytes32(address(nft), tokenId)][comment.id]
             .price = price; // bank.processMint(msg.sender, nft.ownerOf(tokenId), gas);
         emit NewComment(
@@ -100,7 +96,7 @@ contract PageComment is Initializable {
 
     /// @notice Return id's of all comments
     /// @return Array of Comment structs
-    function getCommentsIds(IERC721 nft, uint256 tokenId)
+    function getCommentsIds(IERC721Upgradeable nft, uint256 tokenId)
         public
         view
         returns (uint256[] memory)
@@ -110,7 +106,7 @@ contract PageComment is Initializable {
 
     /// @notice Return comments by id's
     function getCommentsByIds(
-        IERC721 nft,
+        IERC721Upgradeable nft,
         uint256 tokenId,
         uint256[] memory ids
     ) public view returns (Comment[] memory comments) {
@@ -137,7 +133,7 @@ contract PageComment is Initializable {
     }
 
     /// @notice Return all comments
-    function getComments(IERC721 nft, uint256 tokenId)
+    function getComments(IERC721Upgradeable nft, uint256 tokenId)
         public
         view
         returns (Comment[] memory comments)
@@ -156,7 +152,7 @@ contract PageComment is Initializable {
     /// @notice Return comment by id
     /// @return Comment struct
     function getCommentById(
-        IERC721 nft,
+        IERC721Upgradeable nft,
         uint256 tokenId,
         uint256 id
     ) public view returns (Comment memory) {
@@ -171,7 +167,7 @@ contract PageComment is Initializable {
     /// @return total Count of comments
     /// @return likes Count of likes
     /// @return dislikes Count of dislikes
-    function getStatistic(IERC721 nft, uint256 tokenId)
+    function getStatistic(IERC721Upgradeable nft, uint256 tokenId)
         public
         view
         returns (
@@ -190,7 +186,7 @@ contract PageComment is Initializable {
     /// @return likes Count of likes
     /// @return dislikes Count of dislikes
     /// @return comments Array of Comment structs
-    function getStatisticWithComments(IERC721 nft, uint256 tokenId)
+    function getStatisticWithComments(IERC721Upgradeable nft, uint256 tokenId)
         public
         view
         returns (
@@ -208,7 +204,7 @@ contract PageComment is Initializable {
     /// @param author Address of author
     /// @return Comments Array of Comment structs
     function getCommentsOf(
-        IERC721 nft,
+        IERC721Upgradeable nft,
         uint256 tokenId,
         address author
     ) public view returns (Comment[] memory) {
@@ -228,7 +224,7 @@ contract PageComment is Initializable {
     /// @param _ipfsHash IPFS hash
     /// @param _like Positive or negative reaction to comment
     function _createComment(
-        IERC721 nft,
+        IERC721Upgradeable nft,
         uint256 tokenId,
         address _author,
         bytes32 _ipfsHash,
@@ -267,16 +263,13 @@ contract PageComment is Initializable {
         view
         returns (uint256 reward)
     {
-        Comment[] memory comments = getComments(IERC721(nft), tokenId);
-        console.log("comments.length %s", comments.length);
+        Comment[] memory comments = getComments(IERC721Upgradeable(nft), tokenId);
         for (uint256 i = 0; i < comments.length; i++) {
             Comment memory comment = comments[i];
             // If author of the comment is not sender
             // Need to calculate 45% of comment.price
             // This is an equivalent reward for comment
-            // console.log("comment price %s", comment.price);
-            // console.log("reward %s", reward);
-            if (comment.author != IERC721(nft).ownerOf(tokenId)) {
+            if (comment.author != IERC721Upgradeable(nft).ownerOf(tokenId)) {
                 reward = reward.add(comment.price).mul(2); //.div(100).mul(45));
             }
         }

@@ -2,12 +2,10 @@
 
 pragma solidity 0.8.11;
 
-import "hardhat/console.sol";
-
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Upgradeable.sol";
 
 import "./interfaces/ICryptoPageComment.sol";
 import "./interfaces/ICryptoPageToken.sol";
@@ -65,7 +63,6 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         require(owner != address(0), "Address can't be null");
         tokenId = _safeMint(owner, tokenURI);
         // bytes32 a = keccak256(abi.encodePacked(_msgSender(), collectionName));
-        // console.log("collectionName %s", a);
         tokensIdsByCollectionName[_msgSender()][collectionName].push(tokenId);
         // tokensIdsByCollectionName[
         // keccak256(abi.encodePacked(_msgSender(), collectionName))
@@ -99,7 +96,6 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
             address(this),
             tokenId
         );
-        console.log("commentsReward in safeBurn %s", commentsReward);
         /*
         IPageComment.Comment[] memory comments = comment.getComments(
             address(this),

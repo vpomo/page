@@ -38,3 +38,17 @@ def pageToken(PageToken, treasury, deployer, pageBank):
     instanсe = PageToken.deploy({'from': deployer})
     instanсe.initialize(treasury, pageBank)
     return instanсe
+
+
+@pytest.fixture(scope="module")
+def pageComment(PageComment, pageBank, deployer):
+    instanсe = PageComment.deploy({'from': deployer})
+    instanсe.initialize(pageBank)
+    return instanсe
+
+
+@pytest.fixture(scope="module")
+def pageNFT(PageNFT, pageComment, pageBank, treasury, deployer):
+    instanсe = PageNFT.deploy({'from': deployer})
+    instanсe.initialize(pageComment, pageBank, 'https://')
+    return instanсe
