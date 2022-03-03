@@ -39,7 +39,7 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     /// @notice Initial function
     /// @param _comment Address of our PageCommentMinter contract
     /// @param _bank Address of our PageBank contract
-    /// @param _baseURL BaseURL of tokenURI, i.e. https://ipfs.io/ipfs/
+    /// @param _baseURL BaseURL of tokenURI, i.e. https://site.io/api/id=
     function initialize(
         address _comment,
         address _bank,
