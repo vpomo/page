@@ -65,8 +65,9 @@ contract PageCommunity is
 
     function removeModerator(uint256 communityNumber, address moderator) public validNumber(communityNumber) {
         Community storage currentCommunity = community[communityNumber];
-        uint256 index = findModerator(communityNumber, moderator);
+        require(_msgSender() == currentCommunity.creator, "PageCommunity: Wrong creator");
 
+        uint256 index = findModerator(communityNumber, moderator);
         require(index < WRONG_MODERATOR_NUMBER, "PageCommunity: Wrong moderator");
 
         for (uint i = index; i<currentCommunity.moderators.length-1; i++){
