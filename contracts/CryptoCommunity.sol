@@ -57,7 +57,7 @@ contract PageCommunity is
     function addModerator(uint256 communityNumber, address moderator) public validNumber(communityNumber) {
         Community storage currentCommunity = community[communityNumber];
         require(moderator != address(0), "PageCommunity: Wrong moderator");
-        require(currentCommunity.moderators.length <= MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
+        require(currentCommunity.moderators.length < MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
 
         currentCommunity.moderators.push(moderator);
         emit AddedModerator(_msgSender(), communityNumber, moderator);
