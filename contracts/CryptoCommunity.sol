@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
@@ -50,7 +50,7 @@ contract PageCommunity is
         emit AddedCommunity(_msgSender(), communityCount, desc);
     }
 
-    function getCommunity(uint256 communityNumber) public validNumber(communityNumber) view returns(Community) {
+    function getCommunity(uint256 communityNumber) public validNumber(communityNumber) view returns(Community memory) {
         return community[communityNumber];
     }
 
@@ -77,7 +77,8 @@ contract PageCommunity is
         emit RemovedModerator(_msgSender(), communityNumber, moderator);
     }
 
-    function findModerator(uint256 communityNumber, address moderator) public validNumber(communityNumber) returns(uint256 index)
+    function findModerator(uint256 communityNumber, address moderator) public view validNumber(communityNumber)
+        returns(uint256 index)
     {
         index = WRONG_MODERATOR_NUMBER;
         Community memory currentCommunity = community[communityNumber];
