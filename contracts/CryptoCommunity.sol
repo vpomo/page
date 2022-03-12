@@ -4,6 +4,7 @@ pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
 
 /// @title The contract for manage community
@@ -15,6 +16,8 @@ contract PageCommunity is
     OwnableUpgradeable,
     AccessControlUpgradeable
 {
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+
     uint256 public MAX_MODERATORS = 40;
 
     uint256 private WRONG_MODERATOR_NUMBER = 1000;
@@ -24,16 +27,21 @@ contract PageCommunity is
     struct Community {
         string name;
         address creator;
-        address[] moderators;
+        EnumerableSetUpgradeable.AddressSet moderators;
+        uint256 usersCount;
         bool active;
     }
 
     mapping(uint256 => Community) private community;
+    mapping(uint256 => mapping(address => bool)) private communityUsers;
 
     event AddedCommunity(address indexed creator, uint256 number, string name);
 
     event AddedModerator(address indexed admin, uint256 number, address moderator);
     event RemovedModerator(address indexed admin, uint256 number, address moderator);
+
+    event JoinUser(uint256 communityNumber, address user);
+    event QuitUser(uint256 communityNumber, address user);
 
     modifier validNumber(uint256 number) {
         require(number <= communityCount, "PageCommunity: Wrong index");
@@ -59,7 +67,7 @@ contract PageCommunity is
         require(moderator != address(0), "PageCommunity: Wrong moderator");
         require(currentCommunity.moderators.length < MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
 
-        currentCommunity.moderators.push(moderator);
+        currentCommunity.moderators.add(moderator);
         emit AddedModerator(_msgSender(), communityNumber, moderator);
     }
 
@@ -67,26 +75,26 @@ contract PageCommunity is
         Community storage currentCommunity = community[communityNumber];
         require(_msgSender() == currentCommunity.creator, "PageCommunity: Wrong creator");
 
-        uint256 index = findModerator(communityNumber, moderator);
-        require(index < WRONG_MODERATOR_NUMBER, "PageCommunity: Wrong moderator");
-
-        for (uint i = index; i<currentCommunity.moderators.length-1; i++){
-            currentCommunity.moderators[i] = currentCommunity.moderators[i+1];
-        }
-        currentCommunity.moderators.pop();
+        currentCommunity.moderators.remove(moderator);
         emit RemovedModerator(_msgSender(), communityNumber, moderator);
     }
 
-    function findModerator(uint256 communityNumber, address moderator) public view validNumber(communityNumber)
-        returns(uint256 index)
+    function join(uint256 communityNumber) public validNumber(communityNumber) {
+        communityUsers[communityNumber][_msgSender()] = true;
+        community[communityNumber].usersCount++;
+        emit JoinUser(communityNumber, _msgSender());
+    }
+
+    function quit(uint256 communityNumber) public validNumber(communityNumber) {
+        communityUsers[communityNumber][_msgSender()] = false;
+        community[communityNumber].usersCount--;
+        emit QuitUser(communityNumber, _msgSender());
+    }
+
+    function isExistModerator(uint256 communityNumber, address moderator) public view validNumber(communityNumber)
+        returns(bool)
     {
-        index = WRONG_MODERATOR_NUMBER;
         Community memory currentCommunity = community[communityNumber];
-        for (uint j = 0; j<currentCommunity.moderators.length; j++) {
-            if (currentCommunity.moderators[j] == moderator) {
-                index = j;
-                break;
-            }
-        }
+        return currentCommunity.moderators.contains(moderator);
     }
 }
