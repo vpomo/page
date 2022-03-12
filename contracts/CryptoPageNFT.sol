@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorageUpgradea
 import "@openzeppelin/contracts/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 
 import "./interfaces/ICryptoPageComment.sol";
 import "./interfaces/ICryptoPageToken.sol";
@@ -17,7 +18,7 @@ import "./CryptoPageBank.sol";
 /// @author Crypto.Page Team
 /// @notice
 /// @dev //https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/tree/master/contracts
-contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
+contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeable, IPageNFT {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
 
@@ -27,6 +28,8 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     CountersUpgradeable.Counter public _tokenIdCounter;
     IPageComment public comment;
     IPageBank public bank;
+    address public community;
+
     string private _name;
     string private _symbol;
     string public baseURL;
@@ -34,6 +37,11 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
     mapping(uint256 => uint256) private pricesByTokenId;
     mapping(uint256 => address) private creatorById;
     mapping(uint256 => uint256[]) private tokensIdsByCommunityId;
+
+    modifier onlyCommunity() {
+        require(_msgSender() == community, "PageNFT: not community");
+        _;
+    }
 
     /// @notice Initial function
     /// @param _comment Address of our PageCommentMinter contract
@@ -50,10 +58,15 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
         baseURL = _baseURL;
     }
 
+    function setCommunity(address communityContract) external onlyOwner {
+        require(communityContract != address(0), "Address can't be null");
+        community = communityContract;
+    }
+
     /// @notice Mint PAGE.NFT token
     /// @param owner Address of token owner
     /// @param tokenURI URI of token
-    function communityMint(address owner, uint256 communityId) public override returns (uint256 tokenId) {
+    function mint(address owner, uint256 communityId) public onlyCommunity override returns (uint256 tokenId) {
         uint256 gasBefore = gasleft();
         require(owner != address(0), "Address can't be null");
         tokenId = _safeMint(owner, tokenURI);
@@ -77,7 +90,7 @@ contract PageNFT is Initializable, ERC721URIStorageUpgradeable, IPageNFT {
 
     /// @notice Burn PAGE.NFT token
     /// @param tokenId Id of token
-    function safeBurn(uint256 tokenId) public override {
+    function burn(uint256 tokenId) public onlyCommunity override {
         // Check the amount of gas before counting awards for comments
         // uint256 gasBefore = gasleft();
         require(ownerOf(tokenId) == _msgSender(), "Allower only for owner");

@@ -18,6 +18,8 @@ contract PageCommunity is
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
+    IPageNFT public nft;
+
     uint256 public MAX_MODERATORS = 40;
 
     uint256 private WRONG_MODERATOR_NUMBER = 1000;
@@ -43,9 +45,26 @@ contract PageCommunity is
     event JoinUser(uint256 communityNumber, address user);
     event QuitUser(uint256 communityNumber, address user);
 
+    event WritePost(uint256 indexed communityNumber, address creator);
+
     modifier validNumber(uint256 number) {
-        require(number <= communityCount, "PageCommunity: Wrong index");
+        validateCommunity(number);
         _;
+    }
+
+    modifier onlyModerator(uint256 number) {
+        require(isExistModerator(number, _msgSender()), "PageCommunity: wrong moderator");
+        _;
+    }
+
+    modifier onlyCommunityUser(uint256 number) {
+        validateCommunity(number);
+        require(communityUsers[number][_msgSender()], "PageCommunity: wrong user");
+        _;
+    }
+
+    function initialize(address _nft) public initializer {
+        nft = IPageNFT(_nft);
     }
 
     function addCommunity(string memory desc) public {
@@ -79,13 +98,13 @@ contract PageCommunity is
         emit RemovedModerator(_msgSender(), communityNumber, moderator);
     }
 
-    function join(uint256 communityNumber) public validNumber(communityNumber) {
+    function join(uint256 communityNumber) external validNumber(communityNumber) {
         communityUsers[communityNumber][_msgSender()] = true;
         community[communityNumber].usersCount++;
         emit JoinUser(communityNumber, _msgSender());
     }
 
-    function quit(uint256 communityNumber) public validNumber(communityNumber) {
+    function quit(uint256 communityNumber) external validNumber(communityNumber) {
         communityUsers[communityNumber][_msgSender()] = false;
         community[communityNumber].usersCount--;
         emit QuitUser(communityNumber, _msgSender());
@@ -96,5 +115,14 @@ contract PageCommunity is
     {
         Community memory currentCommunity = community[communityNumber];
         return currentCommunity.moderators.contains(moderator);
+    }
+
+    function writePost(uint256 communityNumber) external validNumber(communityNumber) onlyCommunityUser(communityNumber) {
+
+        emit WritePost(communityNumber, _msgSender());
+    }
+
+    function validateCommunity(uint256 communityNumber) private {
+        require(number <= communityCount, "PageCommunity: wrong community number");
     }
 }

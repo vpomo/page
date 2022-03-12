@@ -55,6 +55,7 @@ def pageNFT(PageNFT, pageComment, pageBank, treasury, deployer):
 
 
 @pytest.fixture(scope="module")
-def pageCommunity(PageCommunity, deployer):
+def pageCommunity(PageCommunity, pageNFT, deployer):
     instanсe = PageCommunity.deploy({'from': deployer})
+    instanсe.initialize(pageNFT)
     return instanсe
