@@ -36,11 +36,24 @@ contract PageCommunity is
         bool active;
     }
 
+    struct Post {
+        uint256 nftId;
+        string ipfsHash;
+        address creator;
+        address owner;
+        uint256 upCount;
+        uint256 downCount;
+        uint256 price;
+        EnumerableSetUpgradeable.UintSet comments;
+        bool active;
+    }
+
     mapping(uint256 => Community) private community;
     mapping(uint256 => mapping(address => bool)) private communityUsers;
 
     mapping(uint256 => uint256) private pricesByPostId;
     mapping(uint256 => uint256[]) private postsIdsByCommunityId;
+    mapping(uint256 => Post) private post;
 
     event AddedCommunity(address indexed creator, uint256 number, string name);
 
@@ -128,8 +141,11 @@ contract PageCommunity is
         address owner
     ) external validId(communityId) onlyCommunityUser(communityId) returns() {
         uint256 gasBefore = gasleft();
-        require(owner != address(0), "PageCommunity: Wrong owner");
+        require(communityUsers[number][_msgSender()], "PageCommunity: wrong user");
+        require(communityUsers[number][owner], "PageCommunity: wrong user");
+
         uint256 postId = nft.mint(owner);
+        post[postId] = ipfsHash;
         postsIdsByCommunityId.push(postId);
         emit WritePost(communityId, postId, _msgSender());
 
@@ -139,7 +155,11 @@ contract PageCommunity is
         pricesByPostId[postId] = price;
     }
 
-    function getPostPrice(uint256 postId) public view returns (uint256) {
+    function readPost(uint256 postId) external view returns(string memory) {
+        return post[postId];
+    }
+
+function getPostPrice(uint256 postId) public view returns (uint256) {
         return pricesByPostId[postId];
     }
 
