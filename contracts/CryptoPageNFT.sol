@@ -22,9 +22,6 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
 
-    uint256 public FOR_MINT_GAS_AMOUNT = 2800;
-    uint256 public FOR_BURN_GAS_AMOUNT = 2800;
-
     CountersUpgradeable.Counter public _tokenIdCounter;
     IPageComment public comment;
     IPageBank public bank;
@@ -34,9 +31,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     string private _symbol;
     string public baseURL;
 
-    mapping(uint256 => uint256) private pricesByTokenId;
     mapping(uint256 => address) private creatorById;
-    mapping(uint256 => uint256[]) private tokensIdsByCommunityId;
 
     modifier onlyCommunity() {
         require(_msgSender() == community, "PageNFT: not community");
@@ -66,26 +61,10 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @notice Mint PAGE.NFT token
     /// @param owner Address of token owner
     /// @param tokenURI URI of token
-    function mint(address owner, uint256 communityId) public onlyCommunity override returns (uint256 tokenId) {
+    function mint(address owner, uint256 communityId) public onlyCommunity override returns (uint256) {
         uint256 gasBefore = gasleft();
         require(owner != address(0), "Address can't be null");
-        tokenId = _safeMint(owner, tokenURI);
-        tokensIdsByCommunityId[communityId].push(tokenId);
-        uint256 gas = gasBefore - gasleft();
-        uint256 price = bank.processMint(_msgSender(), owner, gas + FOR_MINT_GAS_AMOUNT);
-        pricesByTokenId[tokenId] = price;
-    }
-
-    /// @notice Mint PAGE.NFT token
-    /// @param _owner Address of token owner
-    /// @param _tokenURI URI of token
-    /// @return TokenId
-    function _safeMint(address _owner, string memory _tokenURI)
-        private
-        returns (uint256)
-    {
-        uint256 tokenId = _mint(_owner, _tokenURI);
-        return tokenId;
+        return _mint(_owner, _tokenURI);
     }
 
     /// @notice Burn PAGE.NFT token
@@ -124,7 +103,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
         );
         _safeTransfer(_from, _to, _tokenId, data);
         uint256 amount = gasBefore - gasleft();
-        bank.processMint(_from, _to, amount);
+        bank.mintTokenForNewPost(_from, _to, amount);
     }
 
     /// @notice Burn PAGE.NFT token
@@ -147,21 +126,5 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
         _setTokenURI(tokenId, _tokenURI);
         _tokenIdCounter.increment();
         return tokenId;
-    }
-
-    /// @notice Return price of token
-    /// @param tokenId URI of token
-    /// @return Price of PAGE.NFT token in PAGE tokens
-    function tokenPrice(uint256 tokenId)
-        public
-        view
-        override
-        returns (uint256)
-    {
-        return pricesByTokenId[tokenId];
-    }
-
-    function getTokensIdsByCommunityId(uint256 communityId) public view override returns (uint256[] memory tokenIds) {
-        return tokensIdsByCommunityId[communityId];
     }
 }

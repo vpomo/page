@@ -76,7 +76,7 @@ contract PageBank is
     /// @param sender The address on which the tokens burn
     /// @param receiver The receiver address
     /// @param gas Gas
-    function processMint(
+    function mintTokenForNewPost(
         address sender,
         address receiver,
         uint256 gas

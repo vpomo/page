@@ -3,7 +3,7 @@
 pragma solidity 0.8.12;
 
 interface IPageBank {
-    function processMint(
+    function mintTokenForNewPost(
         address sender,
         address receiver,
         uint256 gas
