@@ -37,14 +37,23 @@ contract PageCommunity is
     }
 
     struct Post {
-        uint256 nftId;
         string ipfsHash;
         address creator;
         address owner;
-        uint256 upCount;
-        uint256 downCount;
-        uint256 price;
-        EnumerableSetUpgradeable.UintSet comments;
+        uint64 upCount;
+        uint64 downCount;
+        uint128 price;
+        EnumerableSetUpgradeable.UintSet commentIds;
+        bool active;
+    }
+
+    struct Comment {
+        string ipfsHash;
+        address creator;
+        address owner;
+        uint64 upCount;
+        uint64 downCount;
+        uint128 price;
         bool active;
     }
 
@@ -52,8 +61,12 @@ contract PageCommunity is
     mapping(uint256 => mapping(address => bool)) private communityUsers;
 
     mapping(uint256 => uint256) private pricesByPostId;
-    mapping(uint256 => uint256[]) private postsIdsByCommunityId;
+    EnumerableSetUpgradeable.UintSet private postsIdsByCommunityId;
+
+    //nftId -> Post
     mapping(uint256 => Post) private post;
+    //nftId -> commentId -> Comment
+    mapping(uint256 => mapping(uint256 => Comment)) private comment;
 
     event AddedCommunity(address indexed creator, uint256 number, string name);
 
@@ -145,29 +158,54 @@ contract PageCommunity is
         require(communityUsers[number][owner], "PageCommunity: wrong user");
 
         uint256 postId = nft.mint(owner);
-        post[postId] = ipfsHash;
-        postsIdsByCommunityId.push(postId);
+        createPost(postId, owner);
+
+        postsIdsByCommunityId.add(postId);
         emit WritePost(communityId, postId, _msgSender());
 
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.mintTokenForNewPost(_msgSender(), owner, gas + FOR_MINT_GAS_AMOUNT);
 
-        pricesByPostId[postId] = price;
+        post[postId] = price;
     }
 
-    function readPost(uint256 postId) external view returns(string memory) {
-        return post[postId];
+    function readPost(uint256 postId) external view returns(
+        string ipfsHash,
+        address creator,
+        address owner,
+        uint64 upCount,
+        uint64 downCount,
+        uint128 price,
+        uint[256] memory commentIds,
+        bool active
+    ) {
+        Post memory readed = post[postId];
+        ipfsHash = readed.ipfsHash;
+        creator = readed.creator;
+        owner = readed.owner;
+        upCount = readed.upCount;
+        downCount = readed.downCount;
+        price = readed.price;
+        commentIds = readed.commentIds.values();
+        active = readed.active;
     }
 
-function getPostPrice(uint256 postId) public view returns (uint256) {
-        return pricesByPostId[postId];
+    function getPostPrice(uint256 postId) public view returns (uint256) {
+        return post[postId].price;
     }
 
     function getPostsIdsByCommunityId(uint256 communityId) public view override returns (uint256[] memory) {
-        return postsIdsByCommunityId[communityId];
+        return postsIdsByCommunityId.at(communityId);
     }
 
     function validateCommunity(uint256 communityId) private {
         require(number <= communityCount, "PageCommunity: wrong community number");
+    }
+
+    function createPost(uint256 postId, address owner) private {
+        Post storage newPost = post[postId];
+        newPost.creator = _msgSender();
+        newPost.owner = owner;
+        newPost.active = true;
     }
 }
