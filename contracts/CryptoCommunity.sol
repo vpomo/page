@@ -53,8 +53,8 @@ contract PageCommunity is
         string ipfsHash;
         address creator;
         address owner;
-        uint64 upCount;
-        uint64 downCount;
+        bool isUp;
+        bool isDown;
         uint128 price;
         bool active;
     }
@@ -172,13 +172,18 @@ contract PageCommunity is
         uint256 communityId,
         uint256 postId,
         string memory ipfsHash,
+        bool isUp,
+        bool isDown,
         address owner
     ) external validId(communityId) onlyCommunityUser(communityId) returns() {
         uint256 gasBefore = gasleft();
         require(community[id].users.contains(_msgSender()), "PageCommunity: wrong user");
         require(community[id].users.contains(owner), "PageCommunity: wrong user");
+        require(post[postId].active, "PageCommunity: wrong post");
+
         incCommentCount(postId);
-        createComment(postId, ipfsHash, owner);
+        setPostUpDown(isUp, isDown);
+        createComment(postId, ipfsHash, owner, isUp, isDown);
         uint256 commentId = getCurrentCommentCount(postId);
 
         emit WriteComment(communityId, postId, commentId, _msgSender(), owner);
@@ -206,6 +211,26 @@ contract PageCommunity is
         downCount = readed.downCount;
         price = readed.price;
         count = readed.count;
+        active = readed.active;
+    }
+
+    function readComment(uint256 postId, uint256 commentId) external view returns(
+        string ipfsHash,
+        address creator,
+        address owner,
+        uint128 price,
+        bool isUp,
+        bool isDown,
+        bool active
+    ) {
+        Comment memory readed = comment[postId][commentId];
+        ipfsHash = readed.ipfsHash;
+        creator = readed.creator;
+        owner = readed.owner;
+        price = readed.price;
+        count = readed.count;
+        isUp = readed.isUp;
+        isDown = readed.isDown;
         active = readed.active;
     }
 
@@ -239,17 +264,31 @@ contract PageCommunity is
         curPost.count++;
     }
 
+    function setPostUpDown(bool isUp, bool isDown) private {
+        require(!(isUpCount && isUpCount == isDownCount), "PageCommunity: wrong Up/Down");
+
+        Post storage curPost = post[postId];
+        if (isUp) {
+            curPost.upCount++;
+        }
+        if (isDown) {
+            curPost.downCount++;
+        }
+    }
+
     function getCurrentCommentCount(uint256 postId) public returns(uint256) {
         Post memory curPost = post[postId];
         return curPost.count;
     }
 
-    function createComment(uint256 postId, string memory ipfsHash, address owner) private {
+    function createComment(uint256 postId, string memory ipfsHash, address owner, bool isUp, bool isDown) private {
         uint256 commentId = post[postId].count;
         Comment storage newComment = comment[postId][commentId];
         newComment.ipfsHash = ipfsHash;
         newComment.creator = _msgSender();
         newComment.owner = owner;
+        newComment.isUp = isUp;
+        newComment.isDown = isDown;
         newComment.active = true;
     }
 
