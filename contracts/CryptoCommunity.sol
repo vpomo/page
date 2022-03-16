@@ -26,6 +26,8 @@ contract PageCommunity is
     uint256 public FOR_MINT_GAS_AMOUNT = 2800;
     uint256 public FOR_BURN_GAS_AMOUNT = 2800;
 
+    uint256 public EMPTY_STRING = "";
+
     uint256 public communityCount;
 
     struct Community {
@@ -45,8 +47,8 @@ contract PageCommunity is
         uint64 upCount;
         uint64 downCount;
         uint128 price;
-        uint256 count;
-        bool active;
+        uint256 commentCount;
+        bool isView;
     }
 
     struct Comment {
@@ -56,7 +58,7 @@ contract PageCommunity is
         bool isUp;
         bool isDown;
         uint128 price;
-        bool active;
+        bool isView;
     }
 
     mapping(uint256 => Community) private community;
@@ -76,7 +78,12 @@ contract PageCommunity is
     event QuitUser(uint256 indexed communityId, address user);
 
     event WritePost(uint256 indexed communityId, uint256 postId, address creator, address owner);
+    event BurnPost(uint256 indexed communityId, uint256 postId, address creator, address owner);
+    event ChangeVisiblePost(uint256 indexed communityId, uint256 postId, bool isVisible);
+
     event WriteComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
+    event BurnComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
+    event ChangeVisibleComment(uint256 indexed communityId, uint256 postId, uint256 commentId, bool isVisible);
 
     modifier validId(uint256 id) {
         validateCommunity(id);
@@ -154,6 +161,7 @@ contract PageCommunity is
         address owner
     ) external validId(communityId) onlyCommunityUser(communityId) returns() {
         uint256 gasBefore = gasleft();
+        require(community[id].active, "PageCommunity: wrong active community");
         require(community[id].users.contains(_msgSender()), "PageCommunity: wrong user");
         require(community[id].users.contains(owner), "PageCommunity: wrong user");
 
@@ -168,6 +176,70 @@ contract PageCommunity is
         setPostPrice(postId, price);
     }
 
+    function readPost(uint256 postId) external view returns(
+        string ipfsHash,
+        address creator,
+        address owner,
+        uint64 upCount,
+        uint64 downCount,
+        uint128 price,
+        uint256 commentCount,
+        bool isView
+    ) {
+        Post memory readed = post[postId];
+        ipfsHash = readed.ipfsHash;
+        creator = readed.creator;
+        owner = readed.owner;
+        upCount = readed.upCount;
+        downCount = readed.downCount;
+        price = readed.price;
+        commentCount = readed.commentCount;
+        isView = readed.isView;
+    }
+
+    function burnPost(
+        uint256 communityId,
+        uint256 postId
+    ) external validId(communityId) onlyCommunityUser(communityId) returns() {
+        uint256 gasBefore = gasleft();
+        address owner = post[communityId][postId].
+        require(community[id].users.contains(_msgSender()), "PageCommunity: wrong user");
+        require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
+        require(post[postId].owner == _msgSender(), "PageCommunity: wrong owner");
+
+        nft.burn(owner);
+        erasePost(postId, owner);
+        community[communityId].postIds.remove(postId);
+
+        emit BurnPost(communityId, postId, _msgSender(), owner);
+
+        uint256 gas = gasBefore - gasleft();
+        bank.burnTokenForBurnPost(_msgSender(), owner, gas + FOR_MINT_GAS_AMOUNT);
+    }
+
+    function setVisibilityPost(
+        uint256 communityId,
+        uint256 postId,
+        bool newVisible
+    ) external validId(communityId) onlyCommunityUser(communityId) {
+        require(community[communityId].moderators.contains(_msgSender()), "PageCommunity: access denied");
+        require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
+
+        bool oldVisible = post[postId].isView;
+        require(oldVisible != newVisible, "PageCommunity: wrong new visible");
+        post[postId].isView = newVisible;
+
+        emit ChangeVisiblePost(communityId, postId, newVisible);
+    }
+
+    function getPostPrice(uint256 postId) public view returns (uint256) {
+        return post[postId].price;
+    }
+
+    function getPostsIdsByCommunityId(uint256 communityId) public view override returns (uint256[] memory) {
+        return community[communityId].postIds.values();
+    }
+
     function writeComment(
         uint256 communityId,
         uint256 postId,
@@ -177,9 +249,10 @@ contract PageCommunity is
         address owner
     ) external validId(communityId) onlyCommunityUser(communityId) returns() {
         uint256 gasBefore = gasleft();
+        require(community[id].active, "PageCommunity: wrong active community");
         require(community[id].users.contains(_msgSender()), "PageCommunity: wrong user");
         require(community[id].users.contains(owner), "PageCommunity: wrong user");
-        require(post[postId].active, "PageCommunity: wrong post");
+        require(post[postId].isView, "PageCommunity: wrong post");
 
         incCommentCount(postId);
         setPostUpDown(isUp, isDown);
@@ -193,27 +266,6 @@ contract PageCommunity is
         setCommentPrice(postId, commentId, price);
     }
 
-    function readPost(uint256 postId) external view returns(
-        string ipfsHash,
-        address creator,
-        address owner,
-        uint64 upCount,
-        uint64 downCount,
-        uint128 price,
-        uint256 count,
-        bool active
-    ) {
-        Post memory readed = post[postId];
-        ipfsHash = readed.ipfsHash;
-        creator = readed.creator;
-        owner = readed.owner;
-        upCount = readed.upCount;
-        downCount = readed.downCount;
-        price = readed.price;
-        count = readed.count;
-        active = readed.active;
-    }
-
     function readComment(uint256 postId, uint256 commentId) external view returns(
         string ipfsHash,
         address creator,
@@ -221,26 +273,49 @@ contract PageCommunity is
         uint128 price,
         bool isUp,
         bool isDown,
-        bool active
+        bool isView
     ) {
         Comment memory readed = comment[postId][commentId];
         ipfsHash = readed.ipfsHash;
         creator = readed.creator;
         owner = readed.owner;
         price = readed.price;
-        count = readed.count;
         isUp = readed.isUp;
         isDown = readed.isDown;
-        active = readed.active;
+        isView = readed.isView;
     }
 
-    function getPostPrice(uint256 postId) public view returns (uint256) {
-        return post[postId].price;
+    function burnComment(uint256 postId, uint256 commentId) external {
+
+        require(community[id].active, "PageCommunity: wrong active community");
+        require(post[postId].isView, "PageCommunity: wrong post");
+        require(community[id].moderators.contains(_msgSender()), "PageCommunity: access denied");
+
+        eraseComment(postId, commentId);
+        emit BurnComment(postId, commentId, );
     }
 
-    function getPostsIdsByCommunityId(uint256 communityId) public view override returns (uint256[] memory) {
-        return community[communityId].postIds.values();
+    function setVisibilityComment(
+        uint256 postId,
+        uint256 commentId,
+        bool newVisible
+    ) external {
+        require(community[communityId].moderators.contains(_msgSender()), "PageCommunity: access denied");
+        require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
+
+        bool oldVisible = comment[postId][commentId].isView;
+        require(oldVisible != newVisible, "PageCommunity: wrong new visible");
+        post[postId][commentId].isView = newVisible;
+
+        emit ChangeVisibleComment(communityId, postId, newVisible);
     }
+
+    function getCurrentCommentCount(uint256 postId) public returns(uint256) {
+        Post memory curPost = post[postId];
+        return curPost.commentCount;
+    }
+
+    //private area
 
     function validateCommunity(uint256 communityId) private {
         require(number <= communityCount, "PageCommunity: wrong community number");
@@ -251,7 +326,29 @@ contract PageCommunity is
         newPost.ipfsHash = ipfsHash;
         newPost.creator = _msgSender();
         newPost.owner = owner;
-        newPost.active = true;
+        newPost.isView = true;
+    }
+
+    function erasePost(uint256 postId) private {
+        Post storage oldPost = post[postId];
+        oldPost.ipfsHash = EMPTY_STRING;
+        oldPost.creator = address(0);
+        oldPost.owner = address(0);
+        oldPost.downCount = 0;
+        oldPost.upCount = 0;
+        oldPost.commentCount = 0;
+        oldPost.isView = false;
+    }
+
+    function eraseComment(uint256 postId, uint256 commentId) private {
+        Comment storage burned = comment[postId][commentId];
+        burned.ipfsHash = EMPTY_STRING;
+        burned.creator = address(0);
+        burned.owner = address(0);
+        burned.price = 0;
+        burned.isUp = false;
+        burned.isDown = false;
+        burned.isView = false;
     }
 
     function setPostPrice(uint256 postId, uint256 price) private {
@@ -261,7 +358,7 @@ contract PageCommunity is
 
     function incCommentCount(uint256 postId) private {
         Post storage curPost = post[postId];
-        curPost.count++;
+        curPost.commentCount++;
     }
 
     function setPostUpDown(bool isUp, bool isDown) private {
@@ -276,20 +373,15 @@ contract PageCommunity is
         }
     }
 
-    function getCurrentCommentCount(uint256 postId) public returns(uint256) {
-        Post memory curPost = post[postId];
-        return curPost.count;
-    }
-
-    function createComment(uint256 postId, string memory ipfsHash, address owner, bool isUp, bool isDown) private {
-        uint256 commentId = post[postId].count;
+ё    function createComment(uint256 postId, string memory ipfsHash, address owner, bool isUp, bool isDown) private {
+        uint256 commentId = post[postId].commentCount;
         Comment storage newComment = comment[postId][commentId];
         newComment.ipfsHash = ipfsHash;
         newComment.creator = _msgSender();
         newComment.owner = owner;
         newComment.isUp = isUp;
         newComment.isDown = isDown;
-        newComment.active = true;
+        newComment.isView = true;
     }
 
     function setCommentPrice(uint256 postId, uint256 commentId, uint256 price) private {
