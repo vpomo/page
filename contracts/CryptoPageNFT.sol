@@ -61,26 +61,15 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @notice Mint PAGE.NFT token
     /// @param owner Address of token owner
     /// @param tokenURI URI of token
-    function mint(address owner, uint256 communityId) public onlyCommunity override returns (uint256) {
-        uint256 gasBefore = gasleft();
+    function mint(address owner) public override onlyCommunity returns (uint256) {
         require(owner != address(0), "Address can't be null");
         return _mint(_owner, _tokenURI);
     }
 
     /// @notice Burn PAGE.NFT token
     /// @param tokenId Id of token
-    function burn(uint256 tokenId) public onlyCommunity override {
-        // Check the amount of gas before counting awards for comments
-        // uint256 gasBefore = gasleft();
-        require(ownerOf(tokenId) == _msgSender(), "Allower only for owner");
-        uint256 commentsReward = comment.calculateCommentsReward(
-            address(this),
-            tokenId
-        );
-        // Check the amount of gas after counting awards for comments
-        // uint256 gasAfter = gasBefore - gasleft();
-        bank.processBurn(_msgSender(), 0, commentsReward);
-        _safeBurn(tokenId);
+    function burn(uint256 tokenId) public override onlyCommunity {
+        _burn(_tokenId);
     }
 
     /// @notice Transfer PAGE.NFT token
@@ -88,38 +77,33 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @param _to Receiver of token
     /// @param _tokenId Id of token
     /// @param data Stome data
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes memory data
-    ) public override (IERC721Upgradeable, ERC721Upgradeable) {
-        uint256 gasBefore = gasleft();
-        require(_from != address(0), "Address can't be null");
-        require(_to != address(0), "Address can't be null");
-        require(
-            _isApprovedOrOwner(_msgSender(), _tokenId),
-            "ERC721: transfer caller is not owner or approved"
-        );
-        _safeTransfer(_from, _to, _tokenId, data);
-        uint256 amount = gasBefore - gasleft();
-        bank.mintTokenForNewPost(_from, _to, amount);
+    function transferFrom(address _from, address _to, uint256 _tokenId) public override {
+        super.transferFrom(_from, _to, _tokenId);
     }
 
-    /// @notice Burn PAGE.NFT token
+    /// @notice Transfer PAGE.NFT token
+    /// @param _from Approved or owner of token
+    /// @param _to Receiver of token
     /// @param _tokenId Id of token
-    function _safeBurn(uint256 _tokenId) private {
-        _burn(_tokenId);
+    /// @param data Stome data
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) public override {
+        super.safeTransferFrom(_from, _to, _tokenId);
+    }
+
+    /// @notice Transfer PAGE.NFT token
+    /// @param _from Approved or owner of token
+    /// @param _to Receiver of token
+    /// @param _tokenId Id of token
+    /// @param data Stome data
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory _data) public override {
+        super.safeTransferFrom(_from, _to, _tokenId, _data);
     }
 
     /// @notice Mint PAGE.NFT token
     /// @param _owner Address of token owner
     /// @param _tokenURI URI of token
     /// @return TokenId
-    function _mint(address _owner, string memory _tokenURI)
-        private
-        returns (uint256)
-    {
+    function _mint(address _owner, string memory _tokenURI) private returns (uint256) {
         uint256 tokenId = _tokenIdCounter.current();
         creatorById[tokenId] = _owner;
         _safeMint(_owner, tokenId);
