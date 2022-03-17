@@ -29,7 +29,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
 
     string private _name;
     string private _symbol;
-    string public baseURL;
+    string private _baseTokenURI;
 
     mapping(uint256 => address) private creatorById;
 
@@ -50,7 +50,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
         __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
         comment = IPageComment(_comment);
         bank = IPageBank(_bank);
-        baseURL = _baseURL;
+        _baseTokenURI = _baseURL;
     }
 
     function setCommunity(address communityContract) external onlyOwner {
@@ -63,7 +63,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @param tokenURI URI of token
     function mint(address owner) public override onlyCommunity returns (uint256) {
         require(owner != address(0), "Address can't be null");
-        return _mint(_owner, _tokenURI);
+        return _mint(_owner);
     }
 
     /// @notice Burn PAGE.NFT token
@@ -99,16 +99,23 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
         super.safeTransferFrom(_from, _to, _tokenId, _data);
     }
 
+    function setBaseTokenURI(string memory baseTokenURI) public onlyOwner {
+        _baseTokenURI = baseTokenURI;
+    }
+
     /// @notice Mint PAGE.NFT token
     /// @param _owner Address of token owner
     /// @param _tokenURI URI of token
     /// @return TokenId
-    function _mint(address _owner, string memory _tokenURI) private returns (uint256) {
+    function _mint(address _owner) private returns (uint256) {
         uint256 tokenId = _tokenIdCounter.current();
         creatorById[tokenId] = _owner;
         _safeMint(_owner, tokenId);
-        _setTokenURI(tokenId, _tokenURI);
         _tokenIdCounter.increment();
         return tokenId;
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return _baseTokenURI;
     }
 }
