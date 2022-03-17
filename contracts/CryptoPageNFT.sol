@@ -31,8 +31,6 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     string private _symbol;
     string private _baseTokenURI;
 
-    mapping(uint256 => address) private creatorById;
-
     modifier onlyCommunity() {
         require(_msgSender() == community, "PageNFT: not community");
         _;
@@ -58,6 +56,10 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
         community = communityContract;
     }
 
+    function setBaseTokenURI(string memory baseTokenURI) public onlyOwner {
+        _baseTokenURI = baseTokenURI;
+    }
+
     /// @notice Mint PAGE.NFT token
     /// @param owner Address of token owner
     /// @param tokenURI URI of token
@@ -78,6 +80,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @param _tokenId Id of token
     /// @param data Stome data
     function transferFrom(address _from, address _to, uint256 _tokenId) public override {
+        require(super.getApproved(_tokenId) != _to, "Address can't be approved");
         super.transferFrom(_from, _to, _tokenId);
     }
 
@@ -87,6 +90,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @param _tokenId Id of token
     /// @param data Stome data
     function safeTransferFrom(address _from, address _to, uint256 _tokenId) public override {
+        require(super.getApproved(_tokenId) != _to, "Address can't be approved");
         super.safeTransferFrom(_from, _to, _tokenId);
     }
 
@@ -96,11 +100,21 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @param _tokenId Id of token
     /// @param data Stome data
     function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory _data) public override {
+        require(super.getApproved(_tokenId) != _to, "Address can't be approved");
         super.safeTransferFrom(_from, _to, _tokenId, _data);
     }
 
-    function setBaseTokenURI(string memory baseTokenURI) public onlyOwner {
-        _baseTokenURI = baseTokenURI;
+    function tokensOfOwner(address user) external view returns (uint256[] memory) {
+        uint256 tokenCount = balanceOf(user);
+        if (tokenCount == 0) {
+            return new uint256[](0);
+        } else {
+            uint256[] memory output = new uint256[](tokenCount);
+            for (uint256 index = 0; index < tokenCount; index++) {
+                output[index] = tokenOfOwnerByIndex(user, index);
+            }
+            return output;
+        }
     }
 
     /// @notice Mint PAGE.NFT token
@@ -109,8 +123,7 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     /// @return TokenId
     function _mint(address _owner) private returns (uint256) {
         uint256 tokenId = _tokenIdCounter.current();
-        creatorById[tokenId] = _owner;
-        _safeMint(_owner, tokenId);
+        _mint(_owner, tokenId);
         _tokenIdCounter.increment();
         return tokenId;
     }
