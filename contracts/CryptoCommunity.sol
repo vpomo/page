@@ -23,9 +23,6 @@ contract PageCommunity is
     uint256 public MAX_MODERATORS = 40;
     uint256 private WRONG_MODERATOR_NUMBER = 1000;
 
-    uint256 public FOR_MINT_GAS_AMOUNT = 2800;
-    uint256 public FOR_BURN_GAS_AMOUNT = 2800;
-
     uint256 public EMPTY_STRING = "";
 
     uint256 public communityCount;
@@ -176,7 +173,7 @@ contract PageCommunity is
         emit WritePost(communityId, postId, _msgSender(), owner);
 
         uint256 gas = gasBefore - gasleft();
-        uint256 price = bank.mintTokenForNewPost(_msgSender(), owner, gas + FOR_MINT_GAS_AMOUNT);
+        uint256 price = bank.mintTokenForNewPost(_msgSender(), owner, gas);
         setPostPrice(postId, price);
     }
 
@@ -218,7 +215,7 @@ contract PageCommunity is
         emit BurnPost(communityId, postId, _msgSender(), owner);
 
         uint256 gas = gasBefore - gasleft();
-        bank.burnTokenForBurnPost(_msgSender(), owner, gas + FOR_MINT_GAS_AMOUNT);
+        bank.burnTokenForBurnPost(_msgSender(), owner, gas);
     }
 
     function setVisibilityPost(
@@ -266,7 +263,7 @@ contract PageCommunity is
         emit WriteComment(communityId, postId, commentId, _msgSender(), owner);
 
         uint256 gas = gasBefore - gasleft();
-        uint256 price = bank.mintTokenForNewPost(_msgSender(), owner, gas + FOR_MINT_GAS_AMOUNT);
+        uint256 price = bank.mintTokenForNewPost(_msgSender(), owner, gas);
         setCommentPrice(postId, commentId, price);
     }
 

@@ -23,16 +23,8 @@ contract PageBank is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    using SafeMathUpgradeable for uint256;
-
-    event Withdraw(address indexed _to, uint256 indexed _amount);
-    event Deposit(address indexed _to, uint256 indexed _amount);
-    event Burn(address indexed _to, uint256 indexed _amount);
-    event SetWETHUSDTPool(address indexed _pool);
-    event SetUSDTPAGEPool(address indexed _pool);
-    event SetStaticWETHUSDTPrice(uint256 indexed _price);
-    event SetStaticUSDTPAGEPrice(uint256 indexed _price);
-    event SetToken(address indexed _token);
+    uint256 public FOR_MINT_GAS_AMOUNT = 2800;
+    uint256 public FOR_BURN_GAS_AMOUNT = 2800;
 
     uint256 public staticUSDTPAGEPrice = 60;
     uint256 public staticWETHUSDTPrice = 3600;
@@ -43,8 +35,11 @@ contract PageBank is
     address public nft;
     /// Address of CryptoPageCommentDeployer contract
     address public commentDeployer;
+
+    uint256 public ALL_PERCENT = 10000;
     /// Treasury fee (1000 is 10%, 100 is 1% 10 is 0.1%)
-    uint256 public treasuryFee;
+    uint256 public treasuryFee = 1000;
+
     /// CryptoPageToken interface
     IPageToken public token;
     // UniswapV3Pool interface for USDT / PAGE pool
@@ -52,52 +47,81 @@ contract PageBank is
     // UniswapV3Pool interface for WETH / USDT pool
     IUniswapV3Pool private wethusdtPool;
 
+    struct CommunityFee {
+        uint256 createPostOwnerFee;
+        uint256 createPostCreatorFee;
+
+        uint256 removePostOwnerFee;
+        uint256 removePostCreatorFee;
+    }
+    mapping(uint256 => CommunityFee) private communityFee;
+    uint256 public defaultCreatePostOwnerFee = 4500;
+    uint256 public defaultCreatePostCreatorFee = 4500;
+    uint256 public defaultRemovePostOwnerFee = 0;
+    uint256 public defaultRemovePostCreatorFee = 9000;
+
+
     // Storage balance per address
     mapping(address => uint256) private _balances;
+
+    event Withdraw(address indexed _to, uint256 indexed _amount);
+    event Deposit(address indexed _to, uint256 indexed _amount);
+    event Burn(address indexed _to, uint256 indexed _amount);
+
+    event SetStaticWETHUSDTPrice(uint256 indexed _price);
+    event SetStaticUSDTPAGEPrice(uint256 indexed _price);
+    event SetToken(address indexed _token);
+    event SetWETHUSDTPool(address indexed _pool);
+    event SetUSDTPAGEPool(address indexed _pool);
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
     /// @param _admin Address of admin
     /// @param _treasuryFee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
-    function initialize(address _treasury, address _admin, uint256 _treasuryFee)
+    function initialize(address _treasury, address _admin)
         public
         initializer
     {
         __Ownable_init();
-        require(_treasury != address(0), "Wrong address");
-        require(_admin != address(0), "Wrong address");
+        require(_treasury != address(0), "PageBank: wrong address");
+        require(_admin != address(0), "PageBank: wrong address");
         treasury = _treasury;
-        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
-
-        treasuryFee = _treasuryFee;
     }
 
+    //TODO: access denied
+    //TODO setter for default variable
+    function defineFeeForNewCommunity(uint256 communityId) public {
+        CommunityFee storage fee = communityFee[communityId];
+        fee.createPostOwnerFee = defaultCreatePostOwnerFee;
+        fee.createPostCreatorFee = defaultCreatePostCreatorFee;
+        fee.removePostOwnerFee = defaultRemovePostOwnerFee;
+        fee.removePostCreatorFee = defaultRemovePostCreatorFee;
+    }
+
+    //TODO: access denied
+    function updateFeeCommunity(uint256 communityId, uint256 newCreatePostOwnerFee, uint256 newCreatePostCreatorFee) public {
+        CommunityFee storage fee = communityFee[communityId];
+        fee.createPostOwnerFee = newCreatePostOwnerFee;
+        fee.createPostCreatorFee = newCreatePostCreatorFee;
+        fee.removePostOwnerFee =
+    }
+
+
     /// @notice Calculate and call burn
-    /// @param sender The address on which the tokens burn
-    /// @param receiver The receiver address
+    /// @param owner
+    /// @param creator The creator address
     /// @param gas Gas
     function mintTokenForNewPost(
-        address sender,
-        address receiver,
+        uint256 communityId,
+        address owner,
+        address creator,
         uint256 gas
     ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
-        amount = convertGasToTokenAmount(gas);
-        uint256 treasuryAmount = calculateTreasuryAmount(amount);
-        uint256 senderBalance = _balances[sender];
-        if (sender == receiver) {
-            amount += senderBalance;
-            emit Withdraw(sender, senderBalance);
-            token.mint(sender, amount);
-        } else {
-            amount = amount.div(2);
-            uint256 recieverAmount = _balances[receiver].add(amount);
-            _balances[receiver] = recieverAmount;
-            emit Withdraw(sender, senderBalance);
-            emit Deposit(receiver, recieverAmount);
-            token.mint(sender, amount += senderBalance);
-        }
-        _balances[treasury] = _balances[treasury].add(treasuryAmount);
-        emit Deposit(treasury, treasuryAmount);
+        amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
+
+        mintUserPageToken(owner, amount, communityFee[communityId].createPostOwnerFee);
+        mintUserPageToken(creator, amount, communityFee[communityId].createPostCreatorFee);
+        mintTreasuryPageToken(amount);
     }
 
     /// @notice Calculate and call burn
@@ -105,25 +129,16 @@ contract PageBank is
     /// @param gas The amount of gas spent on the function call
     /// @param commentsReward Reward for comments in PAGE tokens
     function processBurn(
-        address receiver,
-        uint256 gas,
-        uint256 commentsReward
+        uint256 communityId,
+        address owner,
+        address creator,
+        uint256 gas
     ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
-        amount = convertGasToTokenAmount(gas).add(_balances[receiver]);
-        if (commentsReward > amount) {
-            commentsReward = commentsReward.sub(amount);
-            require(token.balanceOf(receiver) > commentsReward, "");
-            _balances[receiver] = 0;
-            emit Burn(receiver, _balances[receiver]);
-            token.burn(receiver, commentsReward);
-        } else {
-            amount = amount.sub(commentsReward);
-            _balances[receiver] = amount;
-            // emit Deposit(receiver, amount - commentsReward);
-            // amount - commentsReward;
-            // emit Deposit(receiver, amount);
-            // emit Burn(receiver, commentsReward);
-        }
+        amount = convertGasToTokenAmount(gas + FOR_BURN_GAS_AMOUNT);
+
+        burnUserPageToken(owner, amount, communityFee[communityId].createPostOwnerFee);
+        burnUserPageToken(creator, amount, communityFee[communityId].createPostCreatorFee);
+        mintTreasuryPageToken(amount);
     }
 
     /// @notice Withdraw amount from the bank
@@ -233,20 +248,19 @@ contract PageBank is
     /// @param _gas Comment author's address
     /// @return PAGE token's count
     function convertGasToTokenAmount(uint256 _gas) private view returns (uint256) {
-        return
-            _gas.mul(tx.gasprice).mul(getWETHUSDTPrice()).mul(
-                getUSDTPAGEPrice()
-            );
+        return _gas * tx.gasprice * getWETHUSDTPrice() * getUSDTPAGEPrice();
     }
 
-    /// @notice Returns amount divided by treasury fee
-    /// @param _amount Amount for dividing
-    /// @return PAGE token's count
-    function calculateTreasuryAmount(uint256 _amount)
-        private
-        view
-        returns (uint256)
-    {
-        return _amount.div(10000).mul(treasuryFee);
+    function mintTreasuryPageToken(uint256 amount) private {
+        require(treasury != address(0), "PageBank: wrong treasury address");
+        token.mint(treasury, amount * treasuryFee / ALL_PERCENT);
+    }
+
+    function mintUserPageToken(address user, uint256 amount, uint256 userFee) private {
+        require(user != address(0), "PageBank: wrong user address");
+
+        uint256 userAmount = amount * userFee / ALL_PERCENT;
+        token.mint(address(this), userAmount);
+        _balances[user] += userAmount;
     }
 }
