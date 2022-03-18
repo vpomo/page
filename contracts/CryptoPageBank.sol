@@ -51,6 +51,9 @@ contract PageBank is
         uint256 createPostOwnerFee;
         uint256 createPostCreatorFee;
 
+        uint256 createCommentOwnerFee;
+        uint256 createCommentCreatorFee;
+
         uint256 removePostOwnerFee;
         uint256 removePostCreatorFee;
     }
@@ -67,6 +70,8 @@ contract PageBank is
     event Withdraw(address indexed _to, uint256 indexed _amount);
     event Deposit(address indexed _to, uint256 indexed _amount);
     event Burn(address indexed _to, uint256 indexed _amount);
+
+    event MintForPost(uint256 indexed communityId, address owner, address creator, uint256 amount);
 
     event SetStaticWETHUSDTPrice(uint256 indexed _price);
     event SetStaticUSDTPAGEPrice(uint256 indexed _price);
@@ -99,11 +104,19 @@ contract PageBank is
     }
 
     //TODO: access denied
-    function updateFeeCommunity(uint256 communityId, uint256 newCreatePostOwnerFee, uint256 newCreatePostCreatorFee) public {
+    function updateFeeCommunity(
+        uint256 communityId,
+        uint256 newCreatePostOwnerFee,
+        uint256 newCreatePostCreatorFee,
+        uint256 newRemovePostOwnerFee,
+        uint256 newRemovePostCreatorFee
+    ) public {
         CommunityFee storage fee = communityFee[communityId];
         fee.createPostOwnerFee = newCreatePostOwnerFee;
         fee.createPostCreatorFee = newCreatePostCreatorFee;
-        fee.removePostOwnerFee =
+        fee.removePostOwnerFee = newRemovePostOwnerFee;
+        fee.removePostCreatorFee = newRemovePostCreatorFee;
+        //TODO event
     }
 
 
@@ -122,13 +135,15 @@ contract PageBank is
         mintUserPageToken(owner, amount, communityFee[communityId].createPostOwnerFee);
         mintUserPageToken(creator, amount, communityFee[communityId].createPostCreatorFee);
         mintTreasuryPageToken(amount);
+
+        emit MintForPost(communityId, owner, creator, amount);
     }
 
     /// @notice Calculate and call burn
     /// @param receiver The address on which the tokens burn
     /// @param gas The amount of gas spent on the function call
     /// @param commentsReward Reward for comments in PAGE tokens
-    function processBurn(
+    function burnTokenForPost(
         uint256 communityId,
         address owner,
         address creator,
@@ -136,9 +151,8 @@ contract PageBank is
     ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_BURN_GAS_AMOUNT);
 
-        burnUserPageToken(owner, amount, communityFee[communityId].createPostOwnerFee);
-        burnUserPageToken(creator, amount, communityFee[communityId].createPostCreatorFee);
-        mintTreasuryPageToken(amount);
+        burnUserPageToken(owner, amount, communityFee[communityId].removePostOwnerFee);
+        burnUserPageToken(creator, amount, communityFee[communityId].removePostCreatorFee);
     }
 
     /// @notice Withdraw amount from the bank
@@ -262,5 +276,13 @@ contract PageBank is
         uint256 userAmount = amount * userFee / ALL_PERCENT;
         token.mint(address(this), userAmount);
         _balances[user] += userAmount;
+    }
+
+    function burnUserPageToken(address user, uint256 amount, uint256 userFee) private {
+        require(user != address(0), "PageBank: wrong user address");
+
+        uint256 userAmount = amount * userFee / ALL_PERCENT;
+        token.burn(address(this), userAmount);
+        _balances[user] -= userAmount;
     }
 }
