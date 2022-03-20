@@ -173,7 +173,7 @@ contract PageCommunity is
         emit WritePost(communityId, postId, _msgSender(), owner);
 
         uint256 gas = gasBefore - gasleft();
-        uint256 price = bank.mintTokenForNewPost(_msgSender(), owner, gas);
+        uint256 price = bank.mintTokenForNewPost(communityId, owner, _msgSender(), gas);
         setPostPrice(postId, price);
     }
 
@@ -203,19 +203,20 @@ contract PageCommunity is
     ) external onlyCommunityActive(postId) returns() {
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
+        address postOwner = post[postId].owner;
 
         require(community[communityId].users.contains(_msgSender()), "PageCommunity: wrong user");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
-        require(post[postId].owner == _msgSender(), "PageCommunity: wrong owner");
+        require(postOwner == _msgSender(), "PageCommunity: wrong owner");
 
-        nft.burn(owner);
-        erasePost(postId, owner);
+        nft.burn(postOwner);
+        erasePost(postId, postOwner);
         community[communityId].postIds.remove(postId);
 
-        emit BurnPost(communityId, postId, _msgSender(), owner);
+        emit BurnPost(communityId, postId, _msgSender(), postOwner);
 
         uint256 gas = gasBefore - gasleft();
-        bank.burnTokenForBurnPost(_msgSender(), owner, gas);
+        bank.burnTokenForPost(communityId, postOwner, _msgSender(), gas);
     }
 
     function setVisibilityPost(
@@ -263,7 +264,7 @@ contract PageCommunity is
         emit WriteComment(communityId, postId, commentId, _msgSender(), owner);
 
         uint256 gas = gasBefore - gasleft();
-        uint256 price = bank.mintTokenForNewPost(_msgSender(), owner, gas);
+        uint256 price = bank.mintTokenForNewComment(communityId, owner, _msgSender(), gas);
         setCommentPrice(postId, commentId, price);
     }
 
@@ -287,11 +288,17 @@ contract PageCommunity is
     }
 
     function burnComment(uint256 postId, uint256 commentId) external onlyCommunityActive(postId) {
+        uint256 gasBefore = gasleft();
+        uint256 communityId = getCommunityIdByPostId(postId);
+
         require(post[postId].isView, "PageCommunity: wrong post");
         require(community[id].moderators.contains(_msgSender()), "PageCommunity: access denied");
-
+        address commentOwner = comment[postId][commentId].owner;
         eraseComment(postId, commentId);
-        emit BurnComment(postId, commentId, );
+        emit BurnComment(postId, commentId);
+
+        uint256 gas = gasBefore - gasleft();
+        bank.burnTokenForComment(communityId, commentOwner, _msgSender(), gas);
     }
 
     function setVisibilityComment(

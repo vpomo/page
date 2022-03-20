@@ -48,30 +48,55 @@ contract PageBank is
     IUniswapV3Pool private wethusdtPool;
 
     struct CommunityFee {
-        uint256 createPostOwnerFee;
-        uint256 createPostCreatorFee;
+        uint64 createPostOwnerFee;
+        uint64 createPostCreatorFee;
+        uint64 removePostOwnerFee;
+        uint64 removePostCreatorFee;
 
-        uint256 createCommentOwnerFee;
-        uint256 createCommentCreatorFee;
-
-        uint256 removePostOwnerFee;
-        uint256 removePostCreatorFee;
+        uint64 createCommentOwnerFee;
+        uint64 createCommentCreatorFee;
+        uint64 removeCommentOwnerFee;
+        uint64 removeCommentCreatorFee;
     }
-    mapping(uint256 => CommunityFee) private communityFee;
-    uint256 public defaultCreatePostOwnerFee = 4500;
-    uint256 public defaultCreatePostCreatorFee = 4500;
-    uint256 public defaultRemovePostOwnerFee = 0;
-    uint256 public defaultRemovePostCreatorFee = 9000;
 
+    mapping(uint256 => CommunityFee) private communityFee;
+
+    uint64 public defaultCreatePostOwnerFee = 4500;
+    uint64 public defaultCreatePostCreatorFee = 4500;
+    uint64 public defaultRemovePostOwnerFee = 0;
+    uint64 public defaultRemovePostCreatorFee = 9000;
+
+    uint64 public defaultCreateCommunityOwnerFee = 4500;
+    uint64 public defaultCreateCommunityCreatorFee = 4500;
+    uint64 public defaultRemoveCommunityOwnerFee = 0;
+    uint64 public defaultRemoveCommunityCreatorFee = 9000;
 
     // Storage balance per address
     mapping(address => uint256) private _balances;
 
     event Withdraw(address indexed _to, uint256 indexed _amount);
     event Deposit(address indexed _to, uint256 indexed _amount);
-    event Burn(address indexed _to, uint256 indexed _amount);
 
     event MintForPost(uint256 indexed communityId, address owner, address creator, uint256 amount);
+    event MintForComment(uint256 indexed communityId, address owner, address creator, uint256 amount);
+
+    event BurnForPost(uint256 indexed communityId, address owner, address creator, uint256 amount);
+    event BurnForComment(uint256 indexed communityId, address owner, address creator, uint256 amount);
+
+    event UpdatePostFee(
+        uint256 indexed communityId,
+        uint64 newCreatePostOwnerFee,
+        uint64 newCreatePostCreatorFee,
+        uint64 newRemovePostOwnerFee,
+        uint64 newRemovePostCreatorFee
+    );
+    event UpdateCommentFee(
+        uint256 indexed communityId,
+        uint64 newCreateCommentOwnerFee,
+        uint64 newCreateCommentCreatorFee,
+        uint64 newRemoveCommentOwnerFee,
+        uint64 newRemoveCommentCreatorFee
+    );
 
     event SetStaticWETHUSDTPrice(uint256 indexed _price);
     event SetStaticUSDTPAGEPrice(uint256 indexed _price);
@@ -95,7 +120,7 @@ contract PageBank is
 
     //TODO: access denied
     //TODO setter for default variable
-    function defineFeeForNewCommunity(uint256 communityId) public {
+    function definePostFeeForNewCommunity(uint256 communityId) public {
         CommunityFee storage fee = communityFee[communityId];
         fee.createPostOwnerFee = defaultCreatePostOwnerFee;
         fee.createPostCreatorFee = defaultCreatePostCreatorFee;
@@ -104,21 +129,48 @@ contract PageBank is
     }
 
     //TODO: access denied
-    function updateFeeCommunity(
+    function updatePostFee(
         uint256 communityId,
-        uint256 newCreatePostOwnerFee,
-        uint256 newCreatePostCreatorFee,
-        uint256 newRemovePostOwnerFee,
-        uint256 newRemovePostCreatorFee
+        uint64 newCreatePostOwnerFee,
+        uint64 newCreatePostCreatorFee,
+        uint64 newRemovePostOwnerFee,
+        uint64 newRemovePostCreatorFee
     ) public {
         CommunityFee storage fee = communityFee[communityId];
         fee.createPostOwnerFee = newCreatePostOwnerFee;
         fee.createPostCreatorFee = newCreatePostCreatorFee;
         fee.removePostOwnerFee = newRemovePostOwnerFee;
         fee.removePostCreatorFee = newRemovePostCreatorFee;
-        //TODO event
+
+        emit UpdatePostFee(communityId,
+            newCreatePostOwnerFee,
+            newCreatePostCreatorFee,
+            newRemovePostOwnerFee,
+            newRemovePostCreatorFee
+        );
     }
 
+    //TODO: access denied
+    function updateCommentFee(
+        uint256 communityId,
+        uint64 newCreateCommentOwnerFee,
+        uint64 newCreateCommentCreatorFee,
+        uint64 newRemoveCommentOwnerFee,
+        uint64 newRemoveCommentCreatorFee
+    ) public {
+        CommunityFee storage fee = communityFee[communityId];
+        fee.createCommentOwnerFee = newCreateCommentOwnerFee;
+        fee.createCommentCreatorFee = newCreateCommentCreatorFee;
+        fee.removeCommentOwnerFee = newRemoveCommentOwnerFee;
+        fee.removeCommentCreatorFee = newRemoveCommentCreatorFee;
+
+        emit UpdateCommentFee(communityId,
+            newCreateCommentOwnerFee,
+            newCreateCommentCreatorFee,
+            newRemoveCommentOwnerFee,
+            newRemoveCommentCreatorFee
+        );
+    }
 
     /// @notice Calculate and call burn
     /// @param owner
@@ -139,6 +191,21 @@ contract PageBank is
         emit MintForPost(communityId, owner, creator, amount);
     }
 
+    function mintTokenForNewComment(
+        uint256 communityId,
+        address owner,
+        address creator,
+        uint256 gas
+    ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
+        amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
+
+        mintUserPageToken(owner, amount, communityFee[communityId].createCommentOwnerFee);
+        mintUserPageToken(creator, amount, communityFee[communityId].createCommentCreatorFee);
+        mintTreasuryPageToken(amount);
+
+        emit MintForComment(communityId, owner, creator, amount);
+    }
+
     /// @notice Calculate and call burn
     /// @param receiver The address on which the tokens burn
     /// @param gas The amount of gas spent on the function call
@@ -153,6 +220,22 @@ contract PageBank is
 
         burnUserPageToken(owner, amount, communityFee[communityId].removePostOwnerFee);
         burnUserPageToken(creator, amount, communityFee[communityId].removePostCreatorFee);
+
+        emit BurnForPost(communityId, owner, creator, amount);
+    }
+
+    function burnTokenForComment(
+        uint256 communityId,
+        address owner,
+        address creator,
+        uint256 gas
+    ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
+        amount = convertGasToTokenAmount(gas + FOR_BURN_GAS_AMOUNT);
+
+        burnUserPageToken(owner, amount, communityFee[communityId].removeCommentOwnerFee);
+        burnUserPageToken(creator, amount, communityFee[communityId].removeCommentCreatorFee);
+
+        emit BurnForComment(communityId, owner, creator, amount);
     }
 
     /// @notice Withdraw amount from the bank
