@@ -3,7 +3,6 @@
 pragma solidity 0.8.12;
 
 import "@uniswap/contracts/interfaces/IUniswapV3Pool.sol";
-import "@openzeppelin/contracts/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 
@@ -115,12 +114,18 @@ contract PageBank is
         initializer
     {
         __Ownable_init();
+
         require(_treasury != address(0), "PageBank: wrong address");
         require(_admin != address(0), "PageBank: wrong address");
+
+        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+        _setRoleAdmin(MINTER_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(BURNER_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(UPDATER_FEE_ROLE, DEFAULT_ADMIN_ROLE);
+
         treasury = _treasury;
     }
 
-    //TODO setter for default variable
     function definePostFeeForNewCommunity(uint256 communityId) public onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
 
@@ -131,7 +136,6 @@ contract PageBank is
         return true;
     }
 
-    //TODO setter for default variable
     function defineCommentFeeForNewCommunity(uint256 communityId) public onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
 

@@ -46,6 +46,7 @@ contract PageCommunity is
         uint64 downCount;
         uint128 price;
         uint256 commentCount;
+        EnumerableSetUpgradeable.AddressSet upDownUsers;
         bool isView;
     }
 
@@ -185,6 +186,7 @@ contract PageCommunity is
         uint64 downCount,
         uint128 price,
         uint256 commentCount,
+        address[] upDownUsers,
         bool isView
     ) {
         Post memory readed = post[postId];
@@ -195,6 +197,7 @@ contract PageCommunity is
         downCount = readed.downCount;
         price = readed.price;
         commentCount = readed.commentCount;
+        upDownUsers = readed.upDownUsers.values();
         isView = readed.isView;
     }
 
@@ -257,7 +260,7 @@ contract PageCommunity is
         require(post[postId].isView, "PageCommunity: wrong view post");
 
         incCommentCount(postId);
-        setPostUpDown(isUp, isDown);
+        setPostUpDown(postId, isUp, isDown);
         createComment(postId, ipfsHash, owner, isUp, isDown);
         uint256 commentId = getCommentCount(postId);
 
@@ -334,6 +337,10 @@ contract PageCommunity is
         return communityIdByPostId[postId];
     }
 
+    function isUpDownUser(uint256 postId, address user) public returns(bool) {
+        return post[postId].upDownUsers.contains(user);
+    }
+
     //private area
 
     function validateCommunity(uint256 communityId) private {
@@ -380,8 +387,12 @@ contract PageCommunity is
         curPost.commentCount++;
     }
 
-    function setPostUpDown(bool isUp, bool isDown) private {
-        require(!(isUpCount && isUpCount == isDownCount), "PageCommunity: wrong Up/Down");
+    function setPostUpDown(uint256 postId, bool isUp, bool isDown) private {
+        if (!isUp && !isDown) {
+            return;
+        }
+        require(!(isUpCount && isUpCount == isDownCount), "PageCommunity: wrong values for Up/Down");
+        require(!isUpDownUser(_msgSender()), "PageCommunity: wrong user for Up/Down");
 
         Post storage curPost = post[postId];
         if (isUp) {
@@ -390,6 +401,7 @@ contract PageCommunity is
         if (isDown) {
             curPost.downCount++;
         }
+        curPost.upDownUsers.add(_msgSender);
     }
 
     function createComment(uint256 postId, string memory ipfsHash, address owner, bool isUp, bool isDown) private {
