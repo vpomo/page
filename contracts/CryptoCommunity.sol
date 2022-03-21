@@ -19,6 +19,7 @@ contract PageCommunity is
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     IPageNFT public nft;
+    IPageBank public bank;
 
     uint256 public MAX_MODERATORS = 40;
     uint256 private WRONG_MODERATOR_NUMBER = 1000;
@@ -91,7 +92,7 @@ contract PageCommunity is
 
     modifier onlyCommunityUser(uint256 id) {
         validateCommunity(id);
-        require(community[id].users.contains(_msgSender()), "PageCommunity: wrong user");
+        require(isCommunityUser(id, _msgSender()), "PageCommunity: wrong user");
         _;
     }
 
@@ -100,8 +101,11 @@ contract PageCommunity is
         _;
     }
 
-    function initialize(address _nft) public initializer {
+    function initialize(address _nft, address _bank) public initializer {
+        require(_nft != address(0), "PageCommunity: Wrong _nft address");
+        require(_bank != address(0), "PageCommunity: Wrong _bank address");
         nft = IPageNFT(_nft);
+        bank = IPageBank(_bank);
     }
 
     function addCommunity(string memory desc) public {
@@ -147,13 +151,6 @@ contract PageCommunity is
         emit QuitUser(communityId, _msgSender());
     }
 
-    function isExistModerator(uint256 communityId, address moderator) public view validId(communityId)
-        returns(bool)
-    {
-        Community memory currentCommunity = community[communityId];
-        return currentCommunity.moderators.contains(moderator);
-    }
-
     function writePost(
         uint256 communityId,
         string memory ipfsHash,
@@ -162,8 +159,8 @@ contract PageCommunity is
         uint256 gasBefore = gasleft();
 
         require(community[communityId].active, "PageCommunity: wrong active community");
-        require(community[communityId].users.contains(_msgSender()), "PageCommunity: wrong user");
-        require(community[communityId].users.contains(owner), "PageCommunity: wrong user");
+        require(isCommunityUser(communityId, _msgSender()), "PageCommunity: wrong user");
+        require(isCommunityUser(communityId, owner), "PageCommunity: wrong user");
 
         uint256 postId = nft.mint(owner);
         createPost(postId, owner);
@@ -171,6 +168,9 @@ contract PageCommunity is
         community[communityId].postIds.add(postId);
         communityIdByPostId[postId] = communityId;
         emit WritePost(communityId, postId, _msgSender(), owner);
+
+        require(bank.definePostFeeForNewCommunity(communityId), "PageCommunity: wrong define post fee");
+        require(bank.defineCommentFeeForNewCommunity(communityId), "PageCommunity: wrong define comment fee");
 
         uint256 gas = gasBefore - gasleft();
         uint256 price = bank.mintTokenForNewPost(communityId, owner, _msgSender(), gas);
@@ -205,7 +205,7 @@ contract PageCommunity is
         uint256 communityId = getCommunityIdByPostId(postId);
         address postOwner = post[postId].owner;
 
-        require(community[communityId].users.contains(_msgSender()), "PageCommunity: wrong user");
+        require(isCommunityUser(communityId, _msgSender()), "PageCommunity: wrong user");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
         require(postOwner == _msgSender(), "PageCommunity: wrong owner");
 
@@ -224,7 +224,7 @@ contract PageCommunity is
         bool newVisible
     ) external onlyCommunityActive(postId) {
         uint256 communityId = getCommunityIdByPostId(postId);
-        require(community[communityId].moderators.contains(_msgSender()), "PageCommunity: access denied");
+        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
 
         bool oldVisible = post[postId].isView;
@@ -252,14 +252,14 @@ contract PageCommunity is
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
 
-        require(community[communityId].users.contains(_msgSender()), "PageCommunity: wrong user");
-        require(community[communityId].users.contains(owner), "PageCommunity: wrong user");
+        require(isCommunityUser(communityId, _msgSender()), "PageCommunity: wrong user");
+        require(isCommunityUser(communityId, owner), "PageCommunity: wrong user");
         require(post[postId].isView, "PageCommunity: wrong view post");
 
         incCommentCount(postId);
         setPostUpDown(isUp, isDown);
         createComment(postId, ipfsHash, owner, isUp, isDown);
-        uint256 commentId = getCurrentCommentCount(postId);
+        uint256 commentId = getCommentCount(postId);
 
         emit WriteComment(communityId, postId, commentId, _msgSender(), owner);
 
@@ -292,7 +292,7 @@ contract PageCommunity is
         uint256 communityId = getCommunityIdByPostId(postId);
 
         require(post[postId].isView, "PageCommunity: wrong post");
-        require(community[id].moderators.contains(_msgSender()), "PageCommunity: access denied");
+        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
         address commentOwner = comment[postId][commentId].owner;
         eraseComment(postId, commentId);
         emit BurnComment(postId, commentId);
@@ -307,7 +307,7 @@ contract PageCommunity is
         bool newVisible
     ) external onlyCommunityActive(postId) {
         uint256 communityId = getCommunityIdByPostId(postId);
-        require(community[communityId].moderators.contains(_msgSender()), "PageCommunity: access denied");
+        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
 
         bool oldVisible = comment[postId][commentId].isView;
@@ -317,9 +317,17 @@ contract PageCommunity is
         emit ChangeVisibleComment(communityId, postId, newVisible);
     }
 
-    function getCurrentCommentCount(uint256 postId) public returns(uint256) {
+    function getCommentCount(uint256 postId) public returns(uint256) {
         Post memory curPost = post[postId];
         return curPost.commentCount;
+    }
+
+    function isCommunityUser(uint256 communityId, address user) public returns(bool) {
+        return community[communityId].users.contains(user);
+    }
+
+    function isCommunityModerator(uint256 communityId, address user) public returns(bool) {
+        return community[communityId].moderators.contains(user);
     }
 
     function getCommunityIdByPostId(uint256 postId) public returns(uint256) {

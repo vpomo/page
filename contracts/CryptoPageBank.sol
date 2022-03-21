@@ -22,6 +22,8 @@ contract PageBank is
 {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    bytes32 public constant UPDATER_FEE_ROLE = keccak256("UPDATER_FEE_ROLE");
+    bytes32 public constant DEFINE_FEE_ROLE = keccak256("DEFINE_FEE_ROLE");
 
     uint256 public FOR_MINT_GAS_AMOUNT = 2800;
     uint256 public FOR_BURN_GAS_AMOUNT = 2800;
@@ -74,8 +76,8 @@ contract PageBank is
     // Storage balance per address
     mapping(address => uint256) private _balances;
 
-    event Withdraw(address indexed _to, uint256 indexed _amount);
-    event Deposit(address indexed _to, uint256 indexed _amount);
+    event Withdraw(address indexed user, uint256 amount);
+    event AddedBalance(address indexed user, uint256 amount);
 
     event MintForPost(uint256 indexed communityId, address owner, address creator, uint256 amount);
     event MintForComment(uint256 indexed communityId, address owner, address creator, uint256 amount);
@@ -118,24 +120,35 @@ contract PageBank is
         treasury = _treasury;
     }
 
-    //TODO: access denied
     //TODO setter for default variable
-    function definePostFeeForNewCommunity(uint256 communityId) public {
+    function definePostFeeForNewCommunity(uint256 communityId) public onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
+
         fee.createPostOwnerFee = defaultCreatePostOwnerFee;
         fee.createPostCreatorFee = defaultCreatePostCreatorFee;
         fee.removePostOwnerFee = defaultRemovePostOwnerFee;
         fee.removePostCreatorFee = defaultRemovePostCreatorFee;
+        return true;
     }
 
-    //TODO: access denied
+    //TODO setter for default variable
+    function defineCommentFeeForNewCommunity(uint256 communityId) public onlyRole(MINTER_ROLE) returns(bool) {
+        CommunityFee storage fee = communityFee[communityId];
+
+        fee.createCommentOwnerFee = defaultCreateCommentOwnerFee;
+        fee.createCommentCreatorFee = defaultCreateCommentCreatorFee;
+        fee.removeCommentOwnerFee = defaultRemoveCommentOwnerFee;
+        fee.removeCommentCreatorFee = defaultRemoveCommentCreatorFee;
+        return true;
+    }
+
     function updatePostFee(
         uint256 communityId,
         uint64 newCreatePostOwnerFee,
         uint64 newCreatePostCreatorFee,
         uint64 newRemovePostOwnerFee,
         uint64 newRemovePostCreatorFee
-    ) public {
+    ) public onlyRole(UPDATER_FEE_ROLE) {
         CommunityFee storage fee = communityFee[communityId];
         fee.createPostOwnerFee = newCreatePostOwnerFee;
         fee.createPostCreatorFee = newCreatePostCreatorFee;
@@ -150,14 +163,13 @@ contract PageBank is
         );
     }
 
-    //TODO: access denied
     function updateCommentFee(
         uint256 communityId,
         uint64 newCreateCommentOwnerFee,
         uint64 newCreateCommentCreatorFee,
         uint64 newRemoveCommentOwnerFee,
         uint64 newRemoveCommentCreatorFee
-    ) public {
+    ) public onlyRole(UPDATER_FEE_ROLE) {
         CommunityFee storage fee = communityFee[communityId];
         fee.createCommentOwnerFee = newCreateCommentOwnerFee;
         fee.createCommentCreatorFee = newCreateCommentCreatorFee;
@@ -246,9 +258,16 @@ contract PageBank is
         emit Withdraw(_msgSender(), amount);
     }
 
+    function addBalance(uint256 amount) public override {
+        require(amount > 0, "Wrong amount");
+        require(token.transferFrom(_msgSender(), address(this), amount));
+        _balances[_msgSender()] += amount;
+        emit AddedBalance(_msgSender(), amount);
+    }
+
     /// @notice Bank balance of the sender's address
-    function balanceOf() public view override returns (uint256) {
-        return _balances[_msgSender()];
+    function balanceOf(address user) public view override returns (uint256) {
+        return _balances[user];
     }
 
     function getWETHUSDTPriceFromPool()
@@ -307,6 +326,41 @@ contract PageBank is
         }
         if (price > 100) {
             price = 100;
+        }
+    }
+
+    function setPostDefaultFee(uint256 index, uint256 newValue) public override onlyOwner {
+        if (index == 0) {
+            emit SetDefaultFee(index, defaultCreatePostOwnerFee, newValue);
+            defaultCreatePostOwnerFee = newValue;
+        }
+        if (index == 1) {
+            emit SetDefaultFee(index, defaultCreatePostCreatorFee, newValue);
+            defaultCreatePostCreatorFee = newValue;
+        }
+        if (index == 2) {
+            emit SetDefaultFee(index, defaultRemovePostOwnerFee, newValue);
+            defaultRemovePostOwnerFee = newValue;
+        }
+        if (index == 3) {
+            emit SetDefaultFee(index, defaultRemovePostCreatorFee, newValue);
+            defaultRemovePostCreatorFee = newValue;
+        }
+        if (index == 4) {
+            emit SetDefaultFee(index, defaultCreateCommunityOwnerFee, newValue);
+            defaultCreateCommunityOwnerFee = newValue;
+        }
+        if (index == 5) {
+            emit SetDefaultFee(index, defaultCreateCommunityCreatorFee, newValue);
+            defaultCreateCommunityCreatorFee = newValue;
+        }
+        if (index == 6) {
+            emit SetDefaultFee(index, defaultRemoveCommunityOwnerFee, newValue);
+            defaultRemoveCommunityOwnerFee = newValue;
+        }
+        if (index == 7) {
+            emit SetDefaultFee(index, defaultRemoveCommunityCreatorFee, newValue);
+            defaultRemoveCommunityCreatorFee = newValue;
         }
     }
 
