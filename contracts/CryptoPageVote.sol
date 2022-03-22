@@ -30,6 +30,7 @@ contract PageVote is
         uint128 yesCount;
         uint128 noCount;
         uint256[4] newValues;
+        address user;
         EnumerableSetUpgradeable.AddressSet voteUsers;
         bool active;
     }
@@ -62,22 +63,28 @@ contract PageVote is
         string description,
         uint128 duration,
         uint128 methodNumber,
-        uint256[4] memory values
+        uint256[4] memory values,
+        address user
     ) external {
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
-        require(community.isCommunityModerator(communityId, _msgSender()), "PageVote: access denied");
-        require(0 < methodNumber && methodNumber < 3, "PageVote: wrong methodNumber");
+        address sender = _msgSender();
+        require(community.isCommunityModerator(communityId, sender) || community.isCommunityCreator(communityId, sender), "PageVote: access denied");
+        require(0 < methodNumber && methodNumber < 5, "PageVote: wrong methodNumber");
 
         Vote storage vote;
         vote.description = description;
-        vote.creator = _msgSender();
+        vote.creator = sender;
         vote.execMethodNumber = methodNumber;
         vote.newValues = values;
         vote.finishTime = block.timestamp + duration;
         vote.active = true;
+        if (methodNumber == 3 || methodNumber == 4) {
+            require(user != address(0), "PageVote: wrong moderator address");
+            vote.user = user;
+        }
 
         votes[communityId].push(vote);
-        emit CreateVote(_msgSender(), duration, methodNumber, values);
+        emit CreateVote(sender, duration, methodNumber, values);
     }
 
     function setMinDuration(uint256 minDuration) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -128,10 +135,11 @@ contract PageVote is
         string description,
         address creator,
         uint128 execMethodNumber,
-        uint256[4] newValues,
         uint128 finishTime,
         uint128 yesCount,
         uint128 noCount,
+        uint256[4] newValues,
+        address user,
         address[] voteUsers,
         bool active
     ) {
@@ -142,10 +150,11 @@ contract PageVote is
         description = vote.description;
         creator = vote.creator;
         execMethodNumber = vote.execMethodNumber;
-        newValues = vote.newValues;
         finishTime = vote.finishTime;
         yesCount = vote.yesCount;
         noCount = vote.noCount;
+        newValues = vote.newValues;
+        user = vote.user;
         voteUsers = vote.voteUsers.values();
         active = vote.active;
     }
@@ -158,6 +167,12 @@ contract PageVote is
         }
         if (vote.execMethodNumber == 2) {
             bank.updateCommentFee(communityId, values[0], values[1], values[2], values[3]);
+        }
+        if (vote.execMethodNumber == 3) {
+            community.addModerator(communityId, vote.user);
+        }
+        if (vote.execMethodNumber == 4) {
+            community.removeModerator(communityId, vote.user);
         }
     }
 }

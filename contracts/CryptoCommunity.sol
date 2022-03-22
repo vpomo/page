@@ -325,6 +325,10 @@ contract PageCommunity is
         return curPost.commentCount;
     }
 
+    function isCommunityCreator(uint256 communityId, address user) public returns(bool) {
+        return community[communityId].creator == user;
+    }
+
     function isCommunityUser(uint256 communityId, address user) public returns(bool) {
         return community[communityId].users.contains(user);
     }

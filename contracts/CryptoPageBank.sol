@@ -99,16 +99,16 @@ contract PageBank is
         uint64 newRemoveCommentCreatorFee
     );
 
-    event SetStaticWETHUSDTPrice(uint256 indexed _price);
-    event SetStaticUSDTPAGEPrice(uint256 indexed _price);
+    event SetStaticWETHUSDTPrice(uint256 _price);
+    event SetStaticUSDTPAGEPrice(uint256 _price);
     event SetToken(address indexed _token);
+    event SetTreasuryFee(uint256 treasuryFee, uint256 newTreasuryFee);
     event SetWETHUSDTPool(address indexed _pool);
     event SetUSDTPAGEPool(address indexed _pool);
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
     /// @param _admin Address of admin
-    /// @param _treasuryFee Percent of treasury fee (1000 is 10%; 100 is 1%; 10 is 0.1%)
     function initialize(address _treasury, address _admin)
         public
         initializer
@@ -397,6 +397,12 @@ contract PageBank is
     function setToken(address _address) public override onlyOwner {
         token = IPageToken(_address);
         emit SetToken(_address);
+    }
+
+    function setTreasuryFee(uint256 newTreasuryFee ) public override onlyOwner {
+        require(newTreasuryFee != treasuryFee, "PageBank: wrong treasury value");
+        emit SetTreasuryFee(treasuryFee, newTreasuryFee);
+        treasuryFee = newTreasuryFee;
     }
 
     /// @notice Returns gas multiplied by token's prices and gas price.
