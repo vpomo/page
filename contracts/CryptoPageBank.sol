@@ -27,8 +27,9 @@ contract PageBank is
     uint256 public FOR_MINT_GAS_AMOUNT = 2800;
     uint256 public FOR_BURN_GAS_AMOUNT = 2800;
 
-    uint256 public staticUSDTPAGEPrice = 60;
-    uint256 public staticWETHUSDTPrice = 3600;
+    uint256 public staticWETHPagePrice = 600;
+    uint256 public priceChangePercent = 700;
+    uint256 public priceChangePeriod = 3600;
 
     /// Address of Crypto.Page treasury
     address public treasury;
@@ -43,10 +44,8 @@ contract PageBank is
 
     /// CryptoPageToken interface
     IPageToken public token;
-    // UniswapV3Pool interface for USDT / PAGE pool
-    IUniswapV3Pool private usdtpagePool;
     // UniswapV3Pool interface for WETH / USDT pool
-    IUniswapV3Pool private wethusdtPool;
+    IUniswapV3Pool private wethPagePool;
 
     struct CommunityFee {
         uint64 createPostOwnerFee;
@@ -99,12 +98,11 @@ contract PageBank is
         uint64 newRemoveCommentCreatorFee
     );
 
-    event SetStaticWETHUSDTPrice(uint256 _price);
-    event SetStaticUSDTPAGEPrice(uint256 _price);
+    event SetStaticWETHPagePrice(uint256 _price);
+    event SetWETHPagePool(address indexed _pool);
+
     event SetToken(address indexed _token);
     event SetTreasuryFee(uint256 treasuryFee, uint256 newTreasuryFee);
-    event SetWETHUSDTPool(address indexed _pool);
-    event SetUSDTPAGEPool(address indexed _pool);
 
     /// @notice Initial function
     /// @param _treasury Address of our treasury
@@ -274,13 +272,13 @@ contract PageBank is
         return _balances[user];
     }
 
-    function getWETHUSDTPriceFromPool()
+    function getWETHPagePriceFromPool()
         external
         view
         override
         returns (uint256 price)
     {
-        (uint160 sqrtPriceX96, , , , , , ) = wethusdtPool.slot0();
+        (uint160 sqrtPriceX96, , , , , , ) = wethPagePool.slot0();
         price = uint256(sqrtPriceX96)
             .mul(sqrtPriceX96)
             .div(10e18)
@@ -288,48 +286,17 @@ contract PageBank is
             .div(2**192);
     }
 
-    function getUSDTPAGEPriceFromPool()
-        external
-        view
-        override
-        returns (uint256 price)
-    {
-        (uint160 sqrtPriceX96, , , , , , ) = usdtpagePool.slot0();
-        price = uint256(sqrtPriceX96)
-            .mul(sqrtPriceX96)
-            .div(10e6)
-            .mul(10e18)
-            .div(2**192);
-    }
-
     /// @notice Returns WETH / USDT price from UniswapV3Pool
-    function getWETHUSDTPrice() public view override returns (uint256 price) {
-        try IPageBank(this).getWETHUSDTPriceFromPool() returns (
+    function getWETHPagePrice() public view override returns (uint256 price) {
+        try IPageBank(this).getWETHPagePriceFromPool() returns (
             uint256 _price
         ) {
             price = _price;
         } catch {
-            price = staticWETHUSDTPrice;
+            price = staticWETHPagePrice;
         }
         if (price == 0) {
-            price = staticWETHUSDTPrice;
-        }
-    }
-
-    /// @notice Returns USDT / PAGE price from UniswapV3Pool
-    function getUSDTPAGEPrice() public view override returns (uint256 price) {
-        try IPageBank(this).getUSDTPAGEPriceFromPool() returns (
-            uint256 _price
-        ) {
-            price = _price;
-        } catch {
-            price = staticUSDTPAGEPrice;
-        }
-        if (price == 0) {
-            price = staticUSDTPAGEPrice;
-        }
-        if (price > 100) {
-            price = 100;
+            price = staticWETHPagePrice;
         }
     }
 
@@ -369,29 +336,16 @@ contract PageBank is
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
-    /// @param _usdtpagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setUSDTPAGEPool(address _usdtpagePool) public override onlyOwner {
-        usdtpagePool = IUniswapV3Pool(_usdtpagePool);
-        emit SetUSDTPAGEPool(_usdtpagePool);
+    /// @param _wethPagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
+    function setWETHPagePool(address _wethPagePool) public override onlyOwner {
+        wethPagePool = IUniswapV3Pool(_wethPagePool);
+        emit SetWETHUSDTPool(_wethPagePool);
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
-    /// @param _wethusdtPool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setWETHUSDTPool(address _wethusdtPool) public override onlyOwner {
-        wethusdtPool = IUniswapV3Pool(_wethusdtPool);
-        emit SetWETHUSDTPool(_wethusdtPool);
-    }
-
-    /// @notice Returns USDT / PAGE price from UniswapV3
-    function setStaticUSDTPAGEPrice(uint256 _price) public override onlyOwner {
-        staticUSDTPAGEPrice = _price;
-        emit SetStaticUSDTPAGEPrice(_price);
-    }
-
-    /// @notice Returns USDT / PAGE price from UniswapV3
-    function setStaticWETHUSDTPrice(uint256 _price) public override onlyOwner {
-        staticWETHUSDTPrice = _price;
-        emit SetStaticWETHUSDTPrice(_price);
+    function setStaticWETHPagePrice(uint256 _price) public override onlyOwner {
+        staticWETHPagePrice = _price;
+        emit SetStaticWETHPagePrice(_price);
     }
 
     function setToken(address _address) public override onlyOwner {
@@ -409,7 +363,7 @@ contract PageBank is
     /// @param _gas Comment author's address
     /// @return PAGE token's count
     function convertGasToTokenAmount(uint256 _gas) private view returns (uint256) {
-        return _gas * tx.gasprice * getWETHUSDTPrice() * getUSDTPAGEPrice();
+        return _gas * tx.gasprice * getWETHPagePrice();
     }
 
     function mintTreasuryPageToken(uint256 amount) private {
