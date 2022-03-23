@@ -23,13 +23,14 @@ contract PageBank is
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
     bytes32 public constant UPDATER_FEE_ROLE = keccak256("UPDATER_FEE_ROLE");
     bytes32 public constant DEFINE_FEE_ROLE = keccak256("DEFINE_FEE_ROLE");
+    bytes32 public constant CHANGE_PRICE_ROLE = keccak256("CHANGE_PRICE_ROLE");
 
     uint256 public FOR_MINT_GAS_AMOUNT = 2800;
     uint256 public FOR_BURN_GAS_AMOUNT = 2800;
 
+    IUniswapV3Pool private wethPagePool;
     uint256 public staticWETHPagePrice = 600;
     uint256 public priceChangePercent = 700;
-    uint256 public priceChangePeriod = 3600;
 
     /// Address of Crypto.Page treasury
     address public treasury;
@@ -44,8 +45,6 @@ contract PageBank is
 
     /// CryptoPageToken interface
     IPageToken public token;
-    // UniswapV3Pool interface for WETH / USDT pool
-    IUniswapV3Pool private wethPagePool;
 
     struct CommunityFee {
         uint64 createPostOwnerFee;
@@ -98,8 +97,9 @@ contract PageBank is
         uint64 newRemoveCommentCreatorFee
     );
 
-    event SetStaticWETHPagePrice(uint256 _price);
     event SetWETHPagePool(address indexed _pool);
+    event SetStaticWETHPagePrice(uint256 oldPrice, uint256 newPrice);
+    event SetPriceChangePercent(uint256 oldPercent, uint256 newPercent);
 
     event SetToken(address indexed _token);
     event SetTreasuryFee(uint256 treasuryFee, uint256 newTreasuryFee);
@@ -120,6 +120,7 @@ contract PageBank is
         _setRoleAdmin(MINTER_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(BURNER_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(UPDATER_FEE_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(CHANGE_PRICE_ROLE, DEFAULT_ADMIN_ROLE);
 
         treasury = _treasury;
     }
@@ -286,12 +287,16 @@ contract PageBank is
             .div(2**192);
     }
 
-    /// @notice Returns WETH / USDT price from UniswapV3Pool
     function getWETHPagePrice() public view override returns (uint256 price) {
         try IPageBank(this).getWETHPagePriceFromPool() returns (
             uint256 _price
         ) {
-            price = _price;
+            price = validChangePrice(_price) ? _price : staticWETHPagePrice;
+//            if (!validChangePrice(_price)) {
+//                price = staticWETHPagePrice;
+//            } else {
+//                price = _price;
+//            }
         } catch {
             price = staticWETHPagePrice;
         }
@@ -337,20 +342,26 @@ contract PageBank is
 
     /// @notice Returns USDT / PAGE price from UniswapV3
     /// @param _wethPagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setWETHPagePool(address _wethPagePool) public override onlyOwner {
-        wethPagePool = IUniswapV3Pool(_wethPagePool);
-        emit SetWETHUSDTPool(_wethPagePool);
+    function setWETHPagePool(address wethPagePool) public override onlyOwner {
+        wethPagePool = IUniswapV3Pool(wethPagePool);
+        emit SetWETHUSDTPool(wethPagePool);
     }
 
-    /// @notice Returns USDT / PAGE price from UniswapV3
-    function setStaticWETHPagePrice(uint256 _price) public override onlyOwner {
-        staticWETHPagePrice = _price;
-        emit SetStaticWETHPagePrice(_price);
+    function setStaticWETHPagePrice(uint256 price) public override onlyRole(CHANGE_PRICE_ROLE) {
+        require(price != staticWETHPagePrice, "PageBank: wrong price");
+        emit SetStaticWETHPagePrice(staticWETHPagePrice, price);
+        staticWETHPagePrice = price;
     }
 
-    function setToken(address _address) public override onlyOwner {
-        token = IPageToken(_address);
-        emit SetToken(_address);
+    function setPriceChangePercent(uint256 percent) public override onlyOwner {
+        require(percent <= ALL_PERCENT && percent != priceChangePercent, "PageBank: wrong percent");
+        emit SetPriceChangePercent(priceChangePercent, percent);
+        priceChangePercent = percent;
+    }
+
+    function setToken(address newToken) public override onlyOwner {
+        token = IPageToken(newToken);
+        emit SetToken(newToken);
     }
 
     function setTreasuryFee(uint256 newTreasuryFee ) public override onlyOwner {
@@ -362,8 +373,8 @@ contract PageBank is
     /// @notice Returns gas multiplied by token's prices and gas price.
     /// @param _gas Comment author's address
     /// @return PAGE token's count
-    function convertGasToTokenAmount(uint256 _gas) private view returns (uint256) {
-        return _gas * tx.gasprice * getWETHPagePrice();
+    function convertGasToTokenAmount(uint256 gas) private view returns (uint256) {
+        return gas * tx.gasprice * getWETHPagePrice();
     }
 
     function mintTreasuryPageToken(uint256 amount) private {
@@ -385,5 +396,14 @@ contract PageBank is
         uint256 userAmount = amount * userFee / ALL_PERCENT;
         token.burn(address(this), userAmount);
         _balances[user] -= userAmount;
+    }
+
+    function validChangePrice(uint256 currentPrice) private returns(bool isValid) {
+        if (currentPrice <= staticWETHPagePrice) {
+            isValid = (staticWETHPagePrice - currentPrice) <= staticWETHPagePrice * priceChangePercent / ALL_PERCENT;
+        }
+        if (currentPrice > staticWETHPagePrice) {
+            isValid = (currentPrice - staticWETHPagePrice) < currentPrice * priceChangePercent / ALL_PERCENT;
+        }
     }
 }
