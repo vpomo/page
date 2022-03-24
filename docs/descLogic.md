@@ -81,10 +81,24 @@ https://crypto.page/white_paper.html
 
 =======================================================================================================
 #### raw info
+добавляем в будущем
+1. стейкинг
 
-добавляем 
-1 .защиту от резкого перепада цены в пуле, если цена меняется более чем на 7% тогда юзаем предыдущую цену
-А так же нужно будет сделать чтоб мы могли в любой момент скоректировать цену токена page
-
-2. стейкинг
+#### Порядок деплоя
+1. deploy PageBank
+    initialize(address _treasury, address _admin)
+2. deploy PageToken
+    initialize(address _treasury, address _bank)
+3. deploy PageNFT
+    initialize(address _bank)
+4. deploy PageCommunity
+    initialize(address _nft, address _bank)
+5. setup PageNFT.setCommunity()
+6. deploy PageVoteForFeeAndModerator
+   initialize(address _admin, address _token, address _community, address _bank)
+   setup PageVoteForFeeAndModerator.grantRole(UPDATER_FEE_ROLE, PageCommunity.address)
+7. setup PageBank.grantRole(MINTER_ROLE, PageCommunity.address)
+         PageBank.grantRole(BURNER_ROLE, PageCommunity.address)
+         PageBank.grantRole(UPDATER_FEE_ROLE, PageVoteForFeeAndModerator.address)
+8. setup PageBank.grantRole(CHANGE_PRICE_ROLE, bot.address)
 

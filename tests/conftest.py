@@ -27,7 +27,7 @@ def helpers():
 
 
 @pytest.fixture(scope="module")
-def pageBank(PageBank, treasury, deployer, admin):
+def pageBank(PageBank, treasury, admin, deployer):
     instanсe = PageBank.deploy({'from': deployer})
     instanсe.initialize(treasury, admin, 100)
     return instanсe

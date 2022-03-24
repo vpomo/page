@@ -26,10 +26,14 @@ contract PageToken is ERC20Upgradeable, IPageToken {
     /// @param _bank Address of our PageBank contract
     function initialize(address _treasury, address _bank) public initializer {
         __ERC20_init("Crypto.Page", "PAGE");
-        require(_treasury != address(0), "PageToken. Address cannot be zero");
-        require(_bank != address(0), "PageToken. Address cannot be zero");
+        require(_treasury != address(0), "PageToken: address cannot be zero");
+        require(_bank != address(0), "PageToken: address cannot be zero");
         _mint(_treasury, 5e25);
         bank = _bank;
+    }
+
+    function version() public view returns (string memory) {
+        return "1";
     }
 
     /// @notice Mint PAGE tokens

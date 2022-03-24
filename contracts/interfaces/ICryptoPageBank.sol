@@ -3,37 +3,77 @@
 pragma solidity 0.8.12;
 
 interface IPageBank {
+
+    function version() external pure returns (string memory);
+
+    function definePostFeeForNewCommunity(uint256 communityId) external returns(bool);
+
+    function defineCommentFeeForNewCommunity(uint256 communityId) external returns(bool);
+
+    function updatePostFee(
+        uint256 communityId,
+        uint64 newCreatePostOwnerFee,
+        uint64 newCreatePostCreatorFee,
+        uint64 newRemovePostOwnerFee,
+        uint64 newRemovePostCreatorFee
+    ) external;
+
+    function updateCommentFee(
+        uint256 communityId,
+        uint64 newCreateCommentOwnerFee,
+        uint64 newCreateCommentCreatorFee,
+        uint64 newRemoveCommentOwnerFee,
+        uint64 newRemoveCommentCreatorFee
+    ) external;
+
+
     function mintTokenForNewPost(
-        address sender,
-        address receiver,
+        uint256 communityId,
+        address owner,
+        address creator,
         uint256 gas
     ) external returns (uint256 amount);
 
-    function processBurn(
-        address receiver,
-        uint256 gas,
-        uint256 commentsReward
+    function mintTokenForNewComment(
+        uint256 communityId,
+        address owner,
+        address creator,
+        uint256 gas
     ) external returns (uint256 amount);
 
-    function getWETHUSDTPriceFromPool() external view returns (uint256 price);
+    function burnTokenForPost(
+        uint256 communityId,
+        address owner,
+        address creator,
+        uint256 gas
+    ) external returns (uint256 amount);
 
-    function getUSDTPAGEPriceFromPool() external view returns (uint256 price);
-
-    function getWETHUSDTPrice() external view returns (uint256 price);
-
-    function getUSDTPAGEPrice() external view returns (uint256 price);
-
-    function setUSDTPAGEPool(address _usdtpagePool) external;
-
-    function setWETHUSDTPool(address _wethusdtPool) external;
-
-    function setStaticUSDTPAGEPrice(uint256 _price) external;
-
-    function setStaticWETHUSDTPrice(uint256 _price) external;
-
-    function setToken(address _address) external;
+    function burnTokenForComment(
+        uint256 communityId,
+        address owner,
+        address creator,
+        uint256 gas
+    ) external returns (uint256 amount);
 
     function withdraw(uint256 amount) external;
 
-    function balanceOf() external view returns (uint256);
+    function addBalance(uint256 amount) external;
+
+    function balanceOf(address user) external view returns (uint256);
+
+    function getWETHPagePriceFromPool() external view returns (uint256 price);
+
+    function getWETHPagePrice() external view returns (uint256 price);
+
+    function setPostDefaultFee(uint256 index, uint64 newValue) external;
+
+    function setWETHPagePool(address newWethPagePool) external;
+
+    function setStaticWETHPagePrice(uint256 price) external;
+
+    function setPriceChangePercent(uint256 percent) external;
+
+    function setToken(address newToken) external;
+
+    function setTreasuryFee(uint256 newTreasuryFee ) external;
 }

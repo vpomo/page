@@ -23,7 +23,6 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
 
     CountersUpgradeable.Counter public _tokenIdCounter;
-    IPageComment public comment;
     IPageBank public bank;
     address public community;
 
@@ -37,18 +36,19 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721URIStorageUpgradeab
     }
 
     /// @notice Initial function
-    /// @param _comment Address of our PageCommentMinter contract
     /// @param _bank Address of our PageBank contract
     /// @param _baseURL BaseURL of tokenURI, i.e. https://site.io/api/id=
     function initialize(
-        address _comment,
         address _bank,
         string memory _baseURL
     ) public payable initializer {
         __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
-        comment = IPageComment(_comment);
         bank = IPageBank(_bank);
         _baseTokenURI = _baseURL;
+    }
+
+    function version() public view returns (string memory) {
+        return "1";
     }
 
     function setCommunity(address communityContract) external onlyOwner {

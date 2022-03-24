@@ -109,6 +109,10 @@ contract PageCommunity is
         bank = IPageBank(_bank);
     }
 
+    function version() public view returns (string memory) {
+        return "1";
+    }
+
     function addCommunity(string memory desc) public {
         communityCount++;
         Community storage newCommunity = community[communityCount];

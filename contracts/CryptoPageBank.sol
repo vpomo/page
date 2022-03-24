@@ -65,10 +65,10 @@ contract PageBank is
     uint64 public defaultRemovePostOwnerFee = 0;
     uint64 public defaultRemovePostCreatorFee = 9000;
 
-    uint64 public defaultCreateCommunityOwnerFee = 4500;
-    uint64 public defaultCreateCommunityCreatorFee = 4500;
-    uint64 public defaultRemoveCommunityOwnerFee = 0;
-    uint64 public defaultRemoveCommunityCreatorFee = 9000;
+    uint64 public defaultCreateCommentOwnerFee = 4500;
+    uint64 public defaultCreateCommentCreatorFee = 4500;
+    uint64 public defaultRemoveCommentOwnerFee = 0;
+    uint64 public defaultRemoveCommentCreatorFee = 9000;
 
     // Storage balance per address
     mapping(address => uint256) private _balances;
@@ -96,12 +96,13 @@ contract PageBank is
         uint64 newRemoveCommentOwnerFee,
         uint64 newRemoveCommentCreatorFee
     );
+    event SetDefaultFee(uint256 index, uint256 oldFee, uint256 newFee);
 
-    event SetWETHPagePool(address indexed _pool);
+    event SetWETHUSDTPool(address indexed pool);
     event SetStaticWETHPagePrice(uint256 oldPrice, uint256 newPrice);
     event SetPriceChangePercent(uint256 oldPercent, uint256 newPercent);
 
-    event SetToken(address indexed _token);
+    event SetToken(address indexed token);
     event SetTreasuryFee(uint256 treasuryFee, uint256 newTreasuryFee);
 
     /// @notice Initial function
@@ -125,7 +126,11 @@ contract PageBank is
         treasury = _treasury;
     }
 
-    function definePostFeeForNewCommunity(uint256 communityId) public onlyRole(MINTER_ROLE) returns(bool) {
+    function version() external pure override returns (string memory) {
+        return "1";
+    }
+
+    function definePostFeeForNewCommunity(uint256 communityId) external override onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
 
         fee.createPostOwnerFee = defaultCreatePostOwnerFee;
@@ -135,7 +140,7 @@ contract PageBank is
         return true;
     }
 
-    function defineCommentFeeForNewCommunity(uint256 communityId) public onlyRole(MINTER_ROLE) returns(bool) {
+    function defineCommentFeeForNewCommunity(uint256 communityId) external override onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
 
         fee.createCommentOwnerFee = defaultCreateCommentOwnerFee;
@@ -151,7 +156,7 @@ contract PageBank is
         uint64 newCreatePostCreatorFee,
         uint64 newRemovePostOwnerFee,
         uint64 newRemovePostCreatorFee
-    ) public onlyRole(UPDATER_FEE_ROLE) {
+    ) external override onlyRole(UPDATER_FEE_ROLE) {
         CommunityFee storage fee = communityFee[communityId];
         fee.createPostOwnerFee = newCreatePostOwnerFee;
         fee.createPostCreatorFee = newCreatePostCreatorFee;
@@ -172,7 +177,7 @@ contract PageBank is
         uint64 newCreateCommentCreatorFee,
         uint64 newRemoveCommentOwnerFee,
         uint64 newRemoveCommentCreatorFee
-    ) public onlyRole(UPDATER_FEE_ROLE) {
+    ) external override onlyRole(UPDATER_FEE_ROLE) {
         CommunityFee storage fee = communityFee[communityId];
         fee.createCommentOwnerFee = newCreateCommentOwnerFee;
         fee.createCommentCreatorFee = newCreateCommentCreatorFee;
@@ -188,15 +193,16 @@ contract PageBank is
     }
 
     /// @notice Calculate and call burn
-    /// @param owner
+    /// @param communityId The ID for community
+    /// @param owner The owner address
     /// @param creator The creator address
-    /// @param gas Gas
+    /// @param gas Gas used
     function mintTokenForNewPost(
         uint256 communityId,
         address owner,
         address creator,
         uint256 gas
-    ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
+    ) external override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
 
         mintUserPageToken(owner, amount, communityFee[communityId].createPostOwnerFee);
@@ -211,7 +217,7 @@ contract PageBank is
         address owner,
         address creator,
         uint256 gas
-    ) public override onlyRole(MINTER_ROLE) returns (uint256 amount) {
+    ) external override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
 
         mintUserPageToken(owner, amount, communityFee[communityId].createCommentOwnerFee);
@@ -221,16 +227,17 @@ contract PageBank is
         emit MintForComment(communityId, owner, creator, amount);
     }
 
-    /// @notice Calculate and call burn
-    /// @param receiver The address on which the tokens burn
+    /// @dev Calculate and call burn
+    /// @param communityId The ID for community
+    /// @param owner The owner address
+    /// @param creator The creator address
     /// @param gas The amount of gas spent on the function call
-    /// @param commentsReward Reward for comments in PAGE tokens
     function burnTokenForPost(
         uint256 communityId,
         address owner,
         address creator,
         uint256 gas
-    ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
+    ) external override onlyRole(BURNER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_BURN_GAS_AMOUNT);
 
         burnUserPageToken(owner, amount, communityFee[communityId].removePostOwnerFee);
@@ -244,7 +251,7 @@ contract PageBank is
         address owner,
         address creator,
         uint256 gas
-    ) public override onlyRole(BURNER_ROLE) returns (uint256 amount) {
+    ) external override onlyRole(BURNER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_BURN_GAS_AMOUNT);
 
         burnUserPageToken(owner, amount, communityFee[communityId].removeCommentOwnerFee);
@@ -254,14 +261,14 @@ contract PageBank is
     }
 
     /// @notice Withdraw amount from the bank
-    function withdraw(uint256 amount) public override {
+    function withdraw(uint256 amount) external override {
         require(_balances[_msgSender()] >= amount, "Not enough balance");
         _balances[_msgSender()] -= amount;
         token.mint(_msgSender(), amount);
         emit Withdraw(_msgSender(), amount);
     }
 
-    function addBalance(uint256 amount) public override {
+    function addBalance(uint256 amount) external override {
         require(amount > 0, "Wrong amount");
         require(token.transferFrom(_msgSender(), address(this), amount));
         _balances[_msgSender()] += amount;
@@ -269,26 +276,17 @@ contract PageBank is
     }
 
     /// @notice Bank balance of the sender's address
-    function balanceOf(address user) public view override returns (uint256) {
+    function balanceOf(address user) external view override returns (uint256) {
         return _balances[user];
     }
 
-    function getWETHPagePriceFromPool()
-        external
-        view
-        override
-        returns (uint256 price)
-    {
+    function getWETHPagePriceFromPool() public view override returns (uint256 price) {
         (uint160 sqrtPriceX96, , , , , , ) = wethPagePool.slot0();
-        price = uint256(sqrtPriceX96)
-            .mul(sqrtPriceX96)
-            .div(10e18)
-            .mul(10e6)
-            .div(2**192);
+        price = uint256(sqrtPriceX96) * sqrtPriceX96 / 10e18 * 10e6 / 2**192;
     }
 
     function getWETHPagePrice() public view override returns (uint256 price) {
-        try IPageBank(this).getWETHPagePriceFromPool() returns (
+        try this.getWETHPagePriceFromPool() returns (
             uint256 _price
         ) {
             price = validChangePrice(_price) ? _price : staticWETHPagePrice;
@@ -305,7 +303,7 @@ contract PageBank is
         }
     }
 
-    function setPostDefaultFee(uint256 index, uint256 newValue) public override onlyOwner {
+    function setPostDefaultFee(uint256 index, uint64 newValue) external override onlyOwner {
         if (index == 0) {
             emit SetDefaultFee(index, defaultCreatePostOwnerFee, newValue);
             defaultCreatePostOwnerFee = newValue;
@@ -323,55 +321,55 @@ contract PageBank is
             defaultRemovePostCreatorFee = newValue;
         }
         if (index == 4) {
-            emit SetDefaultFee(index, defaultCreateCommunityOwnerFee, newValue);
-            defaultCreateCommunityOwnerFee = newValue;
+            emit SetDefaultFee(index, defaultCreateCommentOwnerFee, newValue);
+            defaultCreateCommentOwnerFee = newValue;
         }
         if (index == 5) {
-            emit SetDefaultFee(index, defaultCreateCommunityCreatorFee, newValue);
-            defaultCreateCommunityCreatorFee = newValue;
+            emit SetDefaultFee(index, defaultCreateCommentCreatorFee, newValue);
+            defaultCreateCommentCreatorFee = newValue;
         }
         if (index == 6) {
-            emit SetDefaultFee(index, defaultRemoveCommunityOwnerFee, newValue);
-            defaultRemoveCommunityOwnerFee = newValue;
+            emit SetDefaultFee(index, defaultRemoveCommentOwnerFee, newValue);
+            defaultRemoveCommentOwnerFee = newValue;
         }
         if (index == 7) {
-            emit SetDefaultFee(index, defaultRemoveCommunityCreatorFee, newValue);
-            defaultRemoveCommunityCreatorFee = newValue;
+            emit SetDefaultFee(index, defaultRemoveCommentCreatorFee, newValue);
+            defaultRemoveCommentCreatorFee = newValue;
         }
     }
 
     /// @notice Returns USDT / PAGE price from UniswapV3
-    /// @param _wethPagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
-    function setWETHPagePool(address wethPagePool) public override onlyOwner {
-        wethPagePool = IUniswapV3Pool(wethPagePool);
-        emit SetWETHUSDTPool(wethPagePool);
+    /// @param newWethPagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
+    function setWETHPagePool(address newWethPagePool) external override onlyOwner {
+        wethPagePool = IUniswapV3Pool(newWethPagePool);
+        emit SetWETHUSDTPool(newWethPagePool);
     }
 
-    function setStaticWETHPagePrice(uint256 price) public override onlyRole(CHANGE_PRICE_ROLE) {
+    function setStaticWETHPagePrice(uint256 price) external override onlyRole(CHANGE_PRICE_ROLE) {
         require(price != staticWETHPagePrice, "PageBank: wrong price");
         emit SetStaticWETHPagePrice(staticWETHPagePrice, price);
         staticWETHPagePrice = price;
     }
 
-    function setPriceChangePercent(uint256 percent) public override onlyOwner {
+    function setPriceChangePercent(uint256 percent) external override onlyOwner {
         require(percent <= ALL_PERCENT && percent != priceChangePercent, "PageBank: wrong percent");
         emit SetPriceChangePercent(priceChangePercent, percent);
         priceChangePercent = percent;
     }
 
-    function setToken(address newToken) public override onlyOwner {
+    function setToken(address newToken) external override onlyOwner {
         token = IPageToken(newToken);
         emit SetToken(newToken);
     }
 
-    function setTreasuryFee(uint256 newTreasuryFee ) public override onlyOwner {
+    function setTreasuryFee(uint256 newTreasuryFee ) external override onlyOwner {
         require(newTreasuryFee != treasuryFee, "PageBank: wrong treasury value");
         emit SetTreasuryFee(treasuryFee, newTreasuryFee);
         treasuryFee = newTreasuryFee;
     }
 
     /// @notice Returns gas multiplied by token's prices and gas price.
-    /// @param _gas Comment author's address
+    /// @param gas Gas used
     /// @return PAGE token's count
     function convertGasToTokenAmount(uint256 gas) private view returns (uint256) {
         return gas * tx.gasprice * getWETHPagePrice();
@@ -398,7 +396,7 @@ contract PageBank is
         _balances[user] -= userAmount;
     }
 
-    function validChangePrice(uint256 currentPrice) private returns(bool isValid) {
+    function validChangePrice(uint256 currentPrice) private view returns(bool isValid) {
         if (currentPrice <= staticWETHPagePrice) {
             isValid = (staticWETHPagePrice - currentPrice) <= staticWETHPagePrice * priceChangePercent / ALL_PERCENT;
         }

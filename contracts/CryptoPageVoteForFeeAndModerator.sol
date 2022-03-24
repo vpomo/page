@@ -9,7 +9,7 @@ import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageCommunity.sol";
 import "./interfaces/ICryptoPageToken.sol";
 
-contract PageVote is
+contract PageVoteForFeeAndModerator is
     Initializable,
     OwnableUpgradeable,
     AccessControlUpgradeable
@@ -56,6 +56,10 @@ contract PageVote is
         token = IPageToken(_token);
         community = IPageCommunity(_community);
         bank = IPageBank(_bank);
+    }
+
+    function version() public view returns (string memory) {
+        return "1";
     }
 
     function createVote(
