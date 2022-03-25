@@ -4,16 +4,20 @@ pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageCommunity.sol";
 import "./interfaces/ICryptoPageToken.sol";
 
 contract PageVoteForFeeAndModerator is
-    Initializable,
-    OwnableUpgradeable,
-    AccessControlUpgradeable
+Initializable,
+OwnableUpgradeable,
+AccessControlUpgradeable,
+IPageVoteForFeeAndModerator
 {
+
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     bytes32 public constant UPDATER_FEE_ROLE = keccak256("UPDATER_FEE_ROLE");
     uint128 public MIN_DURATION = 3 days;
@@ -29,7 +33,7 @@ contract PageVoteForFeeAndModerator is
         uint128 finishTime;
         uint128 yesCount;
         uint128 noCount;
-        uint256[4] newValues;
+        uint64[4] newValues;
         address user;
         EnumerableSetUpgradeable.AddressSet voteUsers;
         bool active;
@@ -40,7 +44,7 @@ contract PageVoteForFeeAndModerator is
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
     event PutVote(address indexed sender, bool isYes, uint256 weight);
-    event CreateVote(address indexed sender, uint128 duration, uint128 methodNumber, uint256[4] values);
+    event CreateVote(address indexed sender, uint128 duration, uint128 methodNumber, uint64[4] values);
     event ExecuteVote(address sender);
 
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
@@ -58,40 +62,42 @@ contract PageVoteForFeeAndModerator is
         bank = IPageBank(_bank);
     }
 
-    function version() public view returns (string memory) {
+    function version() public pure override returns (string memory) {
         return "1";
     }
 
     function createVote(
         uint256 communityId,
-        string description,
+        string memory description,
         uint128 duration,
         uint128 methodNumber,
-        uint256[4] memory values,
+        uint64[4] memory values,
         address user
-    ) external {
+    ) external override {
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
         address sender = _msgSender();
         require(community.isCommunityModerator(communityId, sender) || community.isCommunityCreator(communityId, sender), "PageVote: access denied");
         require(0 < methodNumber && methodNumber < 5, "PageVote: wrong methodNumber");
 
-        Vote storage vote;
+        uint256 len = votes[communityId].length;
+        votes[communityId].push();
+
+        Vote storage vote = votes[communityId][len];
         vote.description = description;
         vote.creator = sender;
         vote.execMethodNumber = methodNumber;
         vote.newValues = values;
-        vote.finishTime = block.timestamp + duration;
+        vote.finishTime = uint128(block.timestamp) + duration;
         vote.active = true;
         if (methodNumber == 3 || methodNumber == 4) {
             require(user != address(0), "PageVote: wrong moderator address");
             vote.user = user;
         }
 
-        votes[communityId].push(vote);
         emit CreateVote(sender, duration, methodNumber, values);
     }
 
-    function setMinDuration(uint256 minDuration) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMinDuration(uint128 minDuration) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(minDuration != MIN_DURATION, "PageVote: wrong value");
         emit SetMinDuration(MIN_DURATION, minDuration);
         MIN_DURATION = minDuration;
@@ -110,15 +116,15 @@ contract PageVoteForFeeAndModerator is
         uint256 weight = bank.balanceOf(sender) + token.balanceOf(sender);
 
         if (isYes) {
-            vote.yesCount += weight;
+            vote.yesCount += uint128(weight);
         } else {
-            vote.noCount += weight;
+            vote.noCount += uint128(weight);
         }
         vote.voteUsers.add(sender);
         emit PutVote(sender, isYes, weight);
     }
 
-    function executeVote(uint256 communityId, uint256 index) external {
+    function executeVote(uint256 communityId, uint256 index) external override {
         require(votes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
@@ -135,21 +141,21 @@ contract PageVoteForFeeAndModerator is
         emit ExecuteVote(sender);
     }
 
-    function readVote(uint256 communityId, uint256 index) external view returns(
-        string description,
+    function readVote(uint256 communityId, uint256 index) external override view returns(
+        string memory description,
         address creator,
         uint128 execMethodNumber,
         uint128 finishTime,
         uint128 yesCount,
         uint128 noCount,
-        uint256[4] newValues,
+        uint64[4] memory newValues,
         address user,
-        address[] voteUsers,
+        address[] memory voteUsers,
         bool active
     ) {
         require(votes[communityId].length > index, "PageVote: wrong index");
 
-        Vote memory vote = votes[communityId][index];
+        Vote storage vote = votes[communityId][index];
 
         description = vote.description;
         creator = vote.creator;
@@ -164,8 +170,8 @@ contract PageVoteForFeeAndModerator is
     }
 
     function executeScript(uint256 communityId, uint256 index) private {
-        Vote memory vote = votes[communityId][index];
-        uint256 values = vote.newValues;
+        Vote storage vote = votes[communityId][index];
+        uint64[4] storage values = vote.newValues;
         if (vote.execMethodNumber == 1) {
             bank.updatePostFee(communityId, values[0], values[1], values[2], values[3]);
         }
