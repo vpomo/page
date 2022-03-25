@@ -32,7 +32,7 @@ contract PageToken is ERC20Upgradeable, IPageToken {
         bank = _bank;
     }
 
-    function version() public view returns (string memory) {
+    function version() public pure returns (string memory) {
         return "1";
     }
 

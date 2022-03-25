@@ -2,39 +2,20 @@
 
 pragma solidity 0.8.12;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721EnumerableUpgradeable.sol";
 
-interface IPageNFT is IERC721Upgradeable {
-    function safeMint(
-        address owner,
-        string memory tokenURI,
-        bytes32 collectionName
-    ) external returns (uint256 tokenId);
+interface IPageNFT is IERC721EnumerableUpgradeable {
 
-    function safeBurn(uint256 tokenId) external;
+    function version() external pure returns (string memory);
 
-    // function safeTransferFrom2(
-        // address from,
-        // address to,
-        // uint256 tokenId
-    // ) external;
-    // function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
+    function setCommunity(address communityContract) external;
 
-    // function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
+    function setBaseTokenURI(string memory baseTokenURI) external;
 
-    function tokenPrice(uint256 tokenId) external returns (uint256);
+    function mint(address owner) external returns (uint256);
 
-    function getTokensIdsByCollectionName(
-        address account,
-        bytes32 collectionName
-    ) external returns (uint256[] memory tokenIds);
+    function burn(uint256 tokenId) external;
 
-    function getTokensURIsByCollectionName(
-        address account,
-        bytes32 collectionName
-    ) external returns (string[] memory tokenURIs);
+    function tokensOfOwner(address user) external view returns (uint256[] memory);
 
-    function getCollectionsByAddress(address _address)
-        external
-        returns (bytes32[] memory collectionNames);
 }

@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
+import "./interfaces/ICryptoPageNFT.sol";
+import "./interfaces/ICryptoPageBank.sol";
+
 
 /// @title The contract for manage community
 /// @author Crypto.Page Team
