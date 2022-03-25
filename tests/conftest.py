@@ -29,7 +29,7 @@ def helpers():
 @pytest.fixture(scope="module")
 def pageBank(PageBank, treasury, admin, deployer):
     instanсe = PageBank.deploy({'from': deployer})
-    instanсe.initialize(treasury, admin, 100)
+    instanсe.initialize(treasury, admin)
     return instanсe
 
 
@@ -41,21 +41,23 @@ def pageToken(PageToken, treasury, deployer, pageBank):
 
 
 @pytest.fixture(scope="module")
-def pageComment(PageComment, pageBank, deployer):
-    instanсe = PageComment.deploy({'from': deployer})
-    instanсe.initialize(pageBank)
-    return instanсe
-
-
-@pytest.fixture(scope="module")
-def pageNFT(PageNFT, pageComment, pageBank, treasury, deployer):
+def pageNFT(PageNFT, pageBank, treasury, deployer):
     instanсe = PageNFT.deploy({'from': deployer})
-    instanсe.initialize(pageComment, pageBank, 'https://')
+    instanсe.initialize(pageBank, 'https://')
     return instanсe
 
 
 @pytest.fixture(scope="module")
-def pageCommunity(PageCommunity, pageNFT, deployer):
+def pageCommunity(PageCommunity, pageNFT, pageBank, deployer):
     instanсe = PageCommunity.deploy({'from': deployer})
-    instanсe.initialize(pageNFT)
+    instanсe.initialize(pageNFT, pageBank)
+    assert deployer == pageNFT.owner()
+    pageNFT.setCommunity(instanсe, {'from': deployer})
+    return instanсe
+
+
+@pytest.fixture(scope="module")
+def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, pageCommunity, pageBank):
+    instanсe = PageVoteForFeeAndModerator.deploy({'from': deployer})
+    instanсe.initialize(deployer, pageToken, pageCommunity, pageBank)
     return instanсe

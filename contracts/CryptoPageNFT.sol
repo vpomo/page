@@ -39,6 +39,7 @@ contract PageNFT is OwnableUpgradeable, ERC721EnumerableUpgradeable, IPageNFT {
         address _bank,
         string memory _baseURL
     ) public payable initializer {
+        __Ownable_init();
         __ERC721_init("Crypto.Page NFT", "PAGE.NFT");
         bank = IPageBank(_bank);
         _baseTokenURI = _baseURL;

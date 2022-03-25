@@ -8,6 +8,16 @@ interface IPageCommunity {
 
     function addCommunity(string memory desc) external;
 
+    function readCommunity(uint256 communityId) external view returns(
+        string memory name,
+        address creator,
+        address[] memory moderators,
+        uint256[] memory postIds,
+        address[] memory users,
+        uint256 usersCount,
+        bool active
+    );
+
     function addModerator(uint256 communityId, address moderator) external;
 
     function removeModerator(uint256 communityId, address moderator) external;

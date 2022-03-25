@@ -111,6 +111,7 @@ IPageCommunity
     function initialize(address _nft, address _bank) public initializer {
         require(_nft != address(0), "PageCommunity: Wrong _nft address");
         require(_bank != address(0), "PageCommunity: Wrong _bank address");
+        __Ownable_init();
         nft = IPageNFT(_nft);
         bank = IPageBank(_bank);
     }
@@ -127,6 +128,27 @@ IPageCommunity
         newCommunity.name = desc;
 
         emit AddedCommunity(_msgSender(), communityCount, desc);
+    }
+
+    function readCommunity(uint256 communityId) external view override validId(communityId) returns(
+        string memory name,
+        address creator,
+        address[] memory moderators,
+        uint256[] memory postIds,
+        address[] memory users,
+        uint256 usersCount,
+        bool active
+    ) {
+
+        Community storage currentCommunity = community[communityId];
+
+        name = currentCommunity.name;
+        creator = currentCommunity.creator;
+        moderators = currentCommunity.moderators.values();
+        postIds = currentCommunity.postIds.values();
+        users = currentCommunity.users.values();
+        usersCount = currentCommunity.usersCount;
+        active = currentCommunity.active;
     }
 
     function addModerator(uint256 communityId, address moderator) external override validId(communityId) {

@@ -91,9 +91,12 @@ https://crypto.page/white_paper.html
     initialize(address _treasury, address _bank)
 3. deploy PageNFT
     initialize(address _bank)
+    
 4. deploy PageCommunity
     initialize(address _nft, address _bank)
+    
 5. setup PageNFT.setCommunity()
+
 6. deploy PageVoteForFeeAndModerator
    initialize(address _admin, address _token, address _community, address _bank)
    setup PageVoteForFeeAndModerator.grantRole(UPDATER_FEE_ROLE, PageCommunity.address)
