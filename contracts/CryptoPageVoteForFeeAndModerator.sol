@@ -9,12 +9,13 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageCommunity.sol";
 import "./interfaces/ICryptoPageToken.sol";
+import "./interfaces/ICryptoPageVoteForFeeAndModerator.sol";
 
 contract PageVoteForFeeAndModerator is
-Initializable,
-OwnableUpgradeable,
-AccessControlUpgradeable,
-IPageVoteForFeeAndModerator
+    Initializable,
+    OwnableUpgradeable,
+    AccessControlUpgradeable,
+    IPageVoteForFeeAndModerator
 {
 
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;

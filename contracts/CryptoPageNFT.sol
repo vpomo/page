@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.12;
 
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Upgradeable.sol";
@@ -10,13 +11,12 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 
 import "./interfaces/ICryptoPageNFT.sol";
 import "./interfaces/ICryptoPageBank.sol";
-import "./CryptoPageBank.sol";
 
 /// @title Contract of PAGE.NFT token
 /// @author Crypto.Page Team
 /// @notice
 /// @dev //https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/tree/master/contracts
-contract PageNFT is Initializable, OwnableUpgradeable, ERC721EnumerableUpgradeable, IPageNFT {
+contract PageNFT is OwnableUpgradeable, ERC721EnumerableUpgradeable, IPageNFT {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
     CountersUpgradeable.Counter public _tokenIdCounter;
@@ -74,7 +74,8 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721EnumerableUpgradeab
     /// @param from Approved or owner of token
     /// @param to Receiver of token
     /// @param tokenId Id of token
-    function transferFrom(address from, address to, uint256 tokenId) public override {
+    function transferFrom(address from, address to, uint256 tokenId) public virtual
+    override(ERC721Upgradeable, IERC721Upgradeable) {
         require(super.getApproved(tokenId) != to, "Address can't be approved");
         super.transferFrom(from, to, tokenId);
     }
@@ -83,7 +84,8 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721EnumerableUpgradeab
     /// @param from Approved or owner of token
     /// @param to Receiver of token
     /// @param tokenId Id of token
-    function safeTransferFrom(address from, address to, uint256 tokenId) public override {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual
+    override(ERC721Upgradeable, IERC721Upgradeable) {
         require(super.getApproved(tokenId) != to, "Address can't be approved");
         super.safeTransferFrom(from, to, tokenId);
     }
@@ -93,7 +95,8 @@ contract PageNFT is Initializable, OwnableUpgradeable, ERC721EnumerableUpgradeab
     /// @param to Receiver of token
     /// @param tokenId Id of token
     /// @param data Stome data
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public override {
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public
+    override(ERC721Upgradeable, IERC721Upgradeable) {
         require(super.getApproved(tokenId) != to, "Address can't be approved");
         super.safeTransferFrom(from, to, tokenId, data);
     }
