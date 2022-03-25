@@ -22,7 +22,7 @@ interface IPageCommunity {
         address owner
     ) external;
 
-    function readPost(uint256 postId) external view returns(
+    function readPost(uint256 postId) external returns(
         string memory ipfsHash,
         address creator,
         address owner,
@@ -50,7 +50,7 @@ interface IPageCommunity {
         address owner
     ) external;
 
-    function readComment(uint256 postId, uint256 commentId) external view returns(
+    function readComment(uint256 postId, uint256 commentId) external returns(
         string memory ipfsHash,
         address creator,
         address owner,
