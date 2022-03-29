@@ -52,16 +52,23 @@ def pageNFT(PageNFT, pageBank, treasury, deployer):
 
 
 @pytest.fixture(scope="module")
-def pageCommunity(PageCommunity, pageNFT, pageBank, deployer):
+def pageCommunity(PageCommunity, pageNFT, pageBank, deployer, admin):
     instanсe = PageCommunity.deploy({'from': deployer})
     instanсe.initialize(pageNFT, pageBank)
     assert deployer == pageNFT.owner()
     pageNFT.setCommunity(instanсe, {'from': deployer})
+
+    pageBank.grantRole(pageBank.MINTER_ROLE(), instanсe, {'from': admin})
+    pageBank.grantRole(pageBank.BURNER_ROLE(), instanсe, {'from': admin})
+
     return instanсe
 
 
 @pytest.fixture(scope="module")
-def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, pageCommunity, pageBank):
+def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, pageCommunity, pageBank, admin):
     instanсe = PageVoteForFeeAndModerator.deploy({'from': deployer})
     instanсe.initialize(deployer, pageToken, pageCommunity, pageBank)
+
+    pageBank.grantRole(pageBank.UPDATER_FEE_ROLE(), instanсe, {'from': admin})
+
     return instanсe

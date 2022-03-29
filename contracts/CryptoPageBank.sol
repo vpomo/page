@@ -150,6 +150,34 @@ contract PageBank is
         return true;
     }
 
+    function readPostFee(uint256 communityId) external override view returns(
+        uint64 createPostOwnerFee,
+        uint64 createPostCreatorFee,
+        uint64 removePostOwnerFee,
+        uint64 removePostCreatorFee
+    ) {
+        CommunityFee memory fee = communityFee[communityId];
+
+        createPostOwnerFee = fee.createPostOwnerFee;
+        createPostCreatorFee = fee.createPostCreatorFee;
+        removePostOwnerFee = fee.removePostOwnerFee;
+        removePostCreatorFee = fee.removePostCreatorFee;
+    }
+
+    function readCommentFee(uint256 communityId) external override view returns(
+        uint64 createCommentOwnerFee,
+        uint64 createCommentCreatorFee,
+        uint64 removeCommentOwnerFee,
+        uint64 removeCommentCreatorFee
+    ) {
+        CommunityFee memory fee = communityFee[communityId];
+
+        createCommentOwnerFee = fee.createCommentOwnerFee;
+        createCommentCreatorFee = fee.createCommentCreatorFee;
+        removeCommentOwnerFee = fee.removeCommentOwnerFee;
+        removeCommentCreatorFee = fee.removeCommentCreatorFee;
+    }
+
     function updatePostFee(
         uint256 communityId,
         uint64 newCreatePostOwnerFee,

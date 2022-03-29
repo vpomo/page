@@ -8,7 +8,21 @@ interface IPageBank {
 
     function definePostFeeForNewCommunity(uint256 communityId) external returns(bool);
 
+    function readPostFee(uint256 communityId) external view returns(
+        uint64 createPostOwnerFee,
+        uint64 createPostCreatorFee,
+        uint64 removePostOwnerFee,
+        uint64 removePostCreatorFee
+    );
+
     function defineCommentFeeForNewCommunity(uint256 communityId) external returns(bool);
+
+    function readCommentFee(uint256 communityId) external view returns(
+        uint64 createCommentOwnerFee,
+        uint64 createCommentCreatorFee,
+        uint64 removeCommentOwnerFee,
+        uint64 removeCommentCreatorFee
+    );
 
     function updatePostFee(
         uint256 communityId,
