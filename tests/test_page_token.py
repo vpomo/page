@@ -2,7 +2,7 @@ import pytest
 from brownie import ZERO_ADDRESS, chain, reverts
 import brownie
 
-TOKEN_VERSION = '1'
+VERSION = '1'
 
 
 def test_deployment(pageToken):
@@ -14,7 +14,7 @@ def test_deployment(pageToken):
 
 
 def test_version(pageToken):
-    assert TOKEN_VERSION == pageToken.version()
+    assert VERSION == pageToken.version()
 
 
 def test_mint_burn(treasury, admin, pageToken, pageBank):

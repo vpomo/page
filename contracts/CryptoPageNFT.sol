@@ -77,7 +77,7 @@ contract PageNFT is OwnableUpgradeable, ERC721EnumerableUpgradeable, IPageNFT {
     /// @param tokenId Id of token
     function transferFrom(address from, address to, uint256 tokenId) public virtual
     override(ERC721Upgradeable, IERC721Upgradeable) {
-        require(super.getApproved(tokenId) != to, "Address can't be approved");
+        require(super.getApproved(tokenId) == to, "Address can't be approved");
         super.transferFrom(from, to, tokenId);
     }
 
@@ -87,7 +87,7 @@ contract PageNFT is OwnableUpgradeable, ERC721EnumerableUpgradeable, IPageNFT {
     /// @param tokenId Id of token
     function safeTransferFrom(address from, address to, uint256 tokenId) public virtual
     override(ERC721Upgradeable, IERC721Upgradeable) {
-        require(super.getApproved(tokenId) != to, "Address can't be approved");
+        require(super.getApproved(tokenId) == to, "Address can't be approved");
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -98,7 +98,7 @@ contract PageNFT is OwnableUpgradeable, ERC721EnumerableUpgradeable, IPageNFT {
     /// @param data Stome data
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public
     override(ERC721Upgradeable, IERC721Upgradeable) {
-        require(super.getApproved(tokenId) != to, "Address can't be approved");
+        require(super.getApproved(tokenId) == to, "Address can't be approved");
         super.safeTransferFrom(from, to, tokenId, data);
     }
 

@@ -20,6 +20,10 @@ def admin(accounts):
 def treasury(accounts):
     return accounts[9]
 
+@pytest.fixture(scope='module')
+def someUser(accounts):
+    return accounts[8]
+
 
 @pytest.fixture(scope='module')
 def helpers():
