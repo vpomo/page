@@ -32,8 +32,8 @@ def test_define_post_fee_for_new_community(pageBank, pageCommunity):
     assert readPostFee[3] == 9000
 
 
-def test_update_comment_fee_for_new_community(pageBank, pageCommunity):
-    pageBank.updateCommentFee(1, 2, 3, 4, 5, {'from': pageCommunity})
+def test_update_comment_fee_for_new_community(pageBank, pageVoteForFeeAndModerator):
+    pageBank.updateCommentFee(1, 2, 3, 4, 5, {'from': pageVoteForFeeAndModerator})
     readCommentFee = pageBank.readCommentFee(1)
     assert readCommentFee[0] == 2
     assert readCommentFee[1] == 3
@@ -50,9 +50,17 @@ def test_update_post_fee_for_new_community(pageBank, pageVoteForFeeAndModerator)
     assert readPostFee[3] == 5
 
 
-def test_mint_token_for_new_post(pageBank, pageCommunity, pageVoteForFeeAndModerator, admin, someUser):
+def test_mint_token_for_new_post(pageBank, pageCommunity, pageToken, admin, someUser):
     pageBank.definePostFeeForNewCommunity(1, {'from': pageCommunity})
     pageBank.defineCommentFeeForNewCommunity(1, {'from': pageCommunity})
-
+    price = pageBank.getWETHPagePrice()
+    print('price', price)
     gas = 200000
-    pageBank.mintTokenForNewPost(1, admin, someUser, {'from': pageVoteForFeeAndModerator})
+    pageBank.mintTokenForNewPost(1, admin, someUser, gas, {'from': pageCommunity})
+    print('pageBank.balanceOf(admin)', pageBank.balanceOf(admin))
+    print('pageBank.balanceOf(someUser)', pageBank.balanceOf(someUser))
+    print('pageToken.balanceOf(pageBank)', pageToken.balanceOf(pageBank))
+
+    #assert pageBank.balanceOf(admin) > 0
+    #assert pageBank.balanceOf(someUser) > 0
+    #assert pageToken.balanceOf(pageBank) > 0

@@ -42,6 +42,7 @@ def pageBank(PageBank, treasury, admin, deployer):
 def pageToken(PageToken, treasury, deployer, pageBank):
     instanсe = PageToken.deploy({'from': deployer})
     instanсe.initialize(treasury, pageBank)
+    pageBank.setToken(instanсe, {'from': deployer})
     return instanсe
 
 
