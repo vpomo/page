@@ -50,5 +50,9 @@ def test_update_post_fee_for_new_community(pageBank, pageVoteForFeeAndModerator)
     assert readPostFee[3] == 5
 
 
-def test_mint_token_for_new_post(pageBank, pageVoteForFeeAndModerator):
-    pageBank.mintTokenForNewPost(1, 2, 3, 4, 5, {'from': pageVoteForFeeAndModerator})
+def test_mint_token_for_new_post(pageBank, pageCommunity, pageVoteForFeeAndModerator, admin, someUser):
+    pageBank.definePostFeeForNewCommunity(1, {'from': pageCommunity})
+    pageBank.defineCommentFeeForNewCommunity(1, {'from': pageCommunity})
+
+    gas = 200000
+    pageBank.mintTokenForNewPost(1, admin, someUser, {'from': pageVoteForFeeAndModerator})
