@@ -270,6 +270,7 @@ contract PageBank is
 
         burnUserPageToken(owner, amount, communityFee[communityId].removePostOwnerFee);
         burnUserPageToken(creator, amount, communityFee[communityId].removePostCreatorFee);
+        mintTreasuryPageToken(amount);
 
         emit BurnForPost(communityId, owner, creator, amount);
     }
@@ -284,6 +285,7 @@ contract PageBank is
 
         burnUserPageToken(owner, amount, communityFee[communityId].removeCommentOwnerFee);
         burnUserPageToken(creator, amount, communityFee[communityId].removeCommentCreatorFee);
+        mintTreasuryPageToken(amount);
 
         emit BurnForComment(communityId, owner, creator, amount);
     }

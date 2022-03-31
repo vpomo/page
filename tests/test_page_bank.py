@@ -50,19 +50,99 @@ def test_update_post_fee_for_new_community(pageBank, pageVoteForFeeAndModerator)
     assert readPostFee[3] == 5
 
 
-def test_mint_token_for_new_post(pageBank, pageCommunity, pageToken, admin, someUser):
+def test_mint_burn_token_for_new_post(pageBank, pageCommunity, pageToken, admin, someUser):
     pageBank.definePostFeeForNewCommunity(1, {'from': pageCommunity})
     pageBank.defineCommentFeeForNewCommunity(1, {'from': pageCommunity})
     price = pageBank.getWETHPagePrice()
-    #print('price', price)
+    assert price > 0
     network.gas_price("65 gwei")
     gas = 200000
     tx = pageBank.mintTokenForNewPost(1, admin, someUser, gas, {'from': pageCommunity})
-    #print('tx', tx.info())
-    #print('pageBank.balanceOf(admin)', pageBank.balanceOf(admin))
-    #print('pageBank.balanceOf(someUser)', pageBank.balanceOf(someUser))
-    #print('pageToken.balanceOf(pageBank)', pageToken.balanceOf(pageBank))
 
-    assert pageBank.balanceOf(admin) > 0
-    assert pageBank.balanceOf(someUser) > 0
-    assert pageToken.balanceOf(pageBank) > 0
+    beforeAdminBalance = pageBank.balanceOf(admin)
+    beforeSomeUserBalance = pageBank.balanceOf(someUser)
+    beforePageBankBalance = pageToken.balanceOf(pageBank)
+
+    assert beforeAdminBalance > 0
+    assert beforeSomeUserBalance > 0
+    assert beforePageBankBalance > 0
+
+    gas = 20
+
+    pageBank.burnTokenForPost(1, admin, someUser, gas, {'from': pageCommunity})
+    afterAdminBalance = pageBank.balanceOf(admin)
+    afterSomeUserBalance = pageBank.balanceOf(someUser)
+    afterPageBankBalance = pageToken.balanceOf(pageBank)
+
+    assert afterAdminBalance > 0
+    assert afterSomeUserBalance > 0
+    assert afterPageBankBalance > 0
+
+    assert beforeSomeUserBalance > afterSomeUserBalance
+    assert beforePageBankBalance > afterPageBankBalance
+
+
+def test_mint_burn_token_for_new_comment(pageBank, pageCommunity, pageToken, admin, someUser):
+    pageBank.definePostFeeForNewCommunity(1, {'from': pageCommunity})
+    pageBank.defineCommentFeeForNewCommunity(1, {'from': pageCommunity})
+    price = pageBank.getWETHPagePrice()
+    assert price > 0
+    network.gas_price("65 gwei")
+    gas = 200000
+    tx = pageBank.mintTokenForNewComment(1, admin, someUser, gas, {'from': pageCommunity})
+
+    beforeAdminBalance = pageBank.balanceOf(admin)
+    beforeSomeUserBalance = pageBank.balanceOf(someUser)
+    beforePageBankBalance = pageToken.balanceOf(pageBank)
+
+    assert beforeAdminBalance > 0
+    assert beforeSomeUserBalance > 0
+    assert beforePageBankBalance > 0
+
+    gas = 20
+
+    pageBank.burnTokenForComment(1, admin, someUser, gas, {'from': pageCommunity})
+    afterAdminBalance = pageBank.balanceOf(admin)
+    afterSomeUserBalance = pageBank.balanceOf(someUser)
+    afterPageBankBalance = pageToken.balanceOf(pageBank)
+
+    assert afterAdminBalance > 0
+    assert afterSomeUserBalance > 0
+    assert afterPageBankBalance > 0
+
+    assert beforeSomeUserBalance > afterSomeUserBalance
+    assert beforePageBankBalance > afterPageBankBalance
+
+
+def test_add_balance_withdraw(pageBank, pageToken, treasury, someUser):
+    amount = 1000
+
+    pageToken.transfer(someUser, amount, {'from': treasury})
+    pageToken.approve(pageBank, amount, {'from': someUser})
+
+    pageBank.addBalance(amount, {'from': someUser})
+    beforeSomeUserBalance = pageBank.balanceOf(someUser)
+    assert beforeSomeUserBalance == amount
+
+    pageBank.withdraw(amount/2, {'from': someUser})
+    afterSomeUserBalance = pageBank.balanceOf(someUser)
+    assert afterSomeUserBalance == amount/2
+
+
+def test_set_post_default_fee(pageBank, deployer):
+    defaultRemovePostOwnerFee = pageBank.defaultRemovePostOwnerFee()
+    assert defaultRemovePostOwnerFee == 0
+
+    pageBank.setPostDefaultFee(2, 99, {'from': deployer} )
+    defaultRemovePostOwnerFee = pageBank.defaultRemovePostOwnerFee()
+    assert defaultRemovePostOwnerFee == 99
+
+
+def test_set_comment_default_fee(pageBank, deployer):
+    defaultRemoveCommentOwnerFee = pageBank.defaultRemovePostOwnerFee()
+    assert defaultRemovePostOwnerFee == 0
+
+    pageBank.setPostDefaultFee(2, 99, {'from': deployer} )
+    defaultRemovePostOwnerFee = pageBank.defaultRemovePostOwnerFee()
+    assert defaultRemovePostOwnerFee == 99
+
