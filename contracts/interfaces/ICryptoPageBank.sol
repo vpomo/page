@@ -79,7 +79,7 @@ interface IPageBank {
 
     function getWETHPagePrice() external view returns (uint256 price);
 
-    function setPostDefaultFee(uint256 index, uint64 newValue) external;
+    function setDefaultFee(uint256 index, uint64 newValue) external;
 
     function setWETHPagePool(address newWethPagePool) external;
 

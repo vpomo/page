@@ -333,7 +333,7 @@ contract PageBank is
         }
     }
 
-    function setPostDefaultFee(uint256 index, uint64 newValue) external override onlyOwner {
+    function setDefaultFee(uint256 index, uint64 newValue) external override onlyOwner {
         if (index == 0) {
             emit SetDefaultFee(index, defaultCreatePostOwnerFee, newValue);
             defaultCreatePostOwnerFee = newValue;
@@ -375,7 +375,7 @@ contract PageBank is
         emit SetWETHUSDTPool(newWethPagePool);
     }
 
-    function setStaticWETHPagePrice(uint256 price) external override onlyRole(CHANGE_PRICE_ROLE) {
+    function setStaticWETHPagePrice(uint256 price) external override onlyOwner {
         require(price != staticWETHPagePrice, "PageBank: wrong price");
         emit SetStaticWETHPagePrice(staticWETHPagePrice, price);
         staticWETHPagePrice = price;

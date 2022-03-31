@@ -133,16 +133,42 @@ def test_set_post_default_fee(pageBank, deployer):
     defaultRemovePostOwnerFee = pageBank.defaultRemovePostOwnerFee()
     assert defaultRemovePostOwnerFee == 0
 
-    pageBank.setPostDefaultFee(2, 99, {'from': deployer} )
+    pageBank.setDefaultFee(2, 99, {'from': deployer} )
     defaultRemovePostOwnerFee = pageBank.defaultRemovePostOwnerFee()
     assert defaultRemovePostOwnerFee == 99
 
 
 def test_set_comment_default_fee(pageBank, deployer):
-    defaultRemoveCommentOwnerFee = pageBank.defaultRemovePostOwnerFee()
-    assert defaultRemovePostOwnerFee == 0
+    defaultRemoveCommentOwnerFee = pageBank.defaultRemoveCommentOwnerFee()
+    assert defaultRemoveCommentOwnerFee == 0
 
-    pageBank.setPostDefaultFee(2, 99, {'from': deployer} )
-    defaultRemovePostOwnerFee = pageBank.defaultRemovePostOwnerFee()
-    assert defaultRemovePostOwnerFee == 99
+    pageBank.setDefaultFee(6, 99, {'from': deployer} )
+    defaultRemoveCommentOwnerFee = pageBank.defaultRemoveCommentOwnerFee()
+    assert defaultRemoveCommentOwnerFee == 99
 
+
+def test_set_staticWETHPagePrice(pageBank, deployer):
+    oldPrice = pageBank.staticWETHPagePrice()
+    newPrice = 999
+    assert oldPrice != newPrice
+
+    pageBank.setStaticWETHPagePrice(newPrice, {'from': deployer} )
+    assert newPrice == pageBank.staticWETHPagePrice()
+
+
+def test_set_PriceChangePercent(pageBank, deployer):
+    oldPercent = pageBank.priceChangePercent()
+    newPercent = 999
+    assert oldPercent != newPercent
+
+    pageBank.setPriceChangePercent(newPercent, {'from': deployer} )
+    assert newPercent == pageBank.priceChangePercent()
+
+
+def test_set_TreasuryFee(pageBank, deployer):
+    oldTreasuryFee = pageBank.treasuryFee()
+    newTreasuryFee = 999
+    assert oldTreasuryFee != newTreasuryFee
+
+    pageBank.setTreasuryFee(newTreasuryFee, {'from': deployer} )
+    assert newTreasuryFee == pageBank.treasuryFee()
