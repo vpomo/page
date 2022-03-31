@@ -120,6 +120,10 @@ IPageCommunity
         return "1";
     }
 
+    receive() external payable {
+        // React to receiving ether
+    }
+
     function addCommunity(string memory desc) external override {
         communityCount++;
         Community storage newCommunity = community[communityCount];

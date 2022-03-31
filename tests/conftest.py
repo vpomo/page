@@ -1,5 +1,5 @@
 import pytest
-from brownie import ZERO_ADDRESS
+from brownie import Wei, ZERO_ADDRESS
 
 @pytest.fixture(scope='function', autouse=True)
 def shared_setup(fn_isolation):
@@ -59,6 +59,7 @@ def pageCommunity(PageCommunity, pageNFT, pageBank, deployer, admin):
     instanсe.initialize(pageNFT, pageBank)
     assert deployer == pageNFT.owner()
     pageNFT.setCommunity(instanсe, {'from': deployer})
+    deployer.transfer(instanсe, Wei('10 ether'))
 
     pageBank.grantRole(pageBank.MINTER_ROLE(), instanсe, {'from': admin})
     pageBank.grantRole(pageBank.BURNER_ROLE(), instanсe, {'from': admin})
@@ -70,6 +71,7 @@ def pageCommunity(PageCommunity, pageNFT, pageBank, deployer, admin):
 def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, pageCommunity, pageBank, admin):
     instanсe = PageVoteForFeeAndModerator.deploy({'from': deployer})
     instanсe.initialize(deployer, pageToken, pageCommunity, pageBank)
+    deployer.transfer(instanсe, Wei('10 ether'))
 
     pageBank.grantRole(pageBank.UPDATER_FEE_ROLE(), instanсe, {'from': admin})
 

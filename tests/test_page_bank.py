@@ -1,5 +1,5 @@
 import pytest
-from brownie import ZERO_ADDRESS, chain, reverts
+from brownie import ZERO_ADDRESS, chain, reverts, network
 import brownie
 
 VERSION = '1'
@@ -54,13 +54,15 @@ def test_mint_token_for_new_post(pageBank, pageCommunity, pageToken, admin, some
     pageBank.definePostFeeForNewCommunity(1, {'from': pageCommunity})
     pageBank.defineCommentFeeForNewCommunity(1, {'from': pageCommunity})
     price = pageBank.getWETHPagePrice()
-    print('price', price)
+    #print('price', price)
+    network.gas_price("65 gwei")
     gas = 200000
-    pageBank.mintTokenForNewPost(1, admin, someUser, gas, {'from': pageCommunity})
-    print('pageBank.balanceOf(admin)', pageBank.balanceOf(admin))
-    print('pageBank.balanceOf(someUser)', pageBank.balanceOf(someUser))
-    print('pageToken.balanceOf(pageBank)', pageToken.balanceOf(pageBank))
+    tx = pageBank.mintTokenForNewPost(1, admin, someUser, gas, {'from': pageCommunity})
+    #print('tx', tx.info())
+    #print('pageBank.balanceOf(admin)', pageBank.balanceOf(admin))
+    #print('pageBank.balanceOf(someUser)', pageBank.balanceOf(someUser))
+    #print('pageToken.balanceOf(pageBank)', pageToken.balanceOf(pageBank))
 
-    #assert pageBank.balanceOf(admin) > 0
-    #assert pageBank.balanceOf(someUser) > 0
-    #assert pageToken.balanceOf(pageBank) > 0
+    assert pageBank.balanceOf(admin) > 0
+    assert pageBank.balanceOf(someUser) > 0
+    assert pageToken.balanceOf(pageBank) > 0

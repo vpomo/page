@@ -67,6 +67,10 @@ contract PageVoteForFeeAndModerator is
         return "1";
     }
 
+    receive() external payable {
+        // React to receiving ether
+    }
+
     function createVote(
         uint256 communityId,
         string memory description,
