@@ -54,7 +54,7 @@ def pageNFT(PageNFT, pageBank, treasury, deployer):
 
 
 @pytest.fixture(scope="module")
-def pageCommunity(PageCommunity, pageNFT, pageBank, deployer, admin):
+def pageCommunity(PageCommunity, pageNFT, pageBank, pageToken, deployer, admin):
     instanсe = PageCommunity.deploy({'from': deployer})
     instanсe.initialize(pageNFT, pageBank)
     assert deployer == pageNFT.owner()
@@ -63,6 +63,7 @@ def pageCommunity(PageCommunity, pageNFT, pageBank, deployer, admin):
 
     pageBank.grantRole(pageBank.MINTER_ROLE(), instanсe, {'from': admin})
     pageBank.grantRole(pageBank.BURNER_ROLE(), instanсe, {'from': admin})
+    pageBank.setToken(pageToken, {'from': deployer})
 
     return instanсe
 

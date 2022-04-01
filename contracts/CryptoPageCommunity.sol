@@ -286,12 +286,12 @@ IPageCommunity
         require(isCommunityUser(communityId, owner), "PageCommunity: wrong user");
         require(post[postId].isView, "PageCommunity: wrong view post");
 
-        incCommentCount(postId);
         setPostUpDown(postId, isUp, isDown);
         createComment(postId, ipfsHash, owner, isUp, isDown);
         uint256 commentId = getCommentCount(postId);
 
         emit WriteComment(communityId, postId, commentId, _msgSender(), owner);
+        incCommentCount(postId);
 
         uint256 gas = gasBefore - gasleft();
         uint128 price = uint128(bank.mintTokenForNewComment(communityId, owner, _msgSender(), gas));

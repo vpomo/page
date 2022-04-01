@@ -1,8 +1,6 @@
 import pytest
-from brownie import ZERO_ADDRESS, chain, reverts
+from brownie import ZERO_ADDRESS, chain, reverts, network
 import brownie
-
-ZERO_BYTES32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
 TOKEN_VERSION = 1
 
@@ -12,12 +10,11 @@ def test_deployment(pageCommunity):
     assert pageCommunity != ZERO_ADDRESS
 
 
-def test_add_community(pageCommunity):
+def test_add_read_community(pageCommunity):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     assert pageCommunity.communityCount() == 1
     community = pageCommunity.readCommunity(1)
-    print('community', community)
     # ('First users', '0x66aB6D9362d4F35596279692F0251Db635165871', (), (), (), 0, True)
 
     assert community[0] == communityName
@@ -51,10 +48,81 @@ def test_find_moderator(pageCommunity, accounts):
     assert community[2][1] == accounts[3]
 
     isCommunityModerator = pageCommunity.isCommunityModerator(1, accounts[2], {'from': accounts[0]})
-    print('isCommunityModerator', isCommunityModerator)
     assert isCommunityModerator == True
     isCommunityModerator = pageCommunity.isCommunityModerator(1, accounts[3], {'from': accounts[0]})
     assert isCommunityModerator == True
+
+
+def test_join_quit(pageCommunity, someUser):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    assert pageCommunity.communityCount() == 1
+
+    isCommunityUser = pageCommunity.isCommunityUser(1, someUser)
+    assert isCommunityUser == False
+
+    pageCommunity.join(1, {'from': someUser})
+    isCommunityUser = pageCommunity.isCommunityUser(1, someUser)
+    assert isCommunityUser == True
+
+    pageCommunity.quit(1, {'from': someUser})
+    isCommunityUser = pageCommunity.isCommunityUser(1, someUser)
+    assert isCommunityUser == False
+
+
+def test_write_read_Post(pageBank, pageCommunity, someUser, deployer):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
+    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
+
+    with reverts():
+        pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+    pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
+
+    readPost = pageCommunity.readPost(0)
+    #('dddd', '0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871', 0, 0, 12122487000000000000, 0, (), True)
+    assert readPost[0] == 'dddd'
+
+    readPost = pageCommunity.readPost(1)
+    assert readPost[0] == 'aaaa'
+
+
+def test_write_read_Comment(pageBank, pageCommunity, someUser, deployer):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
+    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
+
+    with reverts():
+        pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+
+    pageCommunity.writeComment(0, 'dddd-dddd', True, False, deployer, {'from': someUser})
+
+    readComment = pageCommunity.readComment(0, 0)
+    #readComment ('dddd-dddd', '0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871', 7287969000000000000, True, False, True)
+    assert readComment[0] == 'dddd-dddd'
+    assert readComment[1] == someUser
+    assert readComment[2] == deployer
+    assert readComment[3] > 0
+    assert readComment[4] == True
+    assert readComment[5] == False
+    assert readComment[6] == True
+
+    with reverts():
+        pageCommunity.writeComment(0, 'dddd-dddd', True, True, deployer, {'from': someUser})
+
+
+
+
 
 
 
