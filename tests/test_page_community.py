@@ -121,6 +121,82 @@ def test_write_read_Comment(pageBank, pageCommunity, someUser, deployer):
         pageCommunity.writeComment(0, 'dddd-dddd', True, True, deployer, {'from': someUser})
 
 
+def test_write_burn_Post(pageBank, pageCommunity, someUser, deployer):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
+    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
+
+    with reverts():
+        pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+    pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
+
+    readPost = pageCommunity.readPost(0)
+    #('dddd', '0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871', 0, 0, 12122487000000000000, 0, (), True)
+    assert readPost[0] == 'dddd'
+
+    readPost = pageCommunity.readPost(1)
+    assert readPost[0] == 'aaaa'
+
+    pageCommunity.burnPost(0)
+    readPost = pageCommunity.readPost(0)
+    #('', '0x0000000000000000000000000000000000000000', '0x0000000000000000000000000000000000000000', 0, 0, 12122487000000000000, 0, (), False)
+    assert readPost[0] == ''
+    assert readPost[1] == ZERO_ADDRESS
+    assert readPost[2] == ZERO_ADDRESS
+
+
+def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, someUser, deployer, treasury):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
+    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
+
+    with reverts():
+        pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+
+    pageCommunity.writeComment(0, 'dddd-dddd', True, False, deployer, {'from': someUser})
+
+    with reverts():
+        pageCommunity.writeComment(0, 'dddd-dddd-dddd', True, False, deployer, {'from': someUser})
+
+    pageCommunity.writeComment(0, 'dddd-dddd-dddd', False, False, deployer, {'from': someUser})
+
+    readComment = pageCommunity.readComment(0, 0)
+    #readComment ('dddd-dddd', '0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871', 7287969000000000000, True, False, True)
+    assert readComment[0] == 'dddd-dddd'
+
+    with reverts():
+        pageCommunity.burnComment(0,0)
+
+
+    pageCommunity.addModerator(1, accounts[2], {'from': accounts[0]})
+
+    amount = 1000000000000000000000000000;
+    pageToken.transfer(someUser, amount, {'from': treasury})
+    pageToken.approve(pageBank, amount, {'from': someUser})
+    pageBank.addBalance(amount, {'from': someUser})
+
+    pageToken.transfer(deployer, amount, {'from': treasury})
+    pageToken.approve(pageBank, amount, {'from': deployer})
+    pageBank.addBalance(amount, {'from': deployer})
+
+    pageCommunity.burnComment(0,0, {'from': accounts[2]})
+
+    readComment = pageCommunity.readComment(0, 0)
+    assert readComment[0] == ''
+
+
+
+
 
 
 
