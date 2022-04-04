@@ -169,6 +169,8 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, someUs
         pageCommunity.writeComment(0, 'dddd-dddd-dddd', True, False, deployer, {'from': someUser})
 
     pageCommunity.writeComment(0, 'dddd-dddd-dddd', False, False, deployer, {'from': someUser})
+    count = pageCommunity.getCommentCount(0)
+    assert count == 2
 
     readComment = pageCommunity.readComment(0, 0)
     #readComment ('dddd-dddd', '0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871', 7287969000000000000, True, False, True)
@@ -180,19 +182,59 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, someUs
 
     pageCommunity.addModerator(1, accounts[2], {'from': accounts[0]})
 
-    amount = 1000000000000000000000000000;
+    amount = 10000000000000000000000;
     pageToken.transfer(someUser, amount, {'from': treasury})
     pageToken.approve(pageBank, amount, {'from': someUser})
     pageBank.addBalance(amount, {'from': someUser})
 
-    pageToken.transfer(deployer, amount, {'from': treasury})
-    pageToken.approve(pageBank, amount, {'from': deployer})
-    pageBank.addBalance(amount, {'from': deployer})
+    pageToken.transfer(accounts[2], amount, {'from': treasury})
+    pageToken.approve(pageBank, amount, {'from': accounts[2]})
+    pageBank.addBalance(amount, {'from': accounts[2]})
 
     pageCommunity.burnComment(0,0, {'from': accounts[2]})
+    count = pageCommunity.getCommentCount(0)
+    assert count == 2
 
     readComment = pageCommunity.readComment(0, 0)
     assert readComment[0] == ''
+
+
+def test_visibility(accounts, pageBank, pageCommunity, someUser, deployer):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
+    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
+
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+    readPost = pageCommunity.readPost(0)
+    postVisible = readPost[8]
+    assert postVisible == True
+
+
+    pageCommunity.writeComment(0, 'dddd-dddd', True, False, deployer, {'from': someUser})
+    readComment = pageCommunity.readComment(0, 0)
+    commentVisible = readComment[6]
+    assert commentVisible == True
+
+    pageCommunity.addModerator(1, accounts[2], {'from': accounts[0]})
+
+    with reverts():
+        pageCommunity.setVisibilityComment(0, 0, False, {'from': someUser})
+
+    pageCommunity.setVisibilityComment(0, 0, False, {'from': accounts[2]})
+    readComment = pageCommunity.readComment(0, 0)
+    commentVisible = readComment[6]
+    assert commentVisible == False
+
+    with reverts():
+        pageCommunity.setVisibilityPost(0, False, {'from': someUser})
+
+    pageCommunity.setVisibilityPost(0, False, {'from': accounts[2]})
+    readPost = pageCommunity.readPost(0)
+    postVisible = readPost[8]
+    assert postVisible == False
 
 
 
