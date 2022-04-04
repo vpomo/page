@@ -34,4 +34,6 @@ interface IPageVoteForFeeAndModerator {
         address[] memory voteUsers,
         bool active
     );
+
+    function readVotesCount(uint256 communityId) external view returns(uint256 count);
 }

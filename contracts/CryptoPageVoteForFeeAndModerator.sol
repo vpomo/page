@@ -84,7 +84,7 @@ contract PageVoteForFeeAndModerator is
         require(community.isCommunityModerator(communityId, sender) || community.isCommunityCreator(communityId, sender), "PageVote: access denied");
         require(0 < methodNumber && methodNumber < 5, "PageVote: wrong methodNumber");
 
-        uint256 len = votes[communityId].length;
+        uint256 len = readVotesCount(communityId);
         votes[communityId].push();
 
         Vote storage vote = votes[communityId][len];
@@ -172,6 +172,10 @@ contract PageVoteForFeeAndModerator is
         user = vote.user;
         voteUsers = vote.voteUsers.values();
         active = vote.active;
+    }
+
+    function readVotesCount(uint256 communityId) public override view returns(uint256 count) {
+        return votes[communityId].length;
     }
 
     function executeScript(uint256 communityId, uint256 index) private {
