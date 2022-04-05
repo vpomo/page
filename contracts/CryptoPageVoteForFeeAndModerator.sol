@@ -21,7 +21,7 @@ contract PageVoteForFeeAndModerator is
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     bytes32 public constant UPDATER_FEE_ROLE = keccak256("UPDATER_FEE_ROLE");
-    uint128 public MIN_DURATION = 3 days;
+    uint128 public MIN_DURATION = 1 days;
 
     IPageCommunity community;
     IPageBank public bank;
@@ -139,6 +139,7 @@ contract PageVoteForFeeAndModerator is
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
         require(vote.active, "PageVote: vote not active");
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");
+        require(vote.yesCount > vote.noCount, "PageVote: wrong yes count");
 
         executeScript(communityId, index);
         vote.active = false;

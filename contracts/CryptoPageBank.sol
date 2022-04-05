@@ -130,6 +130,10 @@ contract PageBank is
         return "1";
     }
 
+    receive() external payable {
+        // React to receiving ether
+    }
+
     function definePostFeeForNewCommunity(uint256 communityId) external override onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
 

@@ -28,8 +28,6 @@ IPageCommunity
     IPageBank public bank;
 
     uint256 public MAX_MODERATORS = 40;
-    uint256 private WRONG_MODERATOR_NUMBER = 1000;
-
     string public EMPTY_STRING = '';
 
     uint256 public communityCount;
@@ -91,6 +89,8 @@ IPageCommunity
     event WriteComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
     event BurnComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
     event ChangeVisibleComment(uint256 indexed communityId, uint256 postId, uint256 commentId, bool isVisible);
+
+    event SetMaxModerators(uint256 oldValue, uint256 newValue);
 
     modifier validId(uint256 id) {
         validateCommunity(id);
@@ -346,6 +346,12 @@ IPageCommunity
         comment[postId][commentId].isView = newVisible;
 
         emit ChangeVisibleComment(communityId, postId, commentId, newVisible);
+    }
+
+    function setMaxModerators(uint256 newValue) external override onlyOwner {
+        require(MAX_MODERATORS != newValue, "PageCommunity: wrong new value");
+        emit SetMaxModerators(MAX_MODERATORS, newValue);
+        MAX_MODERATORS = newValue;
     }
 
     function getCommentCount(uint256 postId) public view override returns(uint256) {

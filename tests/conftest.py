@@ -35,6 +35,7 @@ def pageBank(PageBank, treasury, admin, deployer):
     instanсe = PageBank.deploy({'from': deployer})
     instanсe.initialize(treasury, admin)
     instanсe.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
+    deployer.transfer(instanсe, Wei('10 ether'))
     return instanсe
 
 

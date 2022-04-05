@@ -78,6 +78,8 @@ interface IPageCommunity {
         bool newVisible
     ) external;
 
+    function setMaxModerators(uint256 newValue) external;
+
     function getCommentCount(uint256 postId) external returns(uint256);
 
     function isCommunityCreator(uint256 communityId, address user) external returns(bool);
