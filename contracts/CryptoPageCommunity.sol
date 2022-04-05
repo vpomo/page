@@ -29,6 +29,7 @@ IPageCommunity
 
     uint256 public MAX_MODERATORS = 40;
     string public EMPTY_STRING = '';
+    bytes32 public constant VOTER_ROLE = keccak256("VOTER_ROLE");
 
     uint256 public communityCount;
 
@@ -108,12 +109,17 @@ IPageCommunity
         _;
     }
 
-    function initialize(address _nft, address _bank) public initializer {
+    function initialize(address _nft, address _bank, address _admin) public initializer {
         require(_nft != address(0), "PageCommunity: Wrong _nft address");
         require(_bank != address(0), "PageCommunity: Wrong _bank address");
+        require(_admin != address(0), "PageCommunity: Wrong _admin address");
+
         __Ownable_init();
         nft = IPageNFT(_nft);
         bank = IPageBank(_bank);
+
+        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+        _setRoleAdmin(VOTER_ROLE, DEFAULT_ADMIN_ROLE);
     }
 
     function version() public pure override returns (string memory) {
@@ -155,7 +161,7 @@ IPageCommunity
         active = currentCommunity.active;
     }
 
-    function addModerator(uint256 communityId, address moderator) external override validId(communityId) {
+    function addModerator(uint256 communityId, address moderator) external override validId(communityId) onlyRole(VOTER_ROLE) {
         Community storage currentCommunity = community[communityId];
         require(moderator != address(0), "PageCommunity: Wrong moderator");
         require(currentCommunity.moderators.length() < MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
@@ -164,7 +170,7 @@ IPageCommunity
         emit AddedModerator(_msgSender(), communityId, moderator);
     }
 
-    function removeModerator(uint256 communityId, address moderator) external override validId(communityId) {
+    function removeModerator(uint256 communityId, address moderator) external override validId(communityId) onlyRole(VOTER_ROLE) {
         Community storage currentCommunity = community[communityId];
         require(_msgSender() == currentCommunity.creator, "PageCommunity: Wrong creator");
 

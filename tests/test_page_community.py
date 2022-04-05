@@ -6,7 +6,7 @@ TOKEN_VERSION = 1
 
 
 def test_deployment(pageCommunity):
-    print('='*20 + ' running for pageComment ... ' + '='*20)
+    print('='*20 + ' running for pageCommunity ... ' + '='*20)
     assert pageCommunity != ZERO_ADDRESS
 
 
@@ -20,36 +20,36 @@ def test_add_read_community(pageCommunity):
     assert community[0] == communityName
 
 
-def test_add_remove_moderator(pageCommunity, accounts):
+def test_add_remove_moderator(pageCommunity, accounts, deployer):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     assert pageCommunity.communityCount() == 1
 
-    pageCommunity.addModerator(1, accounts[2], {'from': accounts[0]})
-    pageCommunity.addModerator(1, accounts[3], {'from': accounts[0]})
+    pageCommunity.addModerator(1, accounts[2], {'from': deployer})
+    pageCommunity.addModerator(1, accounts[3], {'from': deployer})
     community = pageCommunity.readCommunity(1)
     assert community[2][0] == accounts[2]
     assert community[2][1] == accounts[3]
 
-    pageCommunity.removeModerator(1, accounts[2], {'from': accounts[0]})
+    pageCommunity.removeModerator(1, accounts[2], {'from': deployer})
     community = pageCommunity.readCommunity(1)
     assert community[2][0] == accounts[3]
 
 
-def test_find_moderator(pageCommunity, accounts):
+def test_find_moderator(pageCommunity, accounts, deployer):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     assert pageCommunity.communityCount() == 1
 
-    pageCommunity.addModerator(1, accounts[2], {'from': accounts[0]})
-    pageCommunity.addModerator(1, accounts[3], {'from': accounts[0]})
+    pageCommunity.addModerator(1, accounts[2], {'from': deployer})
+    pageCommunity.addModerator(1, accounts[3], {'from': deployer})
     community = pageCommunity.readCommunity(1)
     assert community[2][0] == accounts[2]
     assert community[2][1] == accounts[3]
 
-    isCommunityModerator = pageCommunity.isCommunityModerator(1, accounts[2], {'from': accounts[0]})
+    isCommunityModerator = pageCommunity.isCommunityModerator(1, accounts[2], {'from': deployer})
     assert isCommunityModerator == True
-    isCommunityModerator = pageCommunity.isCommunityModerator(1, accounts[3], {'from': accounts[0]})
+    isCommunityModerator = pageCommunity.isCommunityModerator(1, accounts[3], {'from': deployer})
     assert isCommunityModerator == True
 
 
@@ -180,7 +180,7 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, someUs
         pageCommunity.burnComment(0,0)
 
 
-    pageCommunity.addModerator(1, accounts[2], {'from': accounts[0]})
+    pageCommunity.addModerator(1, accounts[2], {'from': deployer})
 
     amount = 10000000000000000000000;
     pageToken.transfer(someUser, amount, {'from': treasury})
@@ -218,7 +218,7 @@ def test_visibility(accounts, pageBank, pageCommunity, someUser, deployer):
     commentVisible = readComment[6]
     assert commentVisible == True
 
-    pageCommunity.addModerator(1, accounts[2], {'from': accounts[0]})
+    pageCommunity.addModerator(1, accounts[2], {'from': deployer})
 
     with reverts():
         pageCommunity.setVisibilityComment(0, 0, False, {'from': someUser})
