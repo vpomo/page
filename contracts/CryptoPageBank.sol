@@ -102,12 +102,18 @@ contract PageBank is
     event SetStaticWETHPagePrice(uint256 oldPrice, uint256 newPrice);
     event SetPriceChangePercent(uint256 oldPercent, uint256 newPercent);
 
+    event SetForMintGasAmount(uint256 oldValue, uint256 newValue);
+    event SetForBurnGasAmount(uint256 oldValue, uint256 newValue);
+
     event SetToken(address indexed token);
     event SetTreasuryFee(uint256 treasuryFee, uint256 newTreasuryFee);
 
-    /// @notice Initial function
-    /// @param _treasury Address of our treasury
-    /// @param _admin Address of admin
+    /**
+     * @dev Makes the initialization of the initial values for the smart contract
+     *
+     * @param _treasury Address of our treasury
+     * @param _admin Address of admin
+     */
     function initialize(address _treasury, address _admin)
         public
         initializer
@@ -126,14 +132,31 @@ contract PageBank is
         treasury = _treasury;
     }
 
+    /**
+     * @dev Returns the smart contract version
+     *
+     */
     function version() external pure override returns (string memory) {
         return "1";
     }
 
+    /**
+     * @dev Accepts ether to the balance of the contract
+     * Required for testing
+     *
+     */
     receive() external payable {
         // React to receiving ether
+        // Comment for tests
+        revert("PageBank: asset transfer prohibited");
     }
 
+    /**
+     * @dev Sets the default commission values for creating and removing posts.
+     * These values will be automatically assigned when a new community is created.
+     *
+     * @param communityId An identification number of community
+     */
     function definePostFeeForNewCommunity(uint256 communityId) external override onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
 
@@ -144,6 +167,12 @@ contract PageBank is
         return true;
     }
 
+    /**
+     * @dev Sets the default commission values for creating and removing comments.
+     * These values will be automatically assigned when a new community is created.
+     *
+     * @param communityId An identification number of community
+     */
     function defineCommentFeeForNewCommunity(uint256 communityId) external override onlyRole(MINTER_ROLE) returns(bool) {
         CommunityFee storage fee = communityFee[communityId];
 
@@ -154,6 +183,11 @@ contract PageBank is
         return true;
     }
 
+    /**
+     * @dev Reads the values of commissions from the community for creating and removing posts.
+     *
+     * @param communityId An identification number of community
+     */
     function readPostFee(uint256 communityId) external override view returns(
         uint64 createPostOwnerFee,
         uint64 createPostCreatorFee,
@@ -168,6 +202,11 @@ contract PageBank is
         removePostCreatorFee = fee.removePostCreatorFee;
     }
 
+    /**
+     * @dev Reads the values of commissions from the community for creating and removing comments.
+     *
+     * @param communityId An identification number of community
+     */
     function readCommentFee(uint256 communityId) external override view returns(
         uint64 createCommentOwnerFee,
         uint64 createCommentCreatorFee,
@@ -182,6 +221,11 @@ contract PageBank is
         removeCommentCreatorFee = fee.removeCommentCreatorFee;
     }
 
+    /**
+     * @dev Changes the commission values for creating and removing posts.
+     *
+     * @param communityId An identification number of community
+     */
     function updatePostFee(
         uint256 communityId,
         uint64 newCreatePostOwnerFee,
@@ -203,6 +247,11 @@ contract PageBank is
         );
     }
 
+    /**
+     * @dev Changes the commission values for creating and removing comments.
+     *
+     * @param communityId An identification number of community
+     */
     function updateCommentFee(
         uint256 communityId,
         uint64 newCreateCommentOwnerFee,
@@ -224,11 +273,14 @@ contract PageBank is
         );
     }
 
-    /// @notice Calculate and call burn
-    /// @param communityId The ID for community
-    /// @param owner The owner address
-    /// @param creator The creator address
-    /// @param gas Gas used
+    /**
+     * @dev Calculates the equivalent number of tokens for gas consumption. Makes a mint of new tokens.
+     *
+     * @param communityId An identification number of community
+     * @param owner The owner address
+     * @param creator The creator address
+     * @param gas Gas used
+     */
     function mintTokenForNewPost(
         uint256 communityId,
         address owner,
@@ -244,6 +296,14 @@ contract PageBank is
         emit MintForPost(communityId, owner, creator, amount);
     }
 
+    /**
+     * @dev Calculates the equivalent number of tokens for gas consumption. Makes a mint of new tokens.
+     *
+     * @param communityId An identification number of community
+     * @param owner The owner address
+     * @param creator The creator address
+     * @param gas Gas used
+     */
     function mintTokenForNewComment(
         uint256 communityId,
         address owner,
@@ -259,11 +319,14 @@ contract PageBank is
         emit MintForComment(communityId, owner, creator, amount);
     }
 
-    /// @dev Calculate and call burn
-    /// @param communityId The ID for community
-    /// @param owner The owner address
-    /// @param creator The creator address
-    /// @param gas The amount of gas spent on the function call
+    /**
+     * @dev Calculates the equivalent number of tokens for gas consumption. Makes a burn of new tokens.
+     *
+     * @param communityId An identification number of community
+     * @param owner The owner address
+     * @param creator The creator address
+     * @param gas Gas used
+     */
     function burnTokenForPost(
         uint256 communityId,
         address owner,
@@ -279,6 +342,14 @@ contract PageBank is
         emit BurnForPost(communityId, owner, creator, amount);
     }
 
+    /**
+     * @dev Calculates the equivalent number of tokens for gas consumption. Makes a burn of new tokens.
+     *
+     * @param communityId An identification number of community
+     * @param owner The owner address
+     * @param creator The creator address
+     * @param gas Gas used
+     */
     function burnTokenForComment(
         uint256 communityId,
         address owner,
@@ -294,41 +365,55 @@ contract PageBank is
         emit BurnForComment(communityId, owner, creator, amount);
     }
 
-    /// @notice Withdraw amount from the bank
+    /**
+     * @dev Withdraw amount from the bank.
+     *
+     * @param amount An amount of tokens
+     */
     function withdraw(uint256 amount) external override {
-        require(_balances[_msgSender()] >= amount, "Not enough balance");
+        require(_balances[_msgSender()] >= amount, "PageBank: not enough balance of tokens");
         _balances[_msgSender()] -= amount;
-        token.mint(_msgSender(), amount);
+        require(token.transfer(_msgSender(),  amount), "PageBank: wrong transfer of tokens");
         emit Withdraw(_msgSender(), amount);
     }
 
+    /**
+     * @dev Adds tokens to the user's balance in the contract.
+     *
+     * @param amount An amount of tokens
+     */
     function addBalance(uint256 amount) external override {
-        require(amount > 0, "Wrong amount");
-        require(token.transferFrom(_msgSender(), address(this), amount));
+        require(amount > 0, "PageBank: wrong amount");
+        require(token.transferFrom(_msgSender(), address(this), amount), "PageBank: wrong transfer of tokens");
         _balances[_msgSender()] += amount;
         emit AddedBalance(_msgSender(), amount);
     }
 
-    /// @notice Bank balance of the sender's address
+    /**
+     * @dev Bank balance of the user's address.
+     *
+     * @param user An address of user
+     */
     function balanceOf(address user) external view override returns (uint256) {
         return _balances[user];
     }
 
+    /**
+     * @dev Returns WETH / PAGE price from UniswapV3
+     */
     function getWETHPagePriceFromPool() public view override returns (uint256 price) {
         (uint160 sqrtPriceX96, , , , , , ) = wethPagePool.slot0();
         price = uint256(sqrtPriceX96) * sqrtPriceX96 / 10e18 * 10e6 / 2**192;
     }
 
+    /**
+     * @dev Page token price from contract.
+     */
     function getWETHPagePrice() public view override returns (uint256 price) {
         try this.getWETHPagePriceFromPool() returns (
             uint256 _price
         ) {
             price = validChangePrice(_price) ? _price : staticWETHPagePrice;
-//            if (!validChangePrice(_price)) {
-//                price = staticWETHPagePrice;
-//            } else {
-//                price = _price;
-//            }
         } catch {
             price = staticWETHPagePrice;
         }
@@ -337,6 +422,12 @@ contract PageBank is
         }
     }
 
+    /**
+     * @dev Changes default commission values for all new communities.
+     *
+     * @param index Order number of the commission
+     * @param newValue New commission value
+     */
     function setDefaultFee(uint256 index, uint64 newValue) external override onlyOwner {
         if (index == 0) {
             emit SetDefaultFee(index, defaultCreatePostOwnerFee, newValue);
@@ -372,48 +463,108 @@ contract PageBank is
         }
     }
 
-    /// @notice Returns USDT / PAGE price from UniswapV3
-    /// @param newWethPagePool UniswapV3Pool USDT / PAGE address from UniswapV3Factory
+    /**
+     * @dev Changes the value of the FOR_MINT_GAS_AMOUNT.
+     *
+     * @param newValue New value for FOR_MINT_GAS_AMOUNT
+     */
+    function setMintGasAmount(uint256 newValue) external override onlyOwner {
+        require(FOR_MINT_GAS_AMOUNT != newValue, "PageBank: wrong value for FOR_MINT_GAS_AMOUNT");
+        emit SetForMintGasAmount(FOR_MINT_GAS_AMOUNT, newValue);
+        FOR_MINT_GAS_AMOUNT = newValue;
+    }
+
+    /**
+     * @dev Changes the value of the FOR_MINT_GAS_AMOUNT.
+     *
+     * @param newValue New value for FOR_MINT_GAS_AMOUNT
+     */
+    function setBurnGasAmount(uint256 newValue) external override onlyOwner {
+        require(FOR_BURN_GAS_AMOUNT != newValue, "PageBank: wrong value for FOR_BURN_GAS_AMOUNT");
+        emit SetForBurnGasAmount(FOR_BURN_GAS_AMOUNT, newValue);
+        FOR_BURN_GAS_AMOUNT = newValue;
+    }
+
+    /**
+     * @dev Changes the address of the pool.
+     *
+     * @param newWethPagePool New pool address value
+     */
     function setWETHPagePool(address newWethPagePool) external override onlyOwner {
         wethPagePool = IUniswapV3Pool(newWethPagePool);
         emit SetWETHUSDTPool(newWethPagePool);
     }
 
+    /**
+     * @dev Changes the value of the price.
+     *
+     * @param price New price value
+     */
     function setStaticWETHPagePrice(uint256 price) external override onlyOwner {
         require(price != staticWETHPagePrice, "PageBank: wrong price");
         emit SetStaticWETHPagePrice(staticWETHPagePrice, price);
         staticWETHPagePrice = price;
     }
 
+    /**
+     * @dev Changes the value of the percent.
+     *
+     * @param percent New percent value
+     */
     function setPriceChangePercent(uint256 percent) external override onlyOwner {
         require(percent <= ALL_PERCENT && percent != priceChangePercent, "PageBank: wrong percent");
         emit SetPriceChangePercent(priceChangePercent, percent);
         priceChangePercent = percent;
     }
 
+    /**
+     * @dev Changes the address of the token.
+     *
+     * @param newToken New address value
+     */
     function setToken(address newToken) external override onlyOwner {
         token = IPageToken(newToken);
         emit SetToken(newToken);
     }
 
+    /**
+     * @dev Changes the value of the fee for the Treasury.
+     *
+     * @param newTreasuryFee New fee value for the Treasury
+     */
     function setTreasuryFee(uint256 newTreasuryFee ) external override onlyOwner {
         require(newTreasuryFee != treasuryFee, "PageBank: wrong treasury value");
         emit SetTreasuryFee(treasuryFee, newTreasuryFee);
         treasuryFee = newTreasuryFee;
     }
 
-    /// @notice Returns gas multiplied by token's prices and gas price.
-    /// @param gas Gas used
-    /// @return PAGE token's count
+    /**
+     * @dev Returns gas multiplied by token's prices and gas price.
+     *
+     * @param gas Gas used
+     * @return PAGE token's count
+     */
     function convertGasToTokenAmount(uint256 gas) private view returns (uint256) {
         return gas * tx.gasprice * getWETHPagePrice();
     }
 
+    /**
+     * @dev Mints PAGE tokens for Treasury.
+     *
+     * @param amount Amount of tokens
+     */
     function mintTreasuryPageToken(uint256 amount) private {
         require(treasury != address(0), "PageBank: wrong treasury address");
         token.mint(treasury, amount * treasuryFee / ALL_PERCENT);
     }
 
+    /**
+     * @dev Mints PAGE tokens for user.
+     *
+     * @param user Address of user
+     * @param amount Amount of tokens
+     * @param userFee Fee for operation
+     */
     function mintUserPageToken(address user, uint256 amount, uint256 userFee) private {
         require(user != address(0), "PageBank: wrong user address");
 
@@ -422,6 +573,13 @@ contract PageBank is
         _balances[user] += userAmount;
     }
 
+    /**
+     * @dev Burns PAGE tokens for user.
+     *
+     * @param user Address of user
+     * @param amount Amount of tokens
+     * @param userFee Fee for operation
+     */
     function burnUserPageToken(address user, uint256 amount, uint256 userFee) private {
         require(user != address(0), "PageBank: wrong user address");
 
@@ -430,6 +588,11 @@ contract PageBank is
         _balances[user] -= userAmount;
     }
 
+    /**
+     * @dev Checks the correctness of the price change for the token.
+     *
+     * @param currentPrice Checked price value for the token
+     */
     function validChangePrice(uint256 currentPrice) private view returns(bool isValid) {
         if (currentPrice <= staticWETHPagePrice) {
             isValid = (staticWETHPagePrice - currentPrice) <= staticWETHPagePrice * priceChangePercent / ALL_PERCENT;
