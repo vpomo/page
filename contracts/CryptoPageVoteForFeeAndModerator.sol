@@ -51,7 +51,7 @@ contract PageVoteForFeeAndModerator is
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
         __Ownable_init();
         require(_admin != address(0), "PageVote: wrong admin address");
-        require(_token != address(0), "PageCommunity: wrong token address");
+        require(_token != address(0), "PageVote: wrong token address");
         require(_community != address(0), "PageVote: wrong community address");
         require(_bank != address(0), "PageCommunity: wrong bank address");
 
@@ -71,10 +71,27 @@ contract PageVoteForFeeAndModerator is
         return "1";
     }
 
+    /**
+     * @dev Accepts ether to the balance of the contract
+     * Required for testing
+     *
+     */
     receive() external payable {
         // React to receiving ether
+        // Comment for tests
+        revert("PageVote: asset transfer prohibited");
     }
 
+    /**
+     * @dev Creates a new community vote proposal.
+     *
+     * @param communityId ID of community
+     * @param description Brief text description for the proposal
+     * @param duration Voting duration in seconds
+     * @param methodNumber Method number for "executeScript()" function
+     * @param values Values for methods 1 and 2
+     * @param user Value for methods 3 and 4
+     */
     function createVote(
         uint256 communityId,
         string memory description,
@@ -106,12 +123,26 @@ contract PageVoteForFeeAndModerator is
         emit CreateVote(sender, duration, methodNumber, values);
     }
 
+    /**
+     * @dev Changes value for MIN_DURATION variable.
+     * This variable contains the value for the minimum voting period.
+     *
+     * @param minDuration New value for MIN_DURATION variable
+     */
     function setMinDuration(uint128 minDuration) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(minDuration != MIN_DURATION, "PageVote: wrong value");
         emit SetMinDuration(MIN_DURATION, minDuration);
         MIN_DURATION = minDuration;
     }
 
+    /**
+     * @dev Here the user votes either for the implementation of the proposal or against.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     * @param isYes For the implementation of the proposal or against the implementation
+     */
     function putVote(uint256 communityId, uint256 index, bool isYes) external {
         require(votes[communityId].length > index, "PageVote: wrong index");
 
@@ -133,6 +164,13 @@ contract PageVoteForFeeAndModerator is
         emit PutVote(sender, isYes, weight);
     }
 
+    /**
+     * @dev Starts the execution of a Vote.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
     function executeVote(uint256 communityId, uint256 index) external override {
         require(votes[communityId].length > index, "PageVote: wrong index");
 
@@ -151,6 +189,13 @@ contract PageVoteForFeeAndModerator is
         emit ExecuteVote(sender);
     }
 
+    /**
+     * @dev Reading information about a Vote.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
     function readVote(uint256 communityId, uint256 index) external override view returns(
         string memory description,
         address creator,
@@ -179,10 +224,22 @@ contract PageVoteForFeeAndModerator is
         active = vote.active;
     }
 
+    /**
+     * @dev Reading the amount of votes for the community.
+     *
+     * @param communityId ID of community
+     */
     function readVotesCount(uint256 communityId) public override view returns(uint256 count) {
         return votes[communityId].length;
     }
 
+    /**
+     * @dev Starts the execution of a method for the community.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
     function executeScript(uint256 communityId, uint256 index) private {
         Vote storage vote = votes[communityId][index];
         uint64[4] storage values = vote.newValues;
