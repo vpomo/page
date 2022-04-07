@@ -63,6 +63,10 @@ contract PageVoteForFeeAndModerator is
         bank = IPageBank(_bank);
     }
 
+    /**
+     * @dev Returns the smart contract version
+     *
+     */
     function version() public pure override returns (string memory) {
         return "1";
     }
