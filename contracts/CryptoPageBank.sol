@@ -400,10 +400,11 @@ contract PageBank is
 
     /**
      * @dev Returns WETH / PAGE price from UniswapV3
+     * https://docs.uniswap.org/sdk/guides/fetching-prices
      */
     function getWETHPagePriceFromPool() public view override returns (uint256 price) {
         (uint160 sqrtPriceX96, , , , , , ) = wethPagePool.slot0();
-        price = uint256(sqrtPriceX96) * sqrtPriceX96 / 10e18 * 10e6 / 2**192;
+        price = 2**192 / (uint256(sqrtPriceX96**2));
     }
 
     /**

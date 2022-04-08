@@ -34,7 +34,7 @@ def helpers():
 def pageBank(PageBank, treasury, admin, deployer):
     instanсe = PageBank.deploy({'from': deployer})
     instanсe.initialize(treasury, admin)
-    instanсe.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
+    instanсe.setWETHPagePool('0x3b685307c8611afb2a9e83ebc8743dc20480716e', {'from': deployer}) #FTM/ETH
     deployer.transfer(instanсe, Wei('10 ether'))
     return instanсe
 
