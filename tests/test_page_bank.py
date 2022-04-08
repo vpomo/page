@@ -58,6 +58,8 @@ def test_mint_burn_token_for_new_post(pageBank, pageCommunity, pageToken, admin,
     network.gas_price("65 gwei")
     gas = 200000
     tx = pageBank.mintTokenForNewPost(1, admin, someUser, gas, {'from': pageCommunity})
+    #print('tx for mint post', tx.info())
+    #Gas Used: 142345
 
     beforeAdminBalance = pageBank.balanceOf(admin)
     beforeSomeUserBalance = pageBank.balanceOf(someUser)
@@ -69,7 +71,10 @@ def test_mint_burn_token_for_new_post(pageBank, pageCommunity, pageToken, admin,
 
     gas = 20
 
-    pageBank.burnTokenForPost(1, admin, someUser, gas, {'from': pageCommunity})
+    tx = pageBank.burnTokenForPost(1, admin, someUser, gas, {'from': pageCommunity})
+    #print('tx for burn post', tx.info())
+    # Gas Used: 93111
+
     afterAdminBalance = pageBank.balanceOf(admin)
     afterSomeUserBalance = pageBank.balanceOf(someUser)
     afterPageBankBalance = pageToken.balanceOf(pageBank)
@@ -90,6 +95,8 @@ def test_mint_burn_token_for_new_comment(pageBank, pageCommunity, pageToken, adm
     network.gas_price("65 gwei")
     gas = 200000
     tx = pageBank.mintTokenForNewComment(1, admin, someUser, gas, {'from': pageCommunity})
+    #print('tx for mint comment', tx.info())
+    # Gas Used: 142337
 
     beforeAdminBalance = pageBank.balanceOf(admin)
     beforeSomeUserBalance = pageBank.balanceOf(someUser)
@@ -101,7 +108,10 @@ def test_mint_burn_token_for_new_comment(pageBank, pageCommunity, pageToken, adm
 
     gas = 20
 
-    pageBank.burnTokenForComment(1, admin, someUser, gas, {'from': pageCommunity})
+    tx = pageBank.burnTokenForComment(1, admin, someUser, gas, {'from': pageCommunity})
+    #print('tx for burn comment', tx.info())
+    # Gas Used: 93124
+
     afterAdminBalance = pageBank.balanceOf(admin)
     afterSomeUserBalance = pageBank.balanceOf(someUser)
     afterPageBankBalance = pageToken.balanceOf(pageBank)

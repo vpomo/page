@@ -25,8 +25,8 @@ contract PageBank is
     bytes32 public constant DEFINE_FEE_ROLE = keccak256("DEFINE_FEE_ROLE");
     bytes32 public constant CHANGE_PRICE_ROLE = keccak256("CHANGE_PRICE_ROLE");
 
-    uint256 public FOR_MINT_GAS_AMOUNT = 2800;
-    uint256 public FOR_BURN_GAS_AMOUNT = 2800;
+    uint256 public FOR_MINT_GAS_AMOUNT = 145000;
+    uint256 public FOR_BURN_GAS_AMOUNT = 95000;
 
     IUniswapV3Pool private wethPagePool;
     uint256 public staticWETHPagePrice = 600;
@@ -147,8 +147,8 @@ contract PageBank is
      */
     receive() external payable {
         // React to receiving ether
-        // Comment for tests
-        revert("PageBank: asset transfer prohibited");
+        // Uncomment for production
+        //revert("PageBank: asset transfer prohibited");
     }
 
     /**

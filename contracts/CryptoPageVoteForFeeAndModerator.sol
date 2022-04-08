@@ -78,8 +78,8 @@ contract PageVoteForFeeAndModerator is
      */
     receive() external payable {
         // React to receiving ether
-        // Comment for tests
-        revert("PageVote: asset transfer prohibited");
+        // Uncomment for production
+        //revert("PageVote: asset transfer prohibited");
     }
 
     /**

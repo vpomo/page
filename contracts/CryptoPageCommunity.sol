@@ -144,8 +144,8 @@ IPageCommunity
      */
     receive() external payable {
         // React to receiving ether
-        // Comment for tests
-        revert("PageBank: asset transfer prohibited");
+        // Uncomment for production
+        //revert("PageBank: asset transfer prohibited");
     }
 
     /**

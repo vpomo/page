@@ -81,6 +81,10 @@ interface IPageBank {
 
     function setDefaultFee(uint256 index, uint64 newValue) external;
 
+    function setMintGasAmount(uint256 newValue) external;
+
+    function setBurnGasAmount(uint256 newValue) external;
+
     function setWETHPagePool(address newWethPagePool) external;
 
     function setStaticWETHPagePrice(uint256 price) external;
