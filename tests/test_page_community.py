@@ -133,7 +133,9 @@ def test_write_burn_Post(pageBank, pageCommunity, someUser, deployer):
 
     pageCommunity.join(1, {'from': deployer})
     pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
-    pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
+    tx = pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
+    #print('tx write post ', tx.info());
+    # Gas Used: All = 430758;
 
     readPost = pageCommunity.readPost(0)
     #('dddd', '0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871', 0, 0, 12122487000000000000, 0, (), True)
@@ -142,7 +144,10 @@ def test_write_burn_Post(pageBank, pageCommunity, someUser, deployer):
     readPost = pageCommunity.readPost(1)
     assert readPost[0] == 'aaaa'
 
-    pageCommunity.burnPost(0)
+    tx = pageCommunity.burnPost(0)
+    #print('tx burn post ', tx.info());
+    # Gas Used: All = 119503;
+
     readPost = pageCommunity.readPost(0)
     #('', '0x0000000000000000000000000000000000000000', '0x0000000000000000000000000000000000000000', 0, 0, 12122487000000000000, 0, (), False)
     assert readPost[0] == ''
@@ -163,7 +168,9 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, someUs
     pageCommunity.join(1, {'from': deployer})
     pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
 
-    pageCommunity.writeComment(0, 'dddd-dddd', True, False, deployer, {'from': someUser})
+    tx = pageCommunity.writeComment(0, 'dddd-dddd', True, False, deployer, {'from': someUser})
+    #print('tx write comment ', tx.info());
+    # Gas Used: All = 288168;
 
     with reverts():
         pageCommunity.writeComment(0, 'dddd-dddd-dddd', True, False, deployer, {'from': someUser})
@@ -191,7 +198,10 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, someUs
     pageToken.approve(pageBank, amount, {'from': accounts[2]})
     pageBank.addBalance(amount, {'from': accounts[2]})
 
-    pageCommunity.burnComment(0,0, {'from': accounts[2]})
+    tx = pageCommunity.burnComment(0,0, {'from': accounts[2]})
+    #print('tx burn comment ', tx.info());
+    # Gas Used: All = 69089;
+
     count = pageCommunity.getCommentCount(0)
     assert count == 2
 
