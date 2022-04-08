@@ -11,10 +11,10 @@ import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageCommunity.sol";
 
 
-/// @title The contract for manage community
-/// @author Crypto.Page Team
-/// @notice
-/// @dev 
+     /**
+     * @dev The contract for manage community
+     *
+     */
 contract PageCommunity is
 Initializable,
 OwnableUpgradeable,
@@ -109,6 +109,13 @@ IPageCommunity
         _;
     }
 
+    /**
+     * @dev Makes the initialization of the initial values for the smart contract
+     *
+     * @param _nft NFT contract address
+     * @param _bank Bank contract address
+     * @param _admin Address of admin
+     */
     function initialize(address _nft, address _bank, address _admin) public initializer {
         require(_nft != address(0), "PageCommunity: Wrong _nft address");
         require(_bank != address(0), "PageCommunity: Wrong _bank address");
@@ -122,14 +129,30 @@ IPageCommunity
         _setRoleAdmin(VOTER_ROLE, DEFAULT_ADMIN_ROLE);
     }
 
+    /**
+     * @dev Returns the smart contract version
+     *
+     */
     function version() public pure override returns (string memory) {
         return "1";
     }
 
+    /**
+     * @dev Accepts ether to the balance of the contract
+     * Required for testing
+     *
+     */
     receive() external payable {
         // React to receiving ether
+        // Comment for tests
+        revert("PageBank: asset transfer prohibited");
     }
 
+    /**
+     * @dev Creates a new community.
+     *
+     * @param desc Text description for the community
+     */
     function addCommunity(string memory desc) external override {
         communityCount++;
         Community storage newCommunity = community[communityCount];
@@ -140,6 +163,11 @@ IPageCommunity
         emit AddedCommunity(_msgSender(), communityCount, desc);
     }
 
+    /**
+     * @dev Returns information about the community.
+     *
+     * @param communityId ID of community
+     */
     function readCommunity(uint256 communityId) external view override validId(communityId) returns(
         string memory name,
         address creator,
@@ -161,6 +189,13 @@ IPageCommunity
         active = currentCommunity.active;
     }
 
+    /**
+     * @dev Adds a moderator for the community.
+     * Can only be done by voting.
+     *
+     * @param communityId ID of community
+     * @param moderator User address
+     */
     function addModerator(uint256 communityId, address moderator) external override validId(communityId) onlyRole(VOTER_ROLE) {
         Community storage currentCommunity = community[communityId];
         require(moderator != address(0), "PageCommunity: Wrong moderator");
@@ -170,6 +205,13 @@ IPageCommunity
         emit AddedModerator(_msgSender(), communityId, moderator);
     }
 
+    /**
+     * @dev Removes a moderator for the community.
+     * Can only be done by voting.
+     *
+     * @param communityId ID of community
+     * @param moderator User address
+     */
     function removeModerator(uint256 communityId, address moderator) external override validId(communityId) onlyRole(VOTER_ROLE) {
         Community storage currentCommunity = community[communityId];
         require(_msgSender() == currentCommunity.creator, "PageCommunity: Wrong creator");
@@ -178,18 +220,35 @@ IPageCommunity
         emit RemovedModerator(_msgSender(), communityId, moderator);
     }
 
+    /**
+     * @dev Entry of a new user into the community.
+     *
+     * @param communityId ID of community
+     */
     function join(uint256 communityId) external override validId(communityId) {
         community[communityId].users.add(_msgSender());
         community[communityId].usersCount++;
         emit JoinUser(communityId, _msgSender());
     }
 
+    /**
+     * @dev Exit of a user from the community.
+     *
+     * @param communityId ID of community
+     */
     function quit(uint256 communityId) external override validId(communityId) {
         community[communityId].users.remove(_msgSender());
         community[communityId].usersCount--;
         emit QuitUser(communityId, _msgSender());
     }
 
+    /**
+     * @dev Create a new community post.
+     *
+     * @param communityId ID of community
+     * @param ipfsHash Link to the message in IPFS
+     * @param owner Post owner address
+     */
     function writePost(
         uint256 communityId,
         string memory ipfsHash,
@@ -216,6 +275,11 @@ IPageCommunity
         setPostPrice(postId, price);
     }
 
+    /**
+     * @dev Returns information about the post.
+     *
+     * @param postId ID of post
+     */
     function readPost(uint256 postId) external view override onlyCommunityActive(postId) returns(
         string memory ipfsHash,
         address creator,
@@ -239,6 +303,11 @@ IPageCommunity
         isView = readed.isView;
     }
 
+    /**
+     * @dev Removes information about the post.
+     *
+     * @param postId ID of post
+     */
     function burnPost(uint256 postId) external override onlyCommunityActive(postId) {
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
@@ -258,6 +327,12 @@ IPageCommunity
         bank.burnTokenForPost(communityId, postOwner, _msgSender(), gas);
     }
 
+    /**
+     * @dev Change post visibility.
+     *
+     * @param postId ID of post
+     * @param newVisible Boolean value for post visibility
+     */
     function setVisibilityPost(uint256 postId, bool newVisible) external override onlyCommunityActive(postId) {
         uint256 communityId = getCommunityIdByPostId(postId);
         require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
@@ -270,14 +345,33 @@ IPageCommunity
         emit ChangeVisiblePost(communityId, postId, newVisible);
     }
 
+    /**
+     * @dev Returns the cost of a post in Page tokens.
+     *
+     * @param postId ID of post
+     */
     function getPostPrice(uint256 postId) external view override returns (uint256) {
         return post[postId].price;
     }
 
+    /**
+     * @dev Returns an array of post IDs created in the community.
+     *
+     * @param communityId ID of community
+     */
     function getPostsIdsByCommunityId(uint256 communityId) external view override returns (uint256[] memory) {
         return community[communityId].postIds.values();
     }
 
+    /**
+     * @dev Create a new post comment.
+     *
+     * @param postId ID of post
+     * @param ipfsHash Link to the message in IPFS
+     * @param isUp If true, then adds a rating for the post
+     * @param isDown If true, then removes a rating for the post
+     * @param owner Comment owner address
+     */
     function writeComment(
         uint256 postId,
         string memory ipfsHash,
@@ -304,6 +398,12 @@ IPageCommunity
         setCommentPrice(postId, commentId, price);
     }
 
+    /**
+     * @dev Returns information about the comment.
+     *
+     * @param postId ID of post
+     * @param commentId ID of comment
+     */
     function readComment(uint256 postId, uint256 commentId) external view override onlyCommunityActive(postId) returns(
         string memory ipfsHash,
         address creator,
@@ -323,6 +423,12 @@ IPageCommunity
         isView = readed.isView;
     }
 
+    /**
+     * @dev Removes information about the comment.
+     *
+     * @param postId ID of post
+     * @param commentId ID of comment
+     */
     function burnComment(uint256 postId, uint256 commentId) external override onlyCommunityActive(postId) {
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
@@ -338,6 +444,13 @@ IPageCommunity
         bank.burnTokenForComment(communityId, commentOwner, _msgSender(), gas);
     }
 
+    /**
+     * @dev Change comment visibility.
+     *
+     * @param postId ID of post
+     * @param commentId ID of comment
+     * @param newVisible Boolean value for comment visibility
+     */
     function setVisibilityComment(
         uint256 postId,
         uint256 commentId,
@@ -354,36 +467,80 @@ IPageCommunity
         emit ChangeVisibleComment(communityId, postId, commentId, newVisible);
     }
 
+    /**
+     * @dev Changes MAX_MODERATORS value for all new communities.
+     *
+     * @param newValue New MAX_MODERATORS value
+     */
     function setMaxModerators(uint256 newValue) external override onlyOwner {
         require(MAX_MODERATORS != newValue, "PageCommunity: wrong new value");
         emit SetMaxModerators(MAX_MODERATORS, newValue);
         MAX_MODERATORS = newValue;
     }
 
+    /**
+     * @dev Returns the number of comments for a post.
+     *
+     * @param postId ID of post
+     */
     function getCommentCount(uint256 postId) public view override returns(uint256) {
         return post[postId].commentCount;
     }
 
+    /**
+     * @dev Returns a boolean value about checking the address of the creator of the community.
+     *
+     * @param communityId ID of community
+     * @param user Community creator address
+     */
     function isCommunityCreator(uint256 communityId, address user) public view override returns(bool) {
         return community[communityId].creator == user;
     }
 
+    /**
+     * @dev Returns a boolean value about checking the address of the user of the community.
+     *
+     * @param communityId ID of community
+     * @param user Community user address
+     */
     function isCommunityUser(uint256 communityId, address user) public view override returns(bool) {
         return community[communityId].users.contains(user);
     }
 
+    /**
+     * @dev Returns a boolean value about checking the address of the moderator of the community.
+     *
+     * @param communityId ID of community
+     * @param user Community moderator address
+     */
     function isCommunityModerator(uint256 communityId, address user) public view override returns(bool) {
         return community[communityId].moderators.contains(user);
     }
 
+    /**
+     * @dev Returns the community ID given the post ID.
+     *
+     * @param postId ID of post
+     */
     function getCommunityIdByPostId(uint256 postId) public view override returns(uint256) {
         return communityIdByPostId[postId];
     }
 
+    /**
+     * @dev Returns a boolean indicating that the user has already upvoted or downvoted the post.
+     *
+     * @param postId ID of post
+     * @param user Community user address
+     */
     function isUpDownUser(uint256 postId, address user) public view override returns(bool) {
         return post[postId].upDownUsers.contains(user);
     }
 
+    /**
+     * @dev Returns a boolean indicating that the community is active for this post.
+     *
+     * @param postId ID of post
+     */
     function isActiveCommunityByPostId(uint256 postId) public view override returns(bool) {
         uint256 communityId = communityIdByPostId[postId];
         return community[communityId].active;
@@ -391,10 +548,22 @@ IPageCommunity
 
     //private area
 
+    /**
+     * @dev Checks if such an ID can exist for the community.
+     *
+     * @param communityId ID of community
+     */
     function validateCommunity(uint256 communityId) private view {
         require(communityId <= communityCount, "PageCommunity: wrong community number");
     }
 
+    /**
+     * @dev Create a new community post.
+     *
+     * @param postId ID of post
+     * @param owner Post owner address
+     * @param ipfsHash Link to the message in IPFS
+     */
     function createPost(uint256 postId, address owner, string memory ipfsHash) private {
         Post storage newPost = post[postId];
         newPost.ipfsHash = ipfsHash;
@@ -403,6 +572,11 @@ IPageCommunity
         newPost.isView = true;
     }
 
+    /**
+     * @dev Erase info for the community post.
+     *
+     * @param postId ID of post
+     */
     function erasePost(uint256 postId) private {
         Post storage oldPost = post[postId];
         oldPost.ipfsHash = EMPTY_STRING;
@@ -414,6 +588,12 @@ IPageCommunity
         oldPost.isView = false;
     }
 
+    /**
+     * @dev Erase info for the post comment.
+     *
+     * @param postId ID of post
+     * @param commentId ID of comment
+     */
     function eraseComment(uint256 postId, uint256 commentId) private {
         Comment storage burned = comment[postId][commentId];
         burned.ipfsHash = EMPTY_STRING;
@@ -425,16 +605,34 @@ IPageCommunity
         burned.isView = false;
     }
 
+    /**
+     * @dev Sets price for post.
+     *
+     * @param postId ID of post
+     * @param price The price value
+     */
     function setPostPrice(uint256 postId, uint128 price) private {
         Post storage curPost = post[postId];
         curPost.price = price;
     }
 
+    /**
+     * @dev Increases the comment count for a post.
+     *
+     * @param postId ID of post
+     */
     function incCommentCount(uint256 postId) private {
         Post storage curPost = post[postId];
         curPost.commentCount++;
     }
 
+    /**
+     * @dev Sets rating for post.
+     *
+     * @param postId ID of post
+     * @param isUp If true, then adds a rating for the post
+     * @param isDown If true, then removes a rating for the post
+     */
     function setPostUpDown(uint256 postId, bool isUp, bool isDown) private {
         if (!isUp && !isDown) {
             return;
@@ -452,6 +650,15 @@ IPageCommunity
         curPost.upDownUsers.add(_msgSender());
     }
 
+    /**
+     * @dev Create a new post comment.
+     *
+     * @param postId ID of post
+     * @param ipfsHash Link to the message in IPFS
+     * @param owner Post owner address
+     * @param isUp If true, then adds a rating for the post
+     * @param isDown If true, then removes a rating for the post
+     */
     function createComment(uint256 postId, string memory ipfsHash, address owner, bool isUp, bool isDown) private {
         uint256 commentId = post[postId].commentCount;
         Comment storage newComment = comment[postId][commentId];
@@ -463,6 +670,13 @@ IPageCommunity
         newComment.isView = true;
     }
 
+    /**
+     * @dev Sets price for comment.
+     *
+     * @param postId ID of post
+     * @param commentId ID of comment
+     * @param price The price value
+     */
     function setCommentPrice(uint256 postId, uint256 commentId, uint128 price) private {
         Comment storage curComment = comment[postId][commentId];
         curComment.price = price;
