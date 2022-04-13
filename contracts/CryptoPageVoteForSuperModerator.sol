@@ -202,7 +202,6 @@ contract PageVoteForSuperModerator is
         uint128 finishTime,
         uint128 yesCount,
         uint128 noCount,
-        uint64[4] memory newValues,
         address user,
         address[] memory voteUsers,
         uint256[] memory voteCommunities,
@@ -217,7 +216,6 @@ contract PageVoteForSuperModerator is
         finishTime = vote.finishTime;
         yesCount = vote.yesCount;
         noCount = vote.noCount;
-        newValues = vote.newValues;
         user = vote.user;
         voteUsers = vote.voteUsers.values();
         voteCommunities = vote.voteCommunities.values();
