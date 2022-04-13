@@ -19,10 +19,10 @@ contract PageVoteForSuperModerator is
 {
 
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
 
     uint128 public MIN_DURATION = 1 days;
     uint128 public MIN_MODERATOR_COUNT = 10;
-    uint128 public currentModeratorCount;
 
     IPageCommunity community;
     IPageBank public bank;
@@ -36,6 +36,7 @@ contract PageVoteForSuperModerator is
         uint128 noCount;
         address user;
         EnumerableSetUpgradeable.AddressSet voteUsers;
+        EnumerableSetUpgradeable.UintSet voteCommunities;
         bool active;
     }
 
@@ -99,6 +100,9 @@ contract PageVoteForSuperModerator is
         require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
 
         uint256 len = readVotesCount();
+        if (len > 0) {
+            require(!votes[len-1].active, "PageVote: previous voting has not finished");
+        }
         votes.push();
 
         Vote storage vote = votes[len];
@@ -110,7 +114,6 @@ contract PageVoteForSuperModerator is
         vote.user = user;
 
         vote.active = true;
-        currentModeratorCount = 0;
 
         emit CreateVote(sender, duration, user);
     }
@@ -141,8 +144,9 @@ contract PageVoteForSuperModerator is
         address sender = _msgSender();
         Vote storage vote = votes[communityId][index];
 
-        require(community.isCommunityUser(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
+        require(!vote.voteCommunities.contains(communityId), "PageVote: the community has already voted");
         require(vote.active, "PageVote: vote not active");
 
         uint256 weight = bank.balanceOf(sender) + token.balanceOf(sender);
@@ -153,7 +157,7 @@ contract PageVoteForSuperModerator is
             vote.noCount += uint128(weight);
         }
         vote.voteUsers.add(sender);
-        currentModeratorCount++;
+        vote.voteCommunities.add(communityId);
         emit PutVote(sender, communityId, index, isYes, weight);
     }
 
@@ -174,6 +178,7 @@ contract PageVoteForSuperModerator is
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
         require(vote.active, "PageVote: vote not active");
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");
+        require(MIN_MODERATOR_COUNT <= vote.voteCommunities.length(), "PageVote: wrong communities count");
 
         if (vote.yesCount > vote.noCount) {
             executeScript(vote.user);
@@ -200,6 +205,7 @@ contract PageVoteForSuperModerator is
         uint64[4] memory newValues,
         address user,
         address[] memory voteUsers,
+        uint256[] memory voteCommunities,
         bool active
     ) {
         require(votes.length > index, "PageVote: wrong index");
@@ -214,6 +220,7 @@ contract PageVoteForSuperModerator is
         newValues = vote.newValues;
         user = vote.user;
         voteUsers = vote.voteUsers.values();
+        voteCommunities = vote.voteCommunities.values();
         active = vote.active;
     }
 
