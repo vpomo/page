@@ -1,35 +1,18 @@
 {
-  "name": "combined-lending",
+  "name": "page",
   "version": "1.0.0",
+  "description": "yarn deploy:all\r ./verify.sh",
   "main": "index.js",
-  "license": "MIT",
-  "scripts": {
-    "compile": "npx hardhat compile",
-    "test": "npx hardhat test",
-    "watch": "npx hardhat watch compilation",
-    "deploy:all": "npx hardhat run --network rinkeby scripts/deploy.js", 
-    "deploy:profile": "npx hardhat run --network rinkeby scripts/deploy-profile.js",   
-    "deploy:test": "npx hardhat run --network rinkeby scripts/test.js",
-    "verify": "npx hardhat verify --network rinkeby MyCollectibleTest"
-  },
-  "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-etherscan": "^2.1.3",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@types/progress": "^2.0.3",
-    "chai": "^4.3.4",
-    "ethereum-waffle": "^3.3.0",
-    "ethers": "^5.3.1",
-    "hardhat": "^2.3.3",
-    "ts-node": "^10.0.0",
-    "typescript": "^4.3.2"
+  "directories": {
+    "test": "tests"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.1",
-    "@openzeppelin/contracts-upgradeable": "^4.1.0",
-    "@openzeppelin/hardhat-upgrades": "^1.9.0",
-    "dotenv": "^10.0.0",
-    "hardhat-watcher": "^2.1.1",
-    "progress": "^2.0.3"
-  }
+    "@openzeppelin/contracts": "^4.5.0",
+    "@openzeppelin/contracts-upgradeable": "^4.5.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Vladimir Pomogalov <pomogalov@gmail.com>",
+  "license": "MIT"
 }

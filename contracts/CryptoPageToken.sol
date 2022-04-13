@@ -1,54 +1,65 @@
-
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./interfaces/IERCMINT.sol";
-import './interfaces/ISAFE.sol';
+pragma solidity 0.8.12;
 
-contract PageToken is ERC20, IERCMINT {
+import "@openzeppelin/contracts/token/ERC20/ERC20Upgradeable.sol";
 
-    ISAFE private PAGE_MINTER;
-    constructor(address _PAGE_MINTER) ERC20("Crypto Page", "PAGE") {
-        // address _IMINTER
-        PAGE_MINTER = ISAFE(_PAGE_MINTER);
-    }
+import "./interfaces/ICryptoPageToken.sol";
 
-    // OPEN
-    function burn(uint256 amount) public override {
-        _burn(msg.sender, amount);
-    }
+    /**
+     * @dev Only bank can mint and burn tokens
+     *
+     */
+contract PageToken is ERC20Upgradeable, IPageToken {
+    address public bank;
 
-    function isEnoughOn(address account, uint256 amount) public override view returns (bool) {
-        if (balanceOf(account) >= amount) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // ADMIN ONLY
-    modifier onlyAdmin() {        
-        require(msg.sender == address(PAGE_MINTER), "onlyAdmin: caller is not the admin");
+    modifier onlyBank() {
+        require(
+            _msgSender() == bank,
+            "PageToken. Only bank can call this function"
+        );
         _;
     }
-    function mint(address to, uint256 amount) public onlyAdmin() override {
+
+    /**
+     * @dev Makes the initialization of the initial values for the smart contract
+     *
+     * @param _treasury Address of our treasury
+     * @param _bank Address of our PageBank contract
+     */
+    function initialize(address _treasury, address _bank) public initializer {
+        __ERC20_init("Crypto.Page", "PAGE");
+        require(_treasury != address(0), "PageToken: address cannot be zero");
+        require(_bank != address(0), "PageToken: address cannot be zero");
+        _mint(_treasury, 5e25);
+        bank = _bank;
+    }
+
+    /**
+     * @dev Returns the smart contract version
+     *
+     */
+    function version() public pure returns (string memory) {
+        return "1";
+    }
+
+    /**
+     * @dev Mint PAGE tokens.
+     *
+     * @param to Address of token holder
+     * @param amount How many tokens to be minted
+     */
+    function mint(address to, uint256 amount) public override onlyBank {
         _mint(to, amount);
     }
-    function xburn(address from, uint256 amount) public onlyAdmin() override{
-        _burn(from, amount);
-    }
-    
-    modifier onlySafe() {        
-        require(PAGE_MINTER.isSafe(msg.sender), "onlySafe: caller is not in safe list");
-        _;
-    }
 
-    // ISAFE
-    function safeDeposit(address from, address to, uint256 amount) public override onlySafe() {
-        _transfer(from, to, amount);
-    }
-    function safeWithdraw(address from, address to, uint256 amount) public override onlySafe() {
-        _transfer(from, to, amount);
+    /**
+     * @dev Burn PAGE tokens.
+     *
+     * @param to Address of token holder
+     * @param amount How many tokens to be burned
+     */
+    function burn(address to, uint256 amount) public override onlyBank {
+        _burn(to, amount);
     }
 }
