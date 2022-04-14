@@ -239,6 +239,6 @@ contract PageVoteForSuperModerator is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeScript(address user) private {
-        community.changeSuperModerator(user);
+        community.changeSupervisor(user);
     }
 }

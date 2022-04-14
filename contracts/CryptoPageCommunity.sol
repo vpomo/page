@@ -29,7 +29,9 @@ IPageCommunity
 
     uint256 public MAX_MODERATORS = 40;
     string public EMPTY_STRING = '';
-    bytes32 public constant VOTER_ROLE = keccak256("VOTER_ROLE");
+
+    address public supervisor;
+    address[] public voterContracts;
 
     uint256 public communityCount;
 
@@ -92,6 +94,7 @@ IPageCommunity
     event ChangeVisibleComment(uint256 indexed communityId, uint256 postId, uint256 commentId, bool isVisible);
 
     event SetMaxModerators(uint256 oldValue, uint256 newValue);
+    event ChangeSupervisor(address oldValue, address newValue);
 
     modifier validId(uint256 id) {
         validateCommunity(id);
@@ -101,6 +104,11 @@ IPageCommunity
     modifier onlyCommunityUser(uint256 id) {
         validateCommunity(id);
         require(isCommunityUser(id, _msgSender()), "PageCommunity: wrong user");
+        _;
+    }
+
+    modifier onlyVoterContract(uint256 id) {
+        require(_msgSender() == voterContracts[id], "PageCommunity: wrong user");
         _;
     }
 
@@ -126,7 +134,6 @@ IPageCommunity
         bank = IPageBank(_bank);
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
-        _setRoleAdmin(VOTER_ROLE, DEFAULT_ADMIN_ROLE);
     }
 
     /**
@@ -196,7 +203,7 @@ IPageCommunity
      * @param communityId ID of community
      * @param moderator User address
      */
-    function addModerator(uint256 communityId, address moderator) external override validId(communityId) onlyRole(VOTER_ROLE) {
+    function addModerator(uint256 communityId, address moderator) external override validId(communityId) onlyVoterContract(0) {
         Community storage currentCommunity = community[communityId];
         require(moderator != address(0), "PageCommunity: Wrong moderator");
         require(currentCommunity.moderators.length() < MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
@@ -212,7 +219,7 @@ IPageCommunity
      * @param communityId ID of community
      * @param moderator User address
      */
-    function removeModerator(uint256 communityId, address moderator) external override validId(communityId) onlyRole(VOTER_ROLE) {
+    function removeModerator(uint256 communityId, address moderator) external override validId(communityId) onlyVoterContract(0) {
         Community storage currentCommunity = community[communityId];
         require(_msgSender() == currentCommunity.creator, "PageCommunity: Wrong creator");
 
@@ -476,6 +483,21 @@ IPageCommunity
         require(MAX_MODERATORS != newValue, "PageCommunity: wrong new value");
         emit SetMaxModerators(MAX_MODERATORS, newValue);
         MAX_MODERATORS = newValue;
+    }
+
+    /**
+     * @dev Changes MAX_MODERATORS value for all new communities.
+     *
+     * @param newValue New MAX_MODERATORS value
+     */
+    function addVoterContract(address newContract) external override onlyOwner {
+        require(newContract != address(0), "PageCommunity: value is zero");
+        voterContracts.push(newContract);
+    }
+
+    function changeSupervisor(address newUser) external override onlyVoterContract(1) {
+        emit ChangeSupervisor(supervisor, newUser);
+        supervisor = newUser;
     }
 
     /**
