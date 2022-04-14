@@ -87,7 +87,8 @@ IPageCommunity
 
     event WritePost(uint256 indexed communityId, uint256 postId, address creator, address owner);
     event BurnPost(uint256 indexed communityId, uint256 postId, address creator, address owner);
-    event ChangeVisiblePost(uint256 indexed communityId, uint256 postId, bool isVisible);
+    event ChangePostVisible(uint256 indexed communityId, uint256 postId, bool isVisible);
+    event ChangeCommunityActive(uint256 indexed communityId, bool isActive);
 
     event WriteComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
     event BurnComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
@@ -96,8 +97,9 @@ IPageCommunity
     event SetMaxModerators(uint256 oldValue, uint256 newValue);
     event ChangeSupervisor(address oldValue, address newValue);
 
-    modifier validId(uint256 id) {
+    modifier validCommunityId(uint256 id) {
         validateCommunity(id);
+        require(isActiveCommunity(id), "PageCommunity: wrong active community");
         _;
     }
 
@@ -112,7 +114,7 @@ IPageCommunity
         _;
     }
 
-    modifier onlyCommunityActive(uint256 postId) {
+    modifier onlyCommunityActiveByPostId(uint256 postId) {
         require(isActiveCommunityByPostId(postId), "PageCommunity: wrong active community");
         _;
     }
@@ -175,7 +177,7 @@ IPageCommunity
      *
      * @param communityId ID of community
      */
-    function readCommunity(uint256 communityId) external view override validId(communityId) returns(
+    function readCommunity(uint256 communityId) external view override validCommunityId(communityId) returns(
         string memory name,
         address creator,
         address[] memory moderators,
@@ -203,7 +205,7 @@ IPageCommunity
      * @param communityId ID of community
      * @param moderator User address
      */
-    function addModerator(uint256 communityId, address moderator) external override validId(communityId) onlyVoterContract(0) {
+    function addModerator(uint256 communityId, address moderator) external override validCommunityId(communityId) onlyVoterContract(0) {
         Community storage currentCommunity = community[communityId];
         require(moderator != address(0), "PageCommunity: Wrong moderator");
         require(currentCommunity.moderators.length() < MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
@@ -219,7 +221,7 @@ IPageCommunity
      * @param communityId ID of community
      * @param moderator User address
      */
-    function removeModerator(uint256 communityId, address moderator) external override validId(communityId) onlyVoterContract(0) {
+    function removeModerator(uint256 communityId, address moderator) external override validCommunityId(communityId) onlyVoterContract(0) {
         Community storage currentCommunity = community[communityId];
         require(_msgSender() == currentCommunity.creator, "PageCommunity: Wrong creator");
 
@@ -232,7 +234,7 @@ IPageCommunity
      *
      * @param communityId ID of community
      */
-    function join(uint256 communityId) external override validId(communityId) {
+    function join(uint256 communityId) external override validCommunityId(communityId) {
         community[communityId].users.add(_msgSender());
         community[communityId].usersCount++;
         emit JoinUser(communityId, _msgSender());
@@ -243,7 +245,7 @@ IPageCommunity
      *
      * @param communityId ID of community
      */
-    function quit(uint256 communityId) external override validId(communityId) {
+    function quit(uint256 communityId) external override validCommunityId(communityId) {
         community[communityId].users.remove(_msgSender());
         community[communityId].usersCount--;
         emit QuitUser(communityId, _msgSender());
@@ -260,10 +262,9 @@ IPageCommunity
         uint256 communityId,
         string memory ipfsHash,
         address owner
-    ) external override validId(communityId) onlyCommunityUser(communityId) {
+    ) external override validCommunityId(communityId) onlyCommunityUser(communityId) {
         uint256 gasBefore = gasleft();
 
-        require(community[communityId].active, "PageCommunity: wrong active community");
         require(isCommunityUser(communityId, _msgSender()), "PageCommunity: wrong user");
         require(isCommunityUser(communityId, owner), "PageCommunity: wrong user");
 
@@ -287,7 +288,7 @@ IPageCommunity
      *
      * @param postId ID of post
      */
-    function readPost(uint256 postId) external view override onlyCommunityActive(postId) returns(
+    function readPost(uint256 postId) external view override onlyCommunityActiveByPostId(postId) returns(
         string memory ipfsHash,
         address creator,
         address owner,
@@ -315,12 +316,12 @@ IPageCommunity
      *
      * @param postId ID of post
      */
-    function burnPost(uint256 postId) external override onlyCommunityActive(postId) {
+    function burnPost(uint256 postId) external override onlyCommunityActiveByPostId(postId) {
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
         address postOwner = post[postId].owner;
 
-        require(isCommunityUser(communityId, _msgSender()), "PageCommunity: wrong user");
+        require(isCommunityUser(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: wrong user");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
         require(postOwner == _msgSender(), "PageCommunity: wrong owner");
 
@@ -340,16 +341,32 @@ IPageCommunity
      * @param postId ID of post
      * @param newVisible Boolean value for post visibility
      */
-    function setVisibilityPost(uint256 postId, bool newVisible) external override onlyCommunityActive(postId) {
+    function setPostVisibility(uint256 postId, bool newVisible) external override onlyCommunityActiveByPostId(postId) {
         uint256 communityId = getCommunityIdByPostId(postId);
-        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
+        require(isCommunityModerator(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: access denied");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
 
         bool oldVisible = post[postId].isView;
         require(oldVisible != newVisible, "PageCommunity: wrong new visible");
         post[postId].isView = newVisible;
 
-        emit ChangeVisiblePost(communityId, postId, newVisible);
+        emit ChangePostVisible(communityId, postId, newVisible);
+    }
+
+    /**
+     * @dev Change community active.
+     *
+     * @param communityId ID of community
+     * @param newActive Boolean value for community active
+     */
+    function setCommunityActive(uint256 communityId, bool newActive) external override {
+        require(supervisor == _msgSender(), "PageCommunity: wrong supervisor");
+
+        bool oldActive = community[communityId].active;
+        require(oldActive != newActive, "PageCommunity: wrong new active");
+        community[communityId].active = newActive;
+
+        emit ChangeCommunityActive(communityId, newActive);
     }
 
     /**
@@ -385,7 +402,7 @@ IPageCommunity
         bool isUp,
         bool isDown,
         address owner
-    ) external override onlyCommunityActive(postId) {
+    ) external override onlyCommunityActiveByPostId(postId) {
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
 
@@ -411,7 +428,7 @@ IPageCommunity
      * @param postId ID of post
      * @param commentId ID of comment
      */
-    function readComment(uint256 postId, uint256 commentId) external view override onlyCommunityActive(postId) returns(
+    function readComment(uint256 postId, uint256 commentId) external view override onlyCommunityActiveByPostId(postId) returns(
         string memory ipfsHash,
         address creator,
         address owner,
@@ -436,12 +453,12 @@ IPageCommunity
      * @param postId ID of post
      * @param commentId ID of comment
      */
-    function burnComment(uint256 postId, uint256 commentId) external override onlyCommunityActive(postId) {
+    function burnComment(uint256 postId, uint256 commentId) external override onlyCommunityActiveByPostId(postId) {
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
 
         require(post[postId].isView, "PageCommunity: wrong post");
-        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
+        require(isCommunityModerator(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: access denied");
         address commentOwner = comment[postId][commentId].owner;
         address commentCreator = comment[postId][commentId].creator;
         eraseComment(postId, commentId);
@@ -462,9 +479,9 @@ IPageCommunity
         uint256 postId,
         uint256 commentId,
         bool newVisible
-    ) external override onlyCommunityActive(postId) {
+    ) external override onlyCommunityActiveByPostId(postId) {
         uint256 communityId = getCommunityIdByPostId(postId);
-        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
+        require(isCommunityModerator(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: access denied");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
 
         bool oldVisible = comment[postId][commentId].isView;
@@ -486,15 +503,20 @@ IPageCommunity
     }
 
     /**
-     * @dev Changes MAX_MODERATORS value for all new communities.
+     * @dev Adds address for voter contracts array
      *
-     * @param newValue New MAX_MODERATORS value
+     * @param newContract New voter contract address
      */
     function addVoterContract(address newContract) external override onlyOwner {
         require(newContract != address(0), "PageCommunity: value is zero");
         voterContracts.push(newContract);
     }
 
+    /**
+     * @dev Changes address for supervisor user
+     *
+     * @param newUser New supervisor address
+     */
     function changeSupervisor(address newUser) external override onlyVoterContract(1) {
         emit ChangeSupervisor(supervisor, newUser);
         supervisor = newUser;
@@ -556,6 +578,15 @@ IPageCommunity
      */
     function isUpDownUser(uint256 postId, address user) public view override returns(bool) {
         return post[postId].upDownUsers.contains(user);
+    }
+
+    /**
+     * @dev Returns a boolean indicating that the community is active.
+     *
+     * @param communityId ID of community
+     */
+    function isActiveCommunity(uint256 communityId) public view override returns(bool) {
+        return community[communityId].active;
     }
 
     /**

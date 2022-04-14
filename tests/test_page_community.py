@@ -239,9 +239,9 @@ def test_visibility(accounts, pageBank, pageCommunity, someUser, deployer):
     assert commentVisible == False
 
     with reverts():
-        pageCommunity.setVisibilityPost(0, False, {'from': someUser})
+        pageCommunity.setPostVisibility(0, False, {'from': someUser})
 
-    pageCommunity.setVisibilityPost(0, False, {'from': accounts[2]})
+    pageCommunity.setPostVisibility(0, False, {'from': accounts[2]})
     readPost = pageCommunity.readPost(0)
     postVisible = readPost[8]
     assert postVisible == False

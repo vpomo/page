@@ -46,7 +46,7 @@ interface IPageCommunity {
 
     function burnPost(uint256 postId) external;
 
-    function setVisibilityPost(uint256 postId, bool newVisible) external;
+    function setPostVisibility(uint256 postId, bool newVisible) external;
 
     function getPostPrice(uint256 postId) external view returns (uint256);
 
