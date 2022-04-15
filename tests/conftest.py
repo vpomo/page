@@ -66,8 +66,6 @@ def pageCommunity(PageCommunity, pageNFT, pageBank, pageToken, deployer, admin):
     pageBank.grantRole(pageBank.BURNER_ROLE(), instanсe, {'from': admin})
     pageBank.setToken(pageToken, {'from': deployer})
 
-    instanсe.grantRole(instanсe.VOTER_ROLE(), deployer, {'from': admin})
-
     return instanсe
 
 
@@ -78,7 +76,9 @@ def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, 
     deployer.transfer(instanсe, Wei('10 ether'))
 
     pageBank.grantRole(pageBank.UPDATER_FEE_ROLE(), instanсe, {'from': admin})
-    pageCommunity.grantRole(pageCommunity.VOTER_ROLE(), instanсe, {'from': admin})
-    pageCommunity.grantRole(pageCommunity.VOTER_ROLE(), deployer, {'from': admin})
+
+    pageCommunity.addVoterContract(instanсe, {'from': deployer})
+    #pageCommunity.grantRole(pageCommunity.VOTER_ROLE(), instanсe, {'from': admin})
+    #pageCommunity.grantRole(pageCommunity.VOTER_ROLE(), deployer, {'from': admin})
 
     return instanсe

@@ -641,7 +641,7 @@ IPageCommunity
      * @param communityId ID of community
      */
     function isActiveCommunity(uint256 communityId) public view override returns(bool) {
-        return community[communityId].active;
+        return community[communityId].active == true;
     }
 
     /**
