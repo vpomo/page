@@ -41,6 +41,7 @@ IPageCommunity
         EnumerableSetUpgradeable.AddressSet moderators;
         EnumerableSetUpgradeable.UintSet postIds;
         EnumerableSetUpgradeable.AddressSet users;
+        EnumerableSetUpgradeable.AddressSet bannedUsers;
         uint256 usersCount;
         bool active;
     }
@@ -81,6 +82,9 @@ IPageCommunity
 
     event AddedModerator(address indexed admin, uint256 number, address moderator);
     event RemovedModerator(address indexed admin, uint256 number, address moderator);
+
+    event AddedBannedUser(address indexed admin, uint256 number, address user);
+    event RemovedBannedUser(address indexed admin, uint256 number, address user);
 
     event JoinUser(uint256 indexed communityId, address user);
     event QuitUser(uint256 indexed communityId, address user);
@@ -183,6 +187,7 @@ IPageCommunity
         address[] memory moderators,
         uint256[] memory postIds,
         address[] memory users,
+        address[] memory bannedUsers,
         uint256 usersCount,
         bool active
     ) {
@@ -194,6 +199,7 @@ IPageCommunity
         moderators = currentCommunity.moderators.values();
         postIds = currentCommunity.postIds.values();
         users = currentCommunity.users.values();
+        bannedUsers = currentCommunity.bannedUsers.values();
         usersCount = currentCommunity.usersCount;
         active = currentCommunity.active;
     }
@@ -207,8 +213,10 @@ IPageCommunity
      */
     function addModerator(uint256 communityId, address moderator) external override validCommunityId(communityId) onlyVoterContract(0) {
         Community storage currentCommunity = community[communityId];
+
         require(moderator != address(0), "PageCommunity: Wrong moderator");
         require(currentCommunity.moderators.length() < MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
+        require(isCommunityUser(communityId, moderator), "PageCommunity: wrong user");
 
         currentCommunity.moderators.add(moderator);
         emit AddedModerator(_msgSender(), communityId, moderator);
@@ -223,10 +231,47 @@ IPageCommunity
      */
     function removeModerator(uint256 communityId, address moderator) external override validCommunityId(communityId) onlyVoterContract(0) {
         Community storage currentCommunity = community[communityId];
-        require(_msgSender() == currentCommunity.creator, "PageCommunity: Wrong creator");
+
+        require(isCommunityModerator(communityId, moderator), "PageCommunity: wrong moderator");
 
         currentCommunity.moderators.remove(moderator);
         emit RemovedModerator(_msgSender(), communityId, moderator);
+    }
+
+    /**
+     * @dev Adds a banned user for the community.
+     * Can only be done by moderator.
+     *
+     * @param communityId ID of community
+     * @param user User address
+     */
+    function addBannedUser(uint256 communityId, address user) external override validCommunityId(communityId) {
+        Community storage currentCommunity = community[communityId];
+
+        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
+        require(isCommunityUser(communityId, user), "PageCommunity: wrong user");
+        require(!isBannedUser(communityId, user), "PageCommunity: user is already banned");
+
+        currentCommunity.bannedUsers.add(user);
+        emit AddedBannedUser(_msgSender(), communityId, user);
+    }
+
+    /**
+     * @dev Removes a banned user for the community.
+     * Can only be done by moderator.
+     *
+     * @param communityId ID of community
+     * @param user User address
+     */
+    function removeBannedUser(uint256 communityId, address user) external override validCommunityId(communityId) {
+        Community storage currentCommunity = community[communityId];
+
+        require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
+        require(isCommunityUser(communityId, user), "PageCommunity: wrong user");
+        require(isBannedUser(communityId, user), "PageCommunity: user is already banned");
+
+        currentCommunity.bannedUsers.remove(user);
+        emit RemovedBannedUser(_msgSender(), communityId, user);
     }
 
     /**
@@ -548,7 +593,17 @@ IPageCommunity
      * @param user Community user address
      */
     function isCommunityUser(uint256 communityId, address user) public view override returns(bool) {
-        return community[communityId].users.contains(user);
+        return community[communityId].users.contains(user) && !isBannedUser(communityId, user);
+    }
+
+    /**
+     * @dev Returns a boolean value about checking the address of the user of the banned.
+     *
+     * @param communityId ID of community
+     * @param user Community user address
+     */
+    function isBannedUser(uint256 communityId, address user) public view override returns(bool) {
+        return community[communityId].bannedUsers.contains(user);
     }
 
     /**
