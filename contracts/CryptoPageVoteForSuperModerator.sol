@@ -9,13 +9,13 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageCommunity.sol";
 import "./interfaces/ICryptoPageToken.sol";
-import "./interfaces/ICryptoPageVoteForFeeAndModerator.sol";
+import "./interfaces/ICryptoPageVoteForSuperModerator.sol";
 
 contract PageVoteForSuperModerator is
     Initializable,
     OwnableUpgradeable,
     AccessControlUpgradeable,
-    IPageVoteForFeeAndModerator
+    IPageVoteForSuperModerator
 {
 
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -86,7 +86,6 @@ contract PageVoteForSuperModerator is
      * @param communityId ID of community
      * @param description Brief text description for the proposal
      * @param duration Voting duration in seconds
-     * @param values Values for methods 1 and 2
      * @param user Value for methods 3 and 4
      */
     function createVote(
@@ -139,10 +138,10 @@ contract PageVoteForSuperModerator is
      * @param isYes For the implementation of the proposal or against the implementation
      */
     function putVote(uint256 communityId, uint256 index, bool isYes) external {
-        require(votes[communityId].length > index, "PageVote: wrong index");
+        require(votes.length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[communityId][index];
+        Vote storage vote = votes[index];
 
         require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
@@ -192,7 +191,6 @@ contract PageVoteForSuperModerator is
     /**
      * @dev Reading information about a Vote.
      *
-     * @param communityId ID of community
      * @param index Voting number for the current community.
      * The total number of all votes is given by the "readVotesCount()" function.
      */
@@ -225,7 +223,6 @@ contract PageVoteForSuperModerator is
     /**
      * @dev Reading the amount of votes for the community.
      *
-     * @param communityId ID of community
      */
     function readVotesCount() public override view returns(uint256 count) {
         return votes.length;
@@ -234,8 +231,7 @@ contract PageVoteForSuperModerator is
     /**
      * @dev Starts the execution of a method for the community.
      *
-     * @param communityId ID of community
-     * @param index Voting number for the current community.
+     * @param user Address of supervisor
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeScript(address user) private {

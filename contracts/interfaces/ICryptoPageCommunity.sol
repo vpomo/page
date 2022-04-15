@@ -14,6 +14,7 @@ interface IPageCommunity {
         address[] memory moderators,
         uint256[] memory postIds,
         address[] memory users,
+        address[] memory bannedUsers,
         uint256 usersCount,
         bool active
     );
@@ -21,6 +22,10 @@ interface IPageCommunity {
     function addModerator(uint256 communityId, address moderator) external;
 
     function removeModerator(uint256 communityId, address moderator) external;
+
+    function addBannedUser(uint256 communityId, address user) external;
+
+    function removeBannedUser(uint256 communityId, address user) external;
 
     function join(uint256 communityId) external;
 
@@ -47,6 +52,8 @@ interface IPageCommunity {
     function burnPost(uint256 postId) external;
 
     function setPostVisibility(uint256 postId, bool newVisible) external;
+
+    function setCommunityActive(uint256 communityId, bool newActive) external;
 
     function getPostPrice(uint256 postId) external view returns (uint256);
 
@@ -80,17 +87,25 @@ interface IPageCommunity {
 
     function setMaxModerators(uint256 newValue) external;
 
+    function addVoterContract(address newContract) external;
+
+    function changeSupervisor(address newUser) external;
+
     function getCommentCount(uint256 postId) external returns(uint256);
 
     function isCommunityCreator(uint256 communityId, address user) external returns(bool);
 
     function isCommunityUser(uint256 communityId, address user) external returns(bool);
 
+    function isBannedUser(uint256 communityId, address user) external view returns(bool);
+
     function isCommunityModerator(uint256 communityId, address user) external returns(bool);
 
     function getCommunityIdByPostId(uint256 postId) external returns(uint256);
 
     function isUpDownUser(uint256 postId, address user) external returns(bool);
+
+    function isActiveCommunity(uint256 communityId) external view returns(bool);
 
     function isActiveCommunityByPostId(uint256 postId) external returns(bool);
 

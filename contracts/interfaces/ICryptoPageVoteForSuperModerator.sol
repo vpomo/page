@@ -3,7 +3,7 @@
 pragma solidity 0.8.12;
 
 
-interface IPageVoteForFeeAndModerator {
+interface IPageVoteForSuperModerator {
 
     function version() external pure returns (string memory);
 
@@ -20,7 +20,7 @@ interface IPageVoteForFeeAndModerator {
 
     function executeVote(uint256 communityId, uint256 index) external;
 
-    function readVote(uint256 index) external override view returns(
+    function readVote(uint256 index) external view returns(
         string memory description,
         address creator,
         uint128 finishTime,
