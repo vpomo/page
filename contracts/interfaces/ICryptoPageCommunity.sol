@@ -16,7 +16,8 @@ interface IPageCommunity {
         address[] memory users,
         address[] memory bannedUsers,
         uint256 usersCount,
-        bool active
+        bool isActive,
+        bool isPrivate
     );
 
     function addModerator(uint256 communityId, address moderator) external;
@@ -54,6 +55,8 @@ interface IPageCommunity {
     function setPostVisibility(uint256 postId, bool newVisible) external;
 
     function setCommunityActive(uint256 communityId, bool newActive) external;
+
+    function setCommunityPrivate(uint256 communityId, bool newPrivate) external;
 
     function getPostPrice(uint256 postId) external view returns (uint256);
 
@@ -108,5 +111,7 @@ interface IPageCommunity {
     function isActiveCommunity(uint256 communityId) external view returns(bool);
 
     function isActiveCommunityByPostId(uint256 postId) external returns(bool);
+
+    function isPrivateCommunity(uint256 communityId) external view returns(bool);
 
 }

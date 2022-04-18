@@ -43,7 +43,8 @@ IPageCommunity
         EnumerableSetUpgradeable.AddressSet users;
         EnumerableSetUpgradeable.AddressSet bannedUsers;
         uint256 usersCount;
-        bool active;
+        bool isActive;
+        bool isPrivate;
     }
 
     struct Post {
@@ -93,6 +94,7 @@ IPageCommunity
     event BurnPost(uint256 indexed communityId, uint256 postId, address creator, address owner);
     event ChangePostVisible(uint256 indexed communityId, uint256 postId, bool isVisible);
     event ChangeCommunityActive(uint256 indexed communityId, bool isActive);
+    event ChangeCommunityPrivate(uint256 indexed communityId, bool isPrivate);
 
     event WriteComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
     event BurnComment(uint256 indexed communityId, uint256 postId, uint256 commentId, address creator, address owner);
@@ -170,7 +172,7 @@ IPageCommunity
         communityCount++;
         Community storage newCommunity = community[communityCount];
         newCommunity.creator = _msgSender();
-        newCommunity.active = true;
+        newCommunity.isActive = true;
         newCommunity.name = desc;
 
         emit AddedCommunity(_msgSender(), communityCount, desc);
@@ -189,7 +191,8 @@ IPageCommunity
         address[] memory users,
         address[] memory bannedUsers,
         uint256 usersCount,
-        bool active
+        bool isActive,
+        bool isPrivate
     ) {
 
         Community storage currentCommunity = community[communityId];
@@ -201,7 +204,8 @@ IPageCommunity
         users = currentCommunity.users.values();
         bannedUsers = currentCommunity.bannedUsers.values();
         usersCount = currentCommunity.usersCount;
-        active = currentCommunity.active;
+        isActive = currentCommunity.isActive;
+        isPrivate = currentCommunity.isPrivate;
     }
 
     /**
@@ -403,14 +407,31 @@ IPageCommunity
      * @param communityId ID of community
      * @param newActive Boolean value for community active
      */
-    function setCommunityActive(uint256 communityId, bool newActive) external override {
+    function setCommunityActive(uint256 communityId, bool newActive) external override validCommunityId(communityId) {
         require(supervisor == _msgSender(), "PageCommunity: wrong supervisor");
 
-        bool oldActive = community[communityId].active;
-        require(oldActive != newActive, "PageCommunity: wrong new active");
-        community[communityId].active = newActive;
+        bool oldActive = community[communityId].isActive;
+        require(oldActive != newActive, "PageCommunity: wrong new active status");
+        community[communityId].isActive = newActive;
 
         emit ChangeCommunityActive(communityId, newActive);
+    }
+
+    /**
+     * @dev Change community private.
+     *
+     * @param communityId ID of community
+     * @param newPrivate Boolean value for community private
+     */
+    function setCommunityPrivate(uint256 communityId, bool newPrivate) external override validCommunityId(communityId) {
+        require(isCommunityModerator(communityId, _msgSender())
+            || _msgSender() == community[communityId].creator, "PageCommunity: access denied");
+
+        bool oldPrivate = community[communityId].isPrivate;
+        require(oldPrivate != newPrivate, "PageCommunity: wrong new private status");
+        community[communityId].isPrivate = newPrivate;
+
+        emit ChangeCommunityPrivate(communityId, newPrivate);
     }
 
     /**
@@ -640,7 +661,7 @@ IPageCommunity
      * @param communityId ID of community
      */
     function isActiveCommunity(uint256 communityId) public view override returns(bool) {
-        return community[communityId].active;
+        return community[communityId].isActive;
     }
 
     /**
@@ -651,6 +672,15 @@ IPageCommunity
     function isActiveCommunityByPostId(uint256 postId) public view override returns(bool) {
         uint256 communityId = getCommunityIdByPostId(postId);
         return isActiveCommunity(communityId);
+    }
+
+    /**
+     * @dev Returns a boolean indicating that the community is private.
+     *
+     * @param communityId ID of community
+     */
+    function isPrivateCommunity(uint256 communityId) public view override returns(bool) {
+        return community[communityId].isPrivate;
     }
 
     //private area
