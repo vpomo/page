@@ -149,7 +149,7 @@ contract PageVoteForFeeAndModerator is
         address sender = _msgSender();
         Vote storage vote = votes[communityId][index];
 
-        require(community.isCommunityUser(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
         require(vote.active, "PageVote: vote not active");
 
@@ -177,7 +177,7 @@ contract PageVoteForFeeAndModerator is
         address sender = _msgSender();
         Vote storage vote = votes[communityId][index];
 
-        require(community.isCommunityUser(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
         require(vote.active, "PageVote: vote not active");
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");

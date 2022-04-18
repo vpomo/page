@@ -95,7 +95,7 @@ interface IPageCommunity {
 
     function isCommunityCreator(uint256 communityId, address user) external returns(bool);
 
-    function isCommunityUser(uint256 communityId, address user) external returns(bool);
+    function isCommunityActiveUser(uint256 communityId, address user) external returns(bool);
 
     function isBannedUser(uint256 communityId, address user) external view returns(bool);
 

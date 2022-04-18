@@ -109,7 +109,7 @@ IPageCommunity
 
     modifier onlyCommunityUser(uint256 id) {
         validateCommunity(id);
-        require(isCommunityUser(id, _msgSender()), "PageCommunity: wrong user");
+        require(isCommunityActiveUser(id, _msgSender()), "PageCommunity: wrong user");
         _;
     }
 
@@ -119,7 +119,7 @@ IPageCommunity
     }
 
     modifier onlyCommunityActiveByPostId(uint256 postId) {
-        require(isActiveCommunityByPostId(postId), "PageCommunity: wrong active community");
+        require(isActiveCommunityByPostId(postId), "PageCommunity: wrong active community by post ID");
         _;
     }
 
@@ -216,7 +216,7 @@ IPageCommunity
 
         require(moderator != address(0), "PageCommunity: Wrong moderator");
         require(currentCommunity.moderators.length() < MAX_MODERATORS, "PageCommunity: The limit on the number of moderators");
-        require(isCommunityUser(communityId, moderator), "PageCommunity: wrong user");
+        require(isCommunityActiveUser(communityId, moderator), "PageCommunity: wrong user");
 
         currentCommunity.moderators.add(moderator);
         emit AddedModerator(_msgSender(), communityId, moderator);
@@ -249,7 +249,7 @@ IPageCommunity
         Community storage currentCommunity = community[communityId];
 
         require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
-        require(isCommunityUser(communityId, user), "PageCommunity: wrong user");
+        require(isCommunityActiveUser(communityId, user), "PageCommunity: wrong user");
         require(!isBannedUser(communityId, user), "PageCommunity: user is already banned");
 
         currentCommunity.bannedUsers.add(user);
@@ -267,7 +267,6 @@ IPageCommunity
         Community storage currentCommunity = community[communityId];
 
         require(isCommunityModerator(communityId, _msgSender()), "PageCommunity: access denied");
-        require(isCommunityUser(communityId, user), "PageCommunity: wrong user");
         require(isBannedUser(communityId, user), "PageCommunity: user is already banned");
 
         currentCommunity.bannedUsers.remove(user);
@@ -310,8 +309,8 @@ IPageCommunity
     ) external override validCommunityId(communityId) onlyCommunityUser(communityId) {
         uint256 gasBefore = gasleft();
 
-        require(isCommunityUser(communityId, _msgSender()), "PageCommunity: wrong user");
-        require(isCommunityUser(communityId, owner), "PageCommunity: wrong user");
+        require(isCommunityActiveUser(communityId, _msgSender()), "PageCommunity: wrong user");
+        require(isCommunityActiveUser(communityId, owner), "PageCommunity: wrong user");
 
         uint256 postId = nft.mint(owner);
         createPost(postId, owner, ipfsHash);
@@ -366,7 +365,7 @@ IPageCommunity
         uint256 communityId = getCommunityIdByPostId(postId);
         address postOwner = post[postId].owner;
 
-        require(isCommunityUser(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: wrong user");
+        require(isCommunityActiveUser(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: wrong user");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
         require(postOwner == _msgSender(), "PageCommunity: wrong owner");
 
@@ -451,8 +450,8 @@ IPageCommunity
         uint256 gasBefore = gasleft();
         uint256 communityId = getCommunityIdByPostId(postId);
 
-        require(isCommunityUser(communityId, _msgSender()), "PageCommunity: wrong user");
-        require(isCommunityUser(communityId, owner), "PageCommunity: wrong user");
+        require(isCommunityActiveUser(communityId, _msgSender()), "PageCommunity: wrong user");
+        require(isCommunityActiveUser(communityId, owner), "PageCommunity: wrong user");
         require(post[postId].isView, "PageCommunity: wrong view post");
 
         setPostUpDown(postId, isUp, isDown);
@@ -592,7 +591,7 @@ IPageCommunity
      * @param communityId ID of community
      * @param user Community user address
      */
-    function isCommunityUser(uint256 communityId, address user) public view override returns(bool) {
+    function isCommunityActiveUser(uint256 communityId, address user) public view override returns(bool) {
         return community[communityId].users.contains(user) && !isBannedUser(communityId, user);
     }
 
@@ -641,7 +640,7 @@ IPageCommunity
      * @param communityId ID of community
      */
     function isActiveCommunity(uint256 communityId) public view override returns(bool) {
-        return community[communityId].active == true;
+        return community[communityId].active;
     }
 
     /**
@@ -650,8 +649,8 @@ IPageCommunity
      * @param postId ID of post
      */
     function isActiveCommunityByPostId(uint256 postId) public view override returns(bool) {
-        uint256 communityId = communityIdByPostId[postId];
-        return community[communityId].active;
+        uint256 communityId = getCommunityIdByPostId(postId);
+        return isActiveCommunity(communityId);
     }
 
     //private area

@@ -64,16 +64,16 @@ def test_join_quit(pageCommunity, someUser):
     pageCommunity.addCommunity(communityName)
     assert pageCommunity.communityCount() == 1
 
-    isCommunityUser = pageCommunity.isCommunityUser(1, someUser)
-    assert isCommunityUser == False
+    isCommunityActiveUser = pageCommunity.isCommunityActiveUser(1, someUser)
+    assert isCommunityActiveUser == False
 
     pageCommunity.join(1, {'from': someUser})
-    isCommunityUser = pageCommunity.isCommunityUser(1, someUser)
-    assert isCommunityUser == True
+    isCommunityActiveUser = pageCommunity.isCommunityActiveUser(1, someUser)
+    assert isCommunityActiveUser == True
 
     pageCommunity.quit(1, {'from': someUser})
-    isCommunityUser = pageCommunity.isCommunityUser(1, someUser)
-    assert isCommunityUser == False
+    isCommunityActiveUser = pageCommunity.isCommunityActiveUser(1, someUser)
+    assert isCommunityActiveUser == False
 
 
 def test_write_read_Post(pageBank, pageCommunity, someUser, deployer):
@@ -89,6 +89,10 @@ def test_write_read_Post(pageBank, pageCommunity, someUser, deployer):
     pageCommunity.join(1, {'from': deployer})
     pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
     pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
+
+    assert pageCommunity.isActiveCommunityByPostId(0) == True
+    assert pageCommunity.isActiveCommunityByPostId(1) == True
+    assert pageCommunity.isActiveCommunityByPostId(2) == False
 
     readPost = pageCommunity.readPost(0)
     #('dddd', '0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871', 0, 0, 12122487000000000000, 0, (), True)
@@ -256,9 +260,32 @@ def test_visibility(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerato
     assert postVisible == False
 
 
+def test_banned_user(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerator, someUser, deployer, treasury):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
+    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
 
+    with reverts():
+        pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
 
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
 
+    pageCommunity.join(1, {'from': accounts[2]})
+    pageCommunity.join(1, {'from': accounts[3]})
+
+    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForFeeAndModerator})
+    pageCommunity.addModerator(1, accounts[3], {'from': pageVoteForFeeAndModerator})
+
+    pageCommunity.addBannedUser(1, someUser, {'from': accounts[2]})
+
+    with reverts():
+        pageCommunity.writePost(1, 'dddd-ssss', deployer, {'from': someUser})
+
+    pageCommunity.removeBannedUser(1, someUser, {'from': accounts[2]})
+    pageCommunity.writePost(1, 'dddd-ssss', deployer, {'from': someUser})
 
 
 
