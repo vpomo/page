@@ -315,6 +315,7 @@ IPageCommunity
 
         require(isCommunityActiveUser(communityId, _msgSender()), "PageCommunity: wrong user");
         require(isCommunityActiveUser(communityId, owner), "PageCommunity: wrong user");
+        require(isPrivacyAccess(_msgSender(), communityId), "PageCommunity: wrong time for privacy access");
 
         uint256 postId = nft.mint(owner);
         createPost(postId, owner, ipfsHash);
@@ -347,16 +348,18 @@ IPageCommunity
         address[] memory upDownUsers,
         bool isView
     ) {
-        Post storage readed = post[postId];
-        ipfsHash = readed.ipfsHash;
-        creator = readed.creator;
-        owner = readed.owner;
-        upCount = readed.upCount;
-        downCount = readed.downCount;
-        price = readed.price;
-        commentCount = readed.commentCount;
-        upDownUsers = readed.upDownUsers.values();
-        isView = readed.isView;
+        if(isPrivacyAccess(_msgSender(), getCommunityIdByPostId(postId))) {
+            Post storage readed = post[postId];
+            ipfsHash = readed.ipfsHash;
+            creator = readed.creator;
+            owner = readed.owner;
+            upCount = readed.upCount;
+            downCount = readed.downCount;
+            price = readed.price;
+            commentCount = readed.commentCount;
+            upDownUsers = readed.upDownUsers.values();
+            isView = readed.isView;
+        }
     }
 
     /**
@@ -393,6 +396,7 @@ IPageCommunity
         uint256 communityId = getCommunityIdByPostId(postId);
         require(isCommunityModerator(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: access denied");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
+        require(isPrivacyAccess(_msgSender(), communityId), "PageCommunity: wrong time for privacy access");
 
         bool oldVisible = post[postId].isView;
         require(oldVisible != newVisible, "PageCommunity: wrong new visible");
@@ -474,6 +478,7 @@ IPageCommunity
         require(isCommunityActiveUser(communityId, _msgSender()), "PageCommunity: wrong user");
         require(isCommunityActiveUser(communityId, owner), "PageCommunity: wrong user");
         require(post[postId].isView, "PageCommunity: wrong view post");
+        require(isPrivacyAccess(_msgSender(), communityId), "PageCommunity: wrong time for privacy access");
 
         setPostUpDown(postId, isUp, isDown);
         createComment(postId, ipfsHash, owner, isUp, isDown);
@@ -502,14 +507,16 @@ IPageCommunity
         bool isDown,
         bool isView
     ) {
-        Comment memory readed = comment[postId][commentId];
-        ipfsHash = readed.ipfsHash;
-        creator = readed.creator;
-        owner = readed.owner;
-        price = readed.price;
-        isUp = readed.isUp;
-        isDown = readed.isDown;
-        isView = readed.isView;
+        if (isPrivacyAccess(_msgSender(), getCommunityIdByPostId(postId))) {
+            Comment memory readed = comment[postId][commentId];
+            ipfsHash = readed.ipfsHash;
+            creator = readed.creator;
+            owner = readed.owner;
+            price = readed.price;
+            isUp = readed.isUp;
+            isDown = readed.isDown;
+            isView = readed.isView;
+        }
     }
 
     /**
@@ -548,6 +555,7 @@ IPageCommunity
         uint256 communityId = getCommunityIdByPostId(postId);
         require(isCommunityModerator(communityId, _msgSender()) || _msgSender() == supervisor, "PageCommunity: access denied");
         require(community[communityId].postIds.contains(postId), "PageCommunity: wrong post");
+        require(isPrivacyAccess(_msgSender(), communityId), "PageCommunity: wrong time for privacy access");
 
         bool oldVisible = comment[postId][commentId].isView;
         require(oldVisible != newVisible, "PageCommunity: wrong new visible");
@@ -683,7 +691,7 @@ IPageCommunity
         return community[communityId].isPrivate;
     }
 
-    //private area
+    // *** --- Private area --- ***
 
     /**
      * @dev Checks if such an ID can exist for the community.
@@ -817,5 +825,21 @@ IPageCommunity
     function setCommentPrice(uint256 postId, uint256 commentId, uint128 price) private {
         Comment storage curComment = comment[postId][commentId];
         curComment.price = price;
+    }
+
+    /**
+     * @dev Checks for privacy access.
+     *
+     * @param user Address of user
+     * @param communityId ID of community
+     */
+    function isPrivacyAccess(address user, uint256 communityId) private view returns(bool) {
+        if (!community[communityId].isPrivate || user == supervisor) {
+            return true;
+        }
+        if (bank.isPrivacyAvailable(user, communityId)) {
+            return true;
+        }
+        return false;
     }
 }

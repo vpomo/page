@@ -60,6 +60,11 @@ contract PageBank is
 
     mapping(uint256 => CommunityFee) private communityFee;
 
+    // user -> communityId -> finished time
+    mapping(address => mapping(uint256 => uint256)) private endPrivacyTime;
+    // communityId -> balance of PAGE tokens
+    mapping(uint256 => uint256) private communityBalance;
+
     uint64 public defaultCreatePostOwnerFee = 4500;
     uint64 public defaultCreatePostCreatorFee = 4500;
     uint64 public defaultRemovePostOwnerFee = 0;
@@ -536,11 +541,23 @@ contract PageBank is
      *
      * @param newTreasuryFee New fee value for the Treasury
      */
-    function setTreasuryFee(uint256 newTreasuryFee ) external override onlyOwner {
+    function setTreasuryFee(uint256 newTreasuryFee) external override onlyOwner {
         require(newTreasuryFee != treasuryFee, "PageBank: wrong treasury value");
         emit SetTreasuryFee(treasuryFee, newTreasuryFee);
         treasuryFee = newTreasuryFee;
     }
+
+    /**
+     * @dev Checks for privacy access.
+     *
+     * @param user Address of user
+     * @param communityId ID of community
+     */
+    function isPrivacyAvailable(address user, uint256 communityId) external view override returns(bool) {
+        return endPrivacyTime[user][communityId] > block.timestamp;
+    }
+
+    // *** --- Private area --- ***
 
     /**
      * @dev Returns gas multiplied by token's prices and gas price.

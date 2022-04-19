@@ -94,4 +94,7 @@ interface IPageBank {
     function setToken(address newToken) external;
 
     function setTreasuryFee(uint256 newTreasuryFee ) external;
+
+    function isPrivacyAvailable(address user, uint256 communityId) external view returns(bool);
+
 }
