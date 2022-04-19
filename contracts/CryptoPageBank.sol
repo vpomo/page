@@ -64,6 +64,8 @@ contract PageBank is
     mapping(address => mapping(uint256 => uint256)) private endPrivacyTime;
     // communityId -> balance of PAGE tokens
     mapping(uint256 => uint256) private communityBalance;
+    // communityId -> price for privacy access
+    mapping(uint256 => uint256) private privacyPrice;
 
     uint64 public defaultCreatePostOwnerFee = 4500;
     uint64 public defaultCreatePostCreatorFee = 4500;
@@ -80,6 +82,7 @@ contract PageBank is
 
     event Withdraw(address indexed user, uint256 amount);
     event AddedBalance(address indexed user, uint256 amount);
+    event PaidForPrivacyAccess(address indexed user, uint256 indexed communityId, uint256 amount);
 
     event MintForPost(uint256 indexed communityId, address owner, address creator, uint256 amount);
     event MintForComment(uint256 indexed communityId, address owner, address creator, uint256 amount);
@@ -392,6 +395,29 @@ contract PageBank is
         require(token.transferFrom(_msgSender(), address(this), amount), "PageBank: wrong transfer of tokens");
         _balances[_msgSender()] += amount;
         emit AddedBalance(_msgSender(), amount);
+    }
+
+    /**
+     * @dev Pay tokens for privacy access.
+     *
+     * @param amount An amount of tokens
+     * @param communityId ID of community
+     */
+    function payForPrivacyAccess(uint256 amount, uint256 communityId) external override {
+        address sender = _msgSender();
+        uint256 price = privacyPrice[communityId];
+        require(amount > 0, "PageBank: wrong amount");
+        require(price > 0, "PageBank: wrong price");
+
+        uint256 daysCount = amount / price;
+        uint256 payAmount = daysCount * price;
+        require(_balances[sender] >= payAmount, "PageBank: incorrect amount on the user's balance");
+
+        _balances[sender] -= payAmount;
+        communityBalance[communityId] += payAmount;
+        endPrivacyTime[sender][communityId] += block.timestamp + (daysCount * 1 days);
+
+        emit PaidForPrivacyAccess(_msgSender(), communityId, amount);
     }
 
     /**
