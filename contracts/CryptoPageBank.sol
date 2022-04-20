@@ -24,6 +24,7 @@ contract PageBank is
     bytes32 public constant UPDATER_FEE_ROLE = keccak256("UPDATER_FEE_ROLE");
     bytes32 public constant DEFINE_FEE_ROLE = keccak256("DEFINE_FEE_ROLE");
     bytes32 public constant CHANGE_PRICE_ROLE = keccak256("CHANGE_PRICE_ROLE");
+    bytes32 public constant VOTE_FOR_EARN_ROLE = keccak256("VOTE_FOR_EARN_ROLE");
 
     uint256 public FOR_MINT_GAS_AMOUNT = 145000;
     uint256 public FOR_BURN_GAS_AMOUNT = 95000;
@@ -82,7 +83,9 @@ contract PageBank is
 
     event Withdraw(address indexed user, uint256 amount);
     event AddedBalance(address indexed user, uint256 amount);
+
     event PaidForPrivacyAccess(address indexed user, uint256 indexed communityId, uint256 amount);
+    event SetPriceForPrivacyAccess(uint256 oldValue, uint256 newValue);
 
     event MintForPost(uint256 indexed communityId, address owner, address creator, uint256 amount);
     event MintForComment(uint256 indexed communityId, address owner, address creator, uint256 amount);
@@ -136,6 +139,7 @@ contract PageBank is
         _setRoleAdmin(BURNER_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(UPDATER_FEE_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(CHANGE_PRICE_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(VOTE_FOR_EARN_ROLE, DEFAULT_ADMIN_ROLE);
 
         treasury = _treasury;
     }
@@ -395,6 +399,21 @@ contract PageBank is
         require(token.transferFrom(_msgSender(), address(this), amount), "PageBank: wrong transfer of tokens");
         _balances[_msgSender()] += amount;
         emit AddedBalance(_msgSender(), amount);
+    }
+
+    /**
+     * @dev Set the new value of price for privacy access.
+     *
+     * @param communityId ID of community
+     * @param newValue New value for price
+     */
+    function setPriceForPrivacyAccess(uint256 communityId, uint256 newValue) external override
+        onlyRole(VOTE_FOR_EARN_ROLE)
+    {
+        uint256 oldValue = privacyPrice[communityId];
+        require(oldValue != newValue, "PageBank: wrong value for price");
+        emit SetPriceForPrivacyAccess(oldValue, newValue);
+        privacyPrice[communityId] = newValue;
     }
 
     /**

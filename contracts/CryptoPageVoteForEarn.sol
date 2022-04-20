@@ -11,7 +11,7 @@ import "./interfaces/ICryptoPageCommunity.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageVoteForSuperModerator.sol";
 
-contract PageVoteForSuperModerator is
+contract PageVoteForEarn is
     Initializable,
     OwnableUpgradeable,
     AccessControlUpgradeable,
@@ -28,24 +28,24 @@ contract PageVoteForSuperModerator is
     IPageBank public bank;
     IPageToken public token;
 
-    struct Vote {
+    struct PrivacyAccessPriceVote {
         string description;
         address creator;
         uint128 finishTime;
         uint128 yesCount;
         uint128 noCount;
-        address user;
+        uint128 newPrice;
         EnumerableSetUpgradeable.AddressSet voteUsers;
-        EnumerableSetUpgradeable.UintSet voteCommunities;
         bool active;
     }
 
-    Vote[] private votes;
+    //communityId -> PrivacyAccessPriceVote[]
+    mapping(uint256 => PrivacyAccessPriceVote[]) private privacyAccessPriceVotes;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
-    event PutVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
-    event CreateVote(address indexed sender, uint128 duration, address user);
-    event ExecuteVote(address sender, uint256 communityId, uint256 index);
+    event PutPrivacyAccessPriceVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
+    event CreatePrivacyAccessPriceVote(address indexed sender, uint128 duration, address user);
+    event ExecutePrivacyAccessPriceVote(address sender, uint256 communityId, uint256 index);
 
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
         __Ownable_init();
@@ -86,35 +86,32 @@ contract PageVoteForSuperModerator is
      * @param communityId ID of community
      * @param description Brief text description for the proposal
      * @param duration Voting duration in seconds
-     * @param user Value for new address
+     * @param newPrice Value for new price
      */
-    function createVote(
+    function createPrivacyAccessPriceVote (
         uint256 communityId,
         string memory description,
         uint128 duration,
-        address user
+        uint256 newPrice
     ) external override {
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
         address sender = _msgSender();
-        require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
 
-        uint256 len = readVotesCount();
+        uint256 len = readPrivacyAccessPriceVotesCount(communityId);
         if (len > 0) {
             require(!votes[len-1].active, "PageVote: previous voting has not finished");
         }
-        votes.push();
+        privacyAccessPriceVotes[communityId].push();
 
-        Vote storage vote = votes[len];
+        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][len];
         vote.description = description;
         vote.creator = sender;
         vote.finishTime = uint128(block.timestamp) + duration;
-
-        require(user != address(0), "PageVote: wrong moderator address");
-        vote.user = user;
-
+        vote.newPrice = newPrice;
         vote.active = true;
 
-        emit CreateVote(sender, duration, user);
+        emit CreatePrivacyAccessPriceVote(sender, duration, newPrice);
     }
 
     /**
@@ -137,15 +134,14 @@ contract PageVoteForSuperModerator is
      * The total number of all votes is given by the "readVotesCount()" function.
      * @param isYes For the implementation of the proposal or against the implementation
      */
-    function putVote(uint256 communityId, uint256 index, bool isYes) external {
-        require(votes.length > index, "PageVote: wrong index");
+    function putPrivacyAccessPriceVote(uint256 communityId, uint256 index, bool isYes) external {
+        require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[index];
+        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][index];
 
-        require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityActiveUser()(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
-        require(!vote.voteCommunities.contains(communityId), "PageVote: the community has already voted");
         require(vote.active, "PageVote: vote not active");
 
         uint256 weight = bank.balanceOf(sender) + token.balanceOf(sender);
@@ -156,8 +152,7 @@ contract PageVoteForSuperModerator is
             vote.noCount += uint128(weight);
         }
         vote.voteUsers.add(sender);
-        vote.voteCommunities.add(communityId);
-        emit PutVote(sender, communityId, index, isYes, weight);
+        emit PutPrivacyAccessPriceVote(sender, communityId, index, isYes, weight);
     }
 
     /**
@@ -167,54 +162,53 @@ contract PageVoteForSuperModerator is
      * @param index Voting number for the current community.
      * The total number of all votes is given by the "readVotesCount()" function.
      */
-    function executeVote(uint256 communityId, uint256 index) external override {
+    function executePrivacyAccessPriceVote(uint256 communityId, uint256 index) external override {
         require(votes.length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[index];
+        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][index];
 
-        require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
         require(vote.active, "PageVote: vote not active");
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");
-        require(MIN_MODERATOR_COUNT <= vote.voteCommunities.length(), "PageVote: wrong communities count");
 
         if (vote.yesCount > vote.noCount) {
-            executeScript(vote.user);
+            executePrivacyAccessPriceVoteScript(communityId, uint256(vote.newPrice));
         }
 
         vote.active = false;
 
-        emit ExecuteVote(sender, communityId, index);
+        emit ExecutePrivacyAccessPriceVote(sender, communityId, index);
     }
 
     /**
      * @dev Reading information about a Vote.
      *
+     * @param communityId ID of community
      * @param index Voting number for the current community.
      * The total number of all votes is given by the "readVotesCount()" function.
      */
-    function readVote(uint256 index) external override view returns(
+    function readPrivacyAccessPriceVote(uint256 communityId, uint256 index) external override view returns(
         string memory description,
         address creator,
         uint128 finishTime,
         uint128 yesCount,
         uint128 noCount,
-        address user,
+        uint128 newPrice,
         address[] memory voteUsers,
-        uint256[] memory voteCommunities,
         bool active
     ) {
-        require(votes.length > index, "PageVote: wrong index");
+        require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
-        Vote storage vote = votes[index];
+        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][index];
 
         description = vote.description;
         creator = vote.creator;
         finishTime = vote.finishTime;
         yesCount = vote.yesCount;
         noCount = vote.noCount;
-        user = vote.user;
+        newPrice = vote.newPrice;
         voteUsers = vote.voteUsers.values();
         voteCommunities = vote.voteCommunities.values();
         active = vote.active;
@@ -223,18 +217,20 @@ contract PageVoteForSuperModerator is
     /**
      * @dev Reading the amount of votes for the community.
      *
+     * @param communityId ID of community
      */
-    function readVotesCount() public override view returns(uint256 count) {
-        return votes.length;
+    function readPrivacyAccessPriceVotesCount(uint256 communityId) public override view returns(uint256 count) {
+        return privacyAccessPriceVotes[communityId].length;
     }
 
     /**
-     * @dev Starts the execution of a method for the community.
+     * @dev Starts the execution for change price.
      *
-     * @param user Address of supervisor
+     * @param communityId ID of community
+     * @param price Value of price
      * The total number of all votes is given by the "readVotesCount()" function.
      */
-    function executeScript(address user) private {
-        community.changeSupervisor(user);
+    function executePrivacyAccessPriceVoteScript(uint256 communityId, uint256 price) private {
+        bank.setPriceForPrivacyAccess(communityId, price);
     }
 }

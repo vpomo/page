@@ -73,6 +73,8 @@ interface IPageBank {
 
     function addBalance(uint256 amount) external;
 
+    function setPriceForPrivacyAccess(uint256 communityId, uint256 newValue) external;
+
     function payForPrivacyAccess(uint256 amount, uint256 communityId) external;
 
     function balanceOf(address user) external view returns (uint256);
