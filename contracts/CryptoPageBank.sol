@@ -82,6 +82,7 @@ contract PageBank is
     mapping(address => uint256) private _balances;
 
     event Withdraw(address indexed user, uint256 amount);
+    event TransferFromCommunity(address indexed user, uint256 amount);
     event AddedBalance(address indexed user, uint256 amount);
 
     event PaidForPrivacyAccess(address indexed user, uint256 indexed communityId, uint256 amount);
@@ -417,6 +418,23 @@ contract PageBank is
     }
 
     /**
+     * @dev Transfer of earned tokens.
+     *
+     * @param communityId ID of community
+     * @param amount Value for amount of tokens
+     * @param wallet Address for transferring tokens
+     */
+    function transferFromCommunity(uint256 communityId, uint256 amount, address wallet) external override
+        onlyRole(VOTE_FOR_EARN_ROLE) returns(bool)
+    {
+        require(communityBalance[communityId] >= amount, "PageBank: not enough balance of tokens");
+        communityBalance[communityId] -= amount;
+        require(token.transfer(wallet,  amount), "PageBank: wrong transfer of tokens");
+        emit TransferFromCommunity(wallet, amount);
+        return true;
+    }
+
+    /**
      * @dev Pay tokens for privacy access.
      *
      * @param amount An amount of tokens
@@ -437,6 +455,15 @@ contract PageBank is
         endPrivacyTime[sender][communityId] += block.timestamp + (daysCount * 1 days);
 
         emit PaidForPrivacyAccess(_msgSender(), communityId, amount);
+    }
+
+    /**
+     * @dev Bank balance of community.
+     *
+     * @param communityId ID of community
+     */
+    function balanceOfCommunity(uint256 communityId) external view override returns (uint256) {
+        return communityBalance[communityId];
     }
 
     /**

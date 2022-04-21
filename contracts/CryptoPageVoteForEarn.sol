@@ -56,10 +56,15 @@ contract PageVoteForEarn is
     mapping(uint256 => UintAddressValueVote[]) private transferVotes;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
+
     event PutPrivacyAccessPriceVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
+    event PutTransferVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
+
     event CreatePrivacyAccessPriceVote(address indexed sender, uint128 duration, address user);
     event CreateTransferVote(address indexed sender, uint128 duration, uint128 amount, address wallet);
+
     event ExecutePrivacyAccessPriceVote(address sender, uint256 communityId, uint256 index);
+    event ExecuteTransferVote(address sender, uint256 communityId, uint256 index);
 
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
         __Ownable_init();
@@ -135,7 +140,7 @@ contract PageVoteForEarn is
      * @param description Brief text description for the proposal
      * @param duration Voting duration in seconds
      * @param amount Value for amount of tokens
-     * @param wallet Wallet address for transferring tokens
+     * @param wallet Address for transferring tokens
      */
     function createTransferVote (
         uint256 communityId,
@@ -207,6 +212,35 @@ contract PageVoteForEarn is
     }
 
     /**
+     * @dev Here the user votes either for the implementation of the proposal or against.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     * @param isYes For the implementation of the proposal or against the implementation
+     */
+    function putTransferVote(uint256 communityId, uint256 index, bool isYes) external {
+        require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
+
+        address sender = _msgSender();
+        UintAddressValueVote storage vote = transferVotes[communityId][index];
+
+        require(community.isCommunityActiveUser()(communityId, sender), "PageVote: access denied");
+        require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
+        require(vote.active, "PageVote: vote not active");
+
+        uint256 weight = bank.balanceOf(sender) + token.balanceOf(sender);
+
+        if (isYes) {
+            vote.yesCount += uint128(weight);
+        } else {
+            vote.noCount += uint128(weight);
+        }
+        vote.voteUsers.add(sender);
+        emit PutTransferVote(sender, communityId, index, isYes, weight);
+    }
+
+    /**
      * @dev Starts the execution of a Vote.
      *
      * @param communityId ID of community
@@ -231,6 +265,33 @@ contract PageVoteForEarn is
         vote.active = false;
 
         emit ExecutePrivacyAccessPriceVote(sender, communityId, index);
+    }
+
+    /**
+     * @dev Starts the execution of a Vote.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
+    function executeTransferVote(uint256 communityId, uint256 index) external override {
+        require(votes.length > index, "PageVote: wrong index");
+
+        address sender = _msgSender();
+        UintAddressValueVote storage vote = transferVotes[communityId][index];
+
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
+        require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
+        require(vote.active, "PageVote: vote not active");
+        require(vote.finishTime < block.timestamp, "PageVote: wrong time");
+
+        if (vote.yesCount > vote.noCount) {
+            executeTransferVoteScript(communityId, uint256(vote.amount), vote.wallet);
+        }
+
+        vote.active = false;
+
+        emit ExecuteTransferVote(sender, communityId, index);
     }
 
     /**
@@ -261,7 +322,39 @@ contract PageVoteForEarn is
         noCount = vote.noCount;
         newPrice = vote.newPrice;
         voteUsers = vote.voteUsers.values();
-        voteCommunities = vote.voteCommunities.values();
+        active = vote.active;
+    }
+
+    /**
+     * @dev Reading information about a Vote.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
+    function readTransferVote(uint256 communityId, uint256 index) external override view returns(
+        string memory description,
+        address creator,
+        uint128 finishTime,
+        uint128 yesCount,
+        uint128 noCount,
+        uint128 amount,
+        address wallet,
+        address[] memory voteUsers,
+        bool active
+    ) {
+        require(transferVotes[communityId].length > index, "PageVote: wrong index");
+
+        UintAddressValueVote storage vote = transferVotes[communityId][index];
+
+        description = vote.description;
+        creator = vote.creator;
+        finishTime = vote.finishTime;
+        yesCount = vote.yesCount;
+        noCount = vote.noCount;
+        amount = vote.amount;
+        wallet = vote.wallet;
+        voteUsers = vote.voteUsers.values();
         active = vote.active;
     }
 
@@ -292,5 +385,17 @@ contract PageVoteForEarn is
      */
     function executePrivacyAccessPriceVoteScript(uint256 communityId, uint256 price) private {
         bank.setPriceForPrivacyAccess(communityId, price);
+    }
+
+    /**
+     * @dev Starts the execution for change price.
+     *
+     * @param communityId ID of community
+     * @param amount Value for amount of tokens
+     * @param wallet Address for transferring tokens
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
+    function executeTransferVoteScript(uint256 communityId, uint256 amount, address wallet) private {
+        require(bank.transferFromCommunity(communityId, amount, wallet), "PageVote: wrong transfer");
     }
 }

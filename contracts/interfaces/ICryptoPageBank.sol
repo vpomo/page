@@ -75,9 +75,13 @@ interface IPageBank {
 
     function setPriceForPrivacyAccess(uint256 communityId, uint256 newValue) external;
 
+    function transferFromCommunity(uint256 communityId, uint256 amount, address wallet) external returns(bool);
+
     function payForPrivacyAccess(uint256 amount, uint256 communityId) external;
 
     function balanceOf(address user) external view returns (uint256);
+
+    function balanceOfCommunity(uint256 communityId) external view returns (uint256);
 
     function getWETHPagePriceFromPool() external view returns (uint256 price);
 
