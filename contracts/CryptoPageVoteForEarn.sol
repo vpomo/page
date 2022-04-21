@@ -28,7 +28,7 @@ contract PageVoteForEarn is
     IPageBank public bank;
     IPageToken public token;
 
-    struct PrivacyAccessPriceVote {
+    struct UintValueVote {
         string description;
         address creator;
         uint128 finishTime;
@@ -39,12 +39,26 @@ contract PageVoteForEarn is
         bool active;
     }
 
-    //communityId -> PrivacyAccessPriceVote[]
-    mapping(uint256 => PrivacyAccessPriceVote[]) private privacyAccessPriceVotes;
+    struct UintAddressValueVote {
+        string description;
+        address creator;
+        uint128 finishTime;
+        uint128 yesCount;
+        uint128 noCount;
+        uint128 amount;
+        address wallet;
+        EnumerableSetUpgradeable.AddressSet voteUsers;
+        bool active;
+    }
+
+    //communityId -> UintValueVote[]
+    mapping(uint256 => UintValueVote[]) private privacyAccessPriceVotes;
+    mapping(uint256 => UintAddressValueVote[]) private transferVotes;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
     event PutPrivacyAccessPriceVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
     event CreatePrivacyAccessPriceVote(address indexed sender, uint128 duration, address user);
+    event CreateTransferVote(address indexed sender, uint128 duration, uint128 amount, address wallet);
     event ExecutePrivacyAccessPriceVote(address sender, uint256 communityId, uint256 index);
 
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
@@ -81,7 +95,7 @@ contract PageVoteForEarn is
     }
 
     /**
-     * @dev Creates a new community vote proposal.
+     * @dev Creates a new community vote proposal for price of privacy access.
      *
      * @param communityId ID of community
      * @param description Brief text description for the proposal
@@ -100,11 +114,11 @@ contract PageVoteForEarn is
 
         uint256 len = readPrivacyAccessPriceVotesCount(communityId);
         if (len > 0) {
-            require(!votes[len-1].active, "PageVote: previous voting has not finished");
+            require(!privacyAccessPriceVotes[len-1].active, "PageVote: previous voting has not finished");
         }
         privacyAccessPriceVotes[communityId].push();
 
-        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][len];
+        UintValueVote storage vote = privacyAccessPriceVotes[communityId][len];
         vote.description = description;
         vote.creator = sender;
         vote.finishTime = uint128(block.timestamp) + duration;
@@ -112,6 +126,43 @@ contract PageVoteForEarn is
         vote.active = true;
 
         emit CreatePrivacyAccessPriceVote(sender, duration, newPrice);
+    }
+
+    /**
+ * @dev Creates a new community vote proposal for price of privacy access.
+     *
+     * @param communityId ID of community
+     * @param description Brief text description for the proposal
+     * @param duration Voting duration in seconds
+     * @param amount Value for amount of tokens
+     * @param wallet Wallet address for transferring tokens
+     */
+    function createTransferVote (
+        uint256 communityId,
+        string memory description,
+        uint128 duration,
+        uint256 amount,
+        address wallet
+    ) external override {
+        require(duration >= MIN_DURATION, "PageVote: wrong duration");
+        address sender = _msgSender();
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
+
+        uint256 len = readTransferVotesCount(communityId);
+        if (len > 0) {
+            require(!transferVotes[len-1].active, "PageVote: previous voting has not finished");
+        }
+        transferVotes[communityId].push();
+
+        UintAddressValueVote storage vote = transferVotes[communityId][len];
+        vote.description = description;
+        vote.creator = sender;
+        vote.finishTime = uint128(block.timestamp) + duration;
+        vote.amount = amount;
+        vote.wallet = wallet;
+        vote.active = true;
+
+        emit CreateTransferVote(sender, duration, amount, wallet);
     }
 
     /**
@@ -138,7 +189,7 @@ contract PageVoteForEarn is
         require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][index];
+        UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
 
         require(community.isCommunityActiveUser()(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
@@ -166,7 +217,7 @@ contract PageVoteForEarn is
         require(votes.length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][index];
+        UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
 
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
@@ -201,7 +252,7 @@ contract PageVoteForEarn is
     ) {
         require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
-        PrivacyAccessPriceVote storage vote = privacyAccessPriceVotes[communityId][index];
+        UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
 
         description = vote.description;
         creator = vote.creator;
@@ -221,6 +272,15 @@ contract PageVoteForEarn is
      */
     function readPrivacyAccessPriceVotesCount(uint256 communityId) public override view returns(uint256 count) {
         return privacyAccessPriceVotes[communityId].length;
+    }
+
+    /**
+     * @dev Reading the amount of votes for the community.
+     *
+     * @param communityId ID of community
+     */
+    function readTransferVotesCount(uint256 communityId) public override view returns(uint256 count) {
+        return transferVotes[communityId].length;
     }
 
     /**
