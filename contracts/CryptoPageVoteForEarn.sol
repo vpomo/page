@@ -9,13 +9,13 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageCommunity.sol";
 import "./interfaces/ICryptoPageToken.sol";
-import "./interfaces/ICryptoPageVoteForSuperModerator.sol";
+import "./interfaces/ICryptoPageVoteForEarn.sol";
 
 contract PageVoteForEarn is
     Initializable,
     OwnableUpgradeable,
     AccessControlUpgradeable,
-    IPageVoteForSuperModerator
+    IPageVoteForEarn
 {
 
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -60,7 +60,7 @@ contract PageVoteForEarn is
     event PutPrivacyAccessPriceVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
     event PutTransferVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
 
-    event CreatePrivacyAccessPriceVote(address indexed sender, uint128 duration, address user);
+    event CreatePrivacyAccessPriceVote(address indexed sender, uint128 duration, uint128 newPrice);
     event CreateTransferVote(address indexed sender, uint128 duration, uint128 amount, address wallet);
 
     event ExecutePrivacyAccessPriceVote(address sender, uint256 communityId, uint256 index);
@@ -111,7 +111,7 @@ contract PageVoteForEarn is
         uint256 communityId,
         string memory description,
         uint128 duration,
-        uint256 newPrice
+        uint128 newPrice
     ) external override {
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
         address sender = _msgSender();
@@ -119,7 +119,7 @@ contract PageVoteForEarn is
 
         uint256 len = readPrivacyAccessPriceVotesCount(communityId);
         if (len > 0) {
-            require(!privacyAccessPriceVotes[len-1].active, "PageVote: previous voting has not finished");
+            require(!privacyAccessPriceVotes[communityId][len-1].active, "PageVote: previous voting has not finished");
         }
         privacyAccessPriceVotes[communityId].push();
 
@@ -146,7 +146,7 @@ contract PageVoteForEarn is
         uint256 communityId,
         string memory description,
         uint128 duration,
-        uint256 amount,
+        uint128 amount,
         address wallet
     ) external override {
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
@@ -155,7 +155,7 @@ contract PageVoteForEarn is
 
         uint256 len = readTransferVotesCount(communityId);
         if (len > 0) {
-            require(!transferVotes[len-1].active, "PageVote: previous voting has not finished");
+            require(!transferVotes[communityId][len-1].active, "PageVote: previous voting has not finished");
         }
         transferVotes[communityId].push();
 
@@ -190,13 +190,13 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      * @param isYes For the implementation of the proposal or against the implementation
      */
-    function putPrivacyAccessPriceVote(uint256 communityId, uint256 index, bool isYes) external {
+    function putPrivacyAccessPriceVote(uint256 communityId, uint256 index, bool isYes) external override {
         require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
         UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
 
-        require(community.isCommunityActiveUser()(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
         require(vote.active, "PageVote: vote not active");
 
@@ -219,13 +219,13 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      * @param isYes For the implementation of the proposal or against the implementation
      */
-    function putTransferVote(uint256 communityId, uint256 index, bool isYes) external {
+    function putTransferVote(uint256 communityId, uint256 index, bool isYes) external override {
         require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
         UintAddressValueVote storage vote = transferVotes[communityId][index];
 
-        require(community.isCommunityActiveUser()(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
         require(vote.active, "PageVote: vote not active");
 
@@ -248,7 +248,7 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executePrivacyAccessPriceVote(uint256 communityId, uint256 index) external override {
-        require(votes.length > index, "PageVote: wrong index");
+        require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
         UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
@@ -275,7 +275,7 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeTransferVote(uint256 communityId, uint256 index) external override {
-        require(votes.length > index, "PageVote: wrong index");
+        require(transferVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
         UintAddressValueVote storage vote = transferVotes[communityId][index];
