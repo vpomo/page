@@ -10,12 +10,5 @@ interface IPageUserRate is IERC1155Upgradeable {
 
     function setCommunity(address communityContract) external;
 
-    function setBaseTokenURI(string memory baseTokenURI) external;
-
-    function mint(address owner) external returns (uint256);
-
-    function burn(uint256 tokenId) external;
-
-    function tokensOfOwner(address user) external view returns (uint256[] memory);
-
+    function totalSupply(uint256 id) external view returns (uint256);
 }
