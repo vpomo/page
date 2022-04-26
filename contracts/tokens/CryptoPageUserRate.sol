@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.12;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Upgradeable.sol";
+//import "@openzeppelin/contracts/token/ERC1155/extensions/IERC721EnumerableUpgradeable.sol";
+//import "@openzeppelin/contracts/token/ERC1155/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 
@@ -16,7 +16,7 @@ import "../interfaces/ICryptoPageBank.sol";
 /// @author Crypto.Page Team
 /// @notice
 /// @dev //https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/tree/master/contracts
-contract PageNFT is OwnableUpgradeable, ERC721EnumerableUpgradeable, IPageNFT {
+contract PageUserRate is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
     CountersUpgradeable.Counter public _tokenIdCounter;

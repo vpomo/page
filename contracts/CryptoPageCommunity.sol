@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
-import "../interfaces/ICryptoPageNFT.sol";
-import "../interfaces/ICryptoPageBank.sol";
-import "../interfaces/ICryptoPageCommunity.sol";
+import "./interfaces/ICryptoPageNFT.sol";
+import "./interfaces/ICryptoPageBank.sol";
+import "./interfaces/ICryptoPageCommunity.sol";
 
 
      /**

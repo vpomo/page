@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20Upgradeable.sol";
 
-import "./interfaces/ICryptoPageToken.sol";
+import "../interfaces/ICryptoPageToken.sol";
 
     /**
      * @dev Only bank can mint and burn tokens

@@ -6,8 +6,8 @@ import "@uniswap/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 
-import "../interfaces/ICryptoPageBank.sol";
-import "../interfaces/ICryptoPageToken.sol";
+import "./interfaces/ICryptoPageBank.sol";
+import "./interfaces/ICryptoPageToken.sol";
 
 /// @title The contract calculates amount and mint / burn PAGE tokens
 /// @author Crypto.Page Team
