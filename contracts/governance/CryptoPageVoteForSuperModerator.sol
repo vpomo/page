@@ -6,22 +6,23 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
-import "./interfaces/ICryptoPageBank.sol";
-import "./interfaces/ICryptoPageCommunity.sol";
-import "./interfaces/ICryptoPageToken.sol";
-import "./interfaces/ICryptoPageVoteForFeeAndModerator.sol";
+import "../interfaces/ICryptoPageBank.sol";
+import "../interfaces/ICryptoPageCommunity.sol";
+import "../interfaces/ICryptoPageToken.sol";
+import "../interfaces/ICryptoPageVoteForSuperModerator.sol";
 
-contract PageVoteForFeeAndModerator is
+contract PageVoteForSuperModerator is
     Initializable,
     OwnableUpgradeable,
     AccessControlUpgradeable,
-    IPageVoteForFeeAndModerator
+    IPageVoteForSuperModerator
 {
 
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
 
-    bytes32 public constant UPDATER_FEE_ROLE = keccak256("UPDATER_FEE_ROLE");
     uint128 public MIN_DURATION = 1 days;
+    uint128 public MIN_MODERATOR_COUNT = 10;
 
     IPageCommunity community;
     IPageBank public bank;
@@ -30,22 +31,20 @@ contract PageVoteForFeeAndModerator is
     struct Vote {
         string description;
         address creator;
-        uint128 execMethodNumber;
         uint128 finishTime;
         uint128 yesCount;
         uint128 noCount;
-        uint64[4] newValues;
         address user;
         EnumerableSetUpgradeable.AddressSet voteUsers;
+        EnumerableSetUpgradeable.UintSet voteCommunities;
         bool active;
     }
 
-    //communityId -> Vote[]
-    mapping(uint256 => Vote[]) private votes;
+    Vote[] private votes;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
     event PutVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
-    event CreateVote(address indexed sender, uint128 duration, uint128 methodNumber, uint64[4] values, address user);
+    event CreateVote(address indexed sender, uint128 duration, address user);
     event ExecuteVote(address sender, uint256 communityId, uint256 index);
 
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
@@ -56,7 +55,6 @@ contract PageVoteForFeeAndModerator is
         require(_bank != address(0), "PageCommunity: wrong bank address");
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
-        _setRoleAdmin(UPDATER_FEE_ROLE, DEFAULT_ADMIN_ROLE);
 
         token = IPageToken(_token);
         community = IPageCommunity(_community);
@@ -88,39 +86,35 @@ contract PageVoteForFeeAndModerator is
      * @param communityId ID of community
      * @param description Brief text description for the proposal
      * @param duration Voting duration in seconds
-     * @param methodNumber Method number for "executeScript()" function
-     * @param values Values for methods 1 and 2
-     * @param user Value for methods 3 and 4
+     * @param user Value for new address
      */
     function createVote(
         uint256 communityId,
         string memory description,
         uint128 duration,
-        uint128 methodNumber,
-        uint64[4] memory values,
         address user
     ) external override {
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
         address sender = _msgSender();
-        require(community.isCommunityModerator(communityId, sender) || community.isCommunityCreator(communityId, sender), "PageVote: access denied");
-        require(0 < methodNumber && methodNumber < 5, "PageVote: wrong methodNumber");
+        require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
 
-        uint256 len = readVotesCount(communityId);
-        votes[communityId].push();
+        uint256 len = readVotesCount();
+        if (len > 0) {
+            require(!votes[len-1].active, "PageVote: previous voting has not finished");
+        }
+        votes.push();
 
-        Vote storage vote = votes[communityId][len];
+        Vote storage vote = votes[len];
         vote.description = description;
         vote.creator = sender;
-        vote.execMethodNumber = methodNumber;
-        vote.newValues = values;
         vote.finishTime = uint128(block.timestamp) + duration;
-        vote.active = true;
-        if (methodNumber == 3 || methodNumber == 4) {
-            require(user != address(0), "PageVote: wrong moderator address");
-            vote.user = user;
-        }
 
-        emit CreateVote(sender, duration, methodNumber, values, user);
+        require(user != address(0), "PageVote: wrong moderator address");
+        vote.user = user;
+
+        vote.active = true;
+
+        emit CreateVote(sender, duration, user);
     }
 
     /**
@@ -144,13 +138,14 @@ contract PageVoteForFeeAndModerator is
      * @param isYes For the implementation of the proposal or against the implementation
      */
     function putVote(uint256 communityId, uint256 index, bool isYes) external {
-        require(votes[communityId].length > index, "PageVote: wrong index");
+        require(votes.length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[communityId][index];
+        Vote storage vote = votes[index];
 
-        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
+        require(!vote.voteCommunities.contains(communityId), "PageVote: the community has already voted");
         require(vote.active, "PageVote: vote not active");
 
         uint256 weight = bank.balanceOf(sender) + token.balanceOf(sender);
@@ -161,6 +156,7 @@ contract PageVoteForFeeAndModerator is
             vote.noCount += uint128(weight);
         }
         vote.voteUsers.add(sender);
+        vote.voteCommunities.add(communityId);
         emit PutVote(sender, communityId, index, isYes, weight);
     }
 
@@ -172,18 +168,19 @@ contract PageVoteForFeeAndModerator is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeVote(uint256 communityId, uint256 index) external override {
-        require(votes[communityId].length > index, "PageVote: wrong index");
+        require(votes.length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[communityId][index];
+        Vote storage vote = votes[index];
 
-        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
+        require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
         require(vote.active, "PageVote: vote not active");
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");
-        require(vote.yesCount > vote.noCount, "PageVote: wrong yes count");
+        require(MIN_MODERATOR_COUNT <= vote.voteCommunities.length(), "PageVote: wrong communities count");
+
         if (vote.yesCount > vote.noCount) {
-            executeScript(communityId, index);
+            executeScript(vote.user);
         }
 
         vote.active = false;
@@ -194,68 +191,50 @@ contract PageVoteForFeeAndModerator is
     /**
      * @dev Reading information about a Vote.
      *
-     * @param communityId ID of community
      * @param index Voting number for the current community.
      * The total number of all votes is given by the "readVotesCount()" function.
      */
-    function readVote(uint256 communityId, uint256 index) external override view returns(
+    function readVote(uint256 index) external override view returns(
         string memory description,
         address creator,
-        uint128 execMethodNumber,
         uint128 finishTime,
         uint128 yesCount,
         uint128 noCount,
-        uint64[4] memory newValues,
         address user,
         address[] memory voteUsers,
+        uint256[] memory voteCommunities,
         bool active
     ) {
-        require(votes[communityId].length > index, "PageVote: wrong index");
+        require(votes.length > index, "PageVote: wrong index");
 
-        Vote storage vote = votes[communityId][index];
+        Vote storage vote = votes[index];
 
         description = vote.description;
         creator = vote.creator;
-        execMethodNumber = vote.execMethodNumber;
         finishTime = vote.finishTime;
         yesCount = vote.yesCount;
         noCount = vote.noCount;
-        newValues = vote.newValues;
         user = vote.user;
         voteUsers = vote.voteUsers.values();
+        voteCommunities = vote.voteCommunities.values();
         active = vote.active;
     }
 
     /**
      * @dev Reading the amount of votes for the community.
      *
-     * @param communityId ID of community
      */
-    function readVotesCount(uint256 communityId) public override view returns(uint256 count) {
-        return votes[communityId].length;
+    function readVotesCount() public override view returns(uint256 count) {
+        return votes.length;
     }
 
     /**
      * @dev Starts the execution of a method for the community.
      *
-     * @param communityId ID of community
-     * @param index Voting number for the current community.
+     * @param user Address of supervisor
      * The total number of all votes is given by the "readVotesCount()" function.
      */
-    function executeScript(uint256 communityId, uint256 index) private {
-        Vote storage vote = votes[communityId][index];
-        uint64[4] storage values = vote.newValues;
-        if (vote.execMethodNumber == 1) {
-            bank.updatePostFee(communityId, values[0], values[1], values[2], values[3]);
-        }
-        if (vote.execMethodNumber == 2) {
-            bank.updateCommentFee(communityId, values[0], values[1], values[2], values[3]);
-        }
-        if (vote.execMethodNumber == 3) {
-            community.addModerator(communityId, vote.user);
-        }
-        if (vote.execMethodNumber == 4) {
-            community.removeModerator(communityId, vote.user);
-        }
+    function executeScript(address user) private {
+        community.changeSupervisor(user);
     }
 }

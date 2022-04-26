@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
-import "./interfaces/ICryptoPageBank.sol";
-import "./interfaces/ICryptoPageCommunity.sol";
-import "./interfaces/ICryptoPageToken.sol";
-import "./interfaces/ICryptoPageVoteForEarn.sol";
+import "../interfaces/ICryptoPageBank.sol";
+import "../interfaces/ICryptoPageCommunity.sol";
+import "../interfaces/ICryptoPageToken.sol";
+import "../interfaces/ICryptoPageVoteForEarn.sol";
 
 contract PageVoteForEarn is
     Initializable,
