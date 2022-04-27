@@ -69,14 +69,14 @@ contract PageUserRate is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
      *
      * Requirements:
      *
-     * - the caller must have the `MINTER_ROLE`.
+     * - the caller must have the `onlyCommunity`.
      */
     function mint(
         address to,
         uint256 id,
         uint256 amount,
         bytes memory data
-    ) external virtual onlyCommunity {
+    ) external override virtual onlyCommunity {
         _mint(to, id, amount, data);
     }
 
@@ -84,7 +84,7 @@ contract PageUserRate is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
         address account,
         uint256 id,
         uint256 value
-    ) external virtual onlyCommunity {
+    ) external override virtual onlyCommunity {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not owner nor approved"
@@ -101,7 +101,7 @@ contract PageUserRate is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) external virtual onlyCommunity {
+    ) external override virtual onlyCommunity {
         _mintBatch(to, ids, amounts, data);
     }
 
@@ -109,7 +109,7 @@ contract PageUserRate is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
         address account,
         uint256[] memory ids,
         uint256[] memory values
-    ) external virtual onlyCommunity {
+    ) external override virtual onlyCommunity {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not owner nor approved"
