@@ -37,8 +37,6 @@ contract PageBank is
     address public treasury;
     /// Address of CryptoPageNFT contract
     address public nft;
-    /// Address of CryptoPageCommentDeployer contract
-    address public commentDeployer;
 
     uint256 public ALL_PERCENT = 10000;
     /// Treasury fee (1000 is 10%, 100 is 1% 10 is 0.1%)
