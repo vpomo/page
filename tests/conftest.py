@@ -92,10 +92,9 @@ def pageVoteForEarn(PageVoteForEarn, deployer, pageToken, pageCommunity, pageBan
     instanсe = PageVoteForEarn.deploy({'from': deployer})
     instanсe.initialize(admin, pageToken, pageCommunity, pageBank)
     deployer.transfer(instanсe, Wei('10 ether'))
-
     pageBank.grantRole(pageBank.VOTE_FOR_EARN_ROLE(), instanсe, {'from': admin})
-
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
+    return instanсe
 
 
 @pytest.fixture(scope="module")

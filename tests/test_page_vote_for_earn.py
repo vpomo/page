@@ -12,7 +12,8 @@ def test_deployment(pageVoteForEarn):
 
 
 def test_version(pageVoteForEarn):
-    assert VERSION == pageVoteForEarn.version()
+    version = pageVoteForEarn.version()
+    assert VERSION == version
 
 
 def test_create_read_vote(accounts, pageVoteForEarn, pageCommunity, someUser, deployer):
@@ -22,14 +23,14 @@ def test_create_read_vote(accounts, pageVoteForEarn, pageCommunity, someUser, de
     pageCommunity.join(1, {'from': deployer})
 
     voteDesc = 'test for vote'
-    pageVoteForEarn.createVote(1, voteDesc, duration, 2, [10, 11, 12, 13], ZERO_ADDRESS, {'from': accounts[0]})
+    pageVoteForEarn.createPrivacyAccessPriceVote(1, voteDesc, duration, 2, {'from': accounts[0]})
 
-    readVote = pageVoteForEarn.readVote(1, 0)
+    readVote = pageVoteForEarn.readPrivacyAccessPriceVote(1, 0)
     #('test for vote', '0x66aB6D9362d4F35596279692F0251Db635165871', 2, 1649429924, 0, 0, (10, 11, 12, 13), '0x0000000000000000000000000000000000000000', (), True)
     assert readVote[0] == voteDesc
-    assert readVote[6][0] == 10
+    assert readVote[5] == 2
 
-    assert 1 == pageVoteForEarn.readVotesCount(1)
+    assert 1 == pageVoteForEarn.readPrivacyAccessPriceVotesCount(1)
 
 
 def test_put_execute_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageBank, pageToken, someUser, deployer, treasury):
@@ -39,40 +40,30 @@ def test_put_execute_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageB
     pageCommunity.join(1, {'from': deployer})
 
     voteDesc = 'test for vote'
-    pageVoteForEarn.createVote(1, voteDesc, duration, 2, [10, 11, 12, 13], ZERO_ADDRESS, {'from': accounts[0]})
+    pageVoteForEarn.createTransferVote(1, voteDesc, duration, 2, accounts[5], {'from': accounts[0]})
 
-    pageToken.transfer(someUser, 1000, {'from': treasury})
-    pageToken.transfer(deployer, 1000, {'from': treasury})
+    pageToken.transfer(someUser, 100, {'from': treasury})
+    pageToken.transfer(deployer, 100, {'from': treasury})
 
-    pageVoteForEarn.putVote(1, 0, True, {'from': someUser})
-    pageVoteForEarn.putVote(1, 0, True, {'from': deployer})
+    pageBank.setPriceForPrivacyAccess(1, 1, {'from': pageVoteForEarn})
+    pageToken.approve(pageBank, 100, {'from': treasury})
+    pageBank.addBalance(100, {'from': treasury})
+    pageBank.payForPrivacyAccess(100, 1, {'from': treasury})
 
-    readVote = pageVoteForEarn.readVote(1, 0)
-    assert readVote[9] == True
+    pageVoteForEarn.putTransferVote(1, 0, True, {'from': someUser})
+    pageVoteForEarn.putTransferVote(1, 0, True, {'from': deployer})
+
+    readVote = pageVoteForEarn.readTransferVote(1, 0)
+    assert readVote[8] == True
 
     with reverts():
-        pageVoteForEarn.executeVote(1, 0, {'from': someUser})
-
-    readCommentFee = pageBank.readCommentFee(1)
-    assert readCommentFee[0] == 0
-    assert readCommentFee[1] == 0
-    assert readCommentFee[2] == 0
-    assert readCommentFee[3] == 0
+        pageVoteForEarn.executeTransferVote(1, 0, {'from': someUser})
 
     chain.sleep(duration + 10)
-    pageVoteForEarn.executeVote(1, 0, {'from': someUser})
+    pageVoteForEarn.executeTransferVote(1, 0, {'from': someUser})
 
-    readVote = pageVoteForEarn.readVote(1, 0)
-    #('test for vote', '0x66aB6D9362d4F35596279692F0251Db635165871', 2, 1649439695, 0, 0, (10, 11, 12, 13),
-    # '0x0000000000000000000000000000000000000000',
-    # ('0xA868bC7c1AF08B8831795FAC946025557369F69C', '0x66aB6D9362d4F35596279692F0251Db635165871'), False)
-    assert readVote[9] == False
-
-    readCommentFee = pageBank.readCommentFee(1)
-    assert readCommentFee[0] == 10
-    assert readCommentFee[1] == 11
-    assert readCommentFee[2] == 12
-    assert readCommentFee[3] == 13
+    readVote = pageVoteForEarn.readTransferVote(1, 0)
+    assert readVote[8] == False
 
 
 

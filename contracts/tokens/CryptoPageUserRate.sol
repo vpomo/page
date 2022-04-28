@@ -41,7 +41,7 @@ contract PageUserRate is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
      * @dev Returns the smart contract version
      *
      */
-    function version() public pure returns (string memory) {
+    function version() external pure returns (string memory) {
         return "1";
     }
 

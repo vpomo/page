@@ -65,7 +65,7 @@ contract PageVoteForSuperModerator is
      * @dev Returns the smart contract version
      *
      */
-    function version() public pure override returns (string memory) {
+    function version() external pure override returns (string memory) {
         return "1";
     }
 

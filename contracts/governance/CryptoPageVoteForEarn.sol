@@ -84,7 +84,7 @@ contract PageVoteForEarn is
      * @dev Returns the smart contract version
      *
      */
-    function version() public pure override returns (string memory) {
+    function version() external pure override returns (string memory) {
         return "1";
     }
 
@@ -220,7 +220,7 @@ contract PageVoteForEarn is
      * @param isYes For the implementation of the proposal or against the implementation
      */
     function putTransferVote(uint256 communityId, uint256 index, bool isYes) external override {
-        require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
+        require(transferVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
         UintAddressValueVote storage vote = transferVotes[communityId][index];
