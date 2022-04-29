@@ -26,6 +26,24 @@ contract PageCalcUserRate is
     IPageBank public bank;
     IPageToken public token;
 
+    struct RateCount {
+        uint64 postCount;
+        uint64 messageCount;
+        uint64 upCount;
+        uint64 downCount;
+    }
+
+    enum ActivityType { POST, MESSAGE, UP, DOWN }
+
+
+    enum UserRatesType {
+        RESERVE, HUNDRED_UP, THOUSAND_UP, HUNDRED_DOWN, THOUSAND_DOWN,
+        TEN_MESSAGES, HUNDRED_MESSAGES, THOUSAND_MESSAGES,
+        ONE_LEVEL, TWO_LEVEL, THREE_LEVEL, FOUR_LEVEL, FIVE_LEVEL
+    }
+
+    mapping(uint256 => mapping(uint256 => RateCount)) private activityСounter;
+
     /**
      * @dev Makes the initialization of the initial values for the smart contract
      *
@@ -68,4 +86,15 @@ contract PageCalcUserRate is
         // Uncomment for production
         //revert("PageBank: asset transfer prohibited");
     }
+
+    /**
+     * @dev ???.
+     *
+     * @param communityId ID of community
+     * @param user
+     */
+    function addActivity(uint256 communityId, address user, A) external override {
+
+    }
+
 }
