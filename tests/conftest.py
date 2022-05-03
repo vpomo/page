@@ -55,13 +55,13 @@ def pageNFT(PageNFT, pageBank, treasury, deployer):
 
 
 @pytest.fixture(scope="module")
-def pageCommunity(PageCommunity, pageNFT, pageUserRate, pageBank, pageToken, deployer, admin):
+def pageCommunity(PageCommunity, pageNFT, pageUserRateToken, pageBank, pageToken, deployer, admin):
     instanсe = PageCommunity.deploy({'from': deployer})
     instanсe.initialize(pageNFT, pageBank, admin)
     assert deployer == pageNFT.owner()
 
     pageNFT.setCommunity(instanсe, {'from': deployer})
-    pageUserRate.setCommunity(instanсe, {'from': deployer})
+    pageUserRateToken.setCommunity(instanсe, {'from': deployer})
 
     deployer.transfer(instanсe, Wei('10 ether'))
 
@@ -98,7 +98,7 @@ def pageVoteForEarn(PageVoteForEarn, deployer, pageToken, pageCommunity, pageBan
 
 
 @pytest.fixture(scope="module")
-def pageUserRate(PageUserRate, pageBank, treasury, deployer):
-    instanсe = PageUserRate.deploy({'from': deployer})
+def pageUserRateToken(PageUserRateToken, pageBank, treasury, deployer):
+    instanсe = PageUserRateToken.deploy({'from': deployer})
     instanсe.initialize(pageBank, 'https://')
     return instanсe

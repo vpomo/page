@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 
-interface IPageUserRate is IERC1155Upgradeable {
+interface IPageUserRateToken is IERC1155Upgradeable {
 
     function version() external pure returns (string memory);
 

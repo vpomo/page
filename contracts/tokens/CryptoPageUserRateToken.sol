@@ -6,14 +6,14 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 
-import "../interfaces/ICryptoPageUserRate.sol";
+import "../interfaces/ICryptoPageUserRateToken.sol";
 import "../interfaces/ICryptoPageBank.sol";
 
 /// @title Contract of PAGE.UserRate token
 /// @author Crypto.Page Team
 /// @notice
 /// @dev //https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/tree/master/contracts
-contract PageUserRate is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
+contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
 
     IPageBank public bank;
     address public community;

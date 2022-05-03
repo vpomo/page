@@ -6,5 +6,4 @@ interface IPageCalcUserRate {
 
     function version() external pure returns (string memory);
 
-
 }
