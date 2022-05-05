@@ -102,3 +102,11 @@ def pageUserRateToken(PageUserRateToken, pageBank, treasury, deployer):
     instanсe = PageUserRateToken.deploy({'from': deployer})
     instanсe.initialize(pageBank, 'https://')
     return instanсe
+
+
+@pytest.fixture(scope="module")
+def pageCalcUserRate(PageCalcUserRate, pageBank, pageCommunity, pageUserRateToken, deployer, admin):
+    instanсe = PageCalcUserRate.deploy({'from': deployer})
+    instanсe.initialize(admin, pageCommunity, pageUserRateToken)
+    instanсe.grantRole(instanсe.BANK_ROLE(), pageBank, {'from': admin})
+    return instanсe

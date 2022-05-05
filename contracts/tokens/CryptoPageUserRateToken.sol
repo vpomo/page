@@ -13,7 +13,7 @@ import "../interfaces/ICryptoPageBank.sol";
 /// @author Crypto.Page Team
 /// @notice
 /// @dev //https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/tree/master/contracts
-contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRate {
+contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRateToken {
 
     IPageBank public bank;
     address public community;

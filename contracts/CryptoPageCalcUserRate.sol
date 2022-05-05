@@ -23,6 +23,8 @@ IPageCalcUserRate
     IPageUserRateToken public userRateToken;
     IPageCommunity public community;
 
+    bytes32 public constant BANK_ROLE = keccak256("BANK_ROLE");
+
     uint256 public constant TOKEN_ID_MULTIPLYING_FACTOR = 100;
     bytes public FOR_RATE_TOKEN_DATA = "";
     uint256[10] public interestAdjustment = [10, 20, 30, 40, 50, 60, 20, 40, 20, 40];
@@ -50,8 +52,8 @@ IPageCalcUserRate
         uint64[2] downCount;
     }
 
-    mapping(uint256 => mapping(address => RateCount)) activityCounter;
-    mapping(uint256 => mapping(address => RedeemedCount)) redeemedCounter;
+    mapping(uint256 => mapping(address => RateCount)) private activityCounter;
+    mapping(uint256 => mapping(address => RedeemedCount)) private redeemedCounter;
 
     /**
      * @dev Makes the initialization of the initial values for the smart contract
@@ -60,10 +62,7 @@ IPageCalcUserRate
      * @param _community Address of community
      * @param _userRateToken Address of bank
      */
-    function initialize(address _admin, address _community, address _userRateToken)
-    public
-    initializer
-    {
+    function initialize(address _admin, address _community, address _userRateToken) public initializer {
         __Ownable_init();
 
         require(_admin != address(0), "PageVote: wrong admin address");
@@ -71,6 +70,8 @@ IPageCalcUserRate
         require(_userRateToken != address(0), "PageCommunity: wrong bank address");
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+        _setRoleAdmin(BANK_ROLE, DEFAULT_ADMIN_ROLE);
+
         community = IPageCommunity(_community);
         userRateToken = IPageUserRateToken(_userRateToken);
     }
@@ -94,8 +95,8 @@ IPageCalcUserRate
         //revert("PageBank: asset transfer prohibited");
     }
 
-    function checkActivity(uint256 communityId, address user, ActivityType activityType) public
-    returns(int256 resultPercent)
+    function checkActivity(uint256 communityId, address user, ActivityType activityType) public onlyRole(BANK_ROLE)
+        returns(int256 resultPercent)
     {
         addActivity(communityId, user, activityType);
         uint256 baseTokenId = communityId * TOKEN_ID_MULTIPLYING_FACTOR;
@@ -107,6 +108,65 @@ IPageCalcUserRate
 
         return calcPercent(user, baseTokenId);
     }
+
+    function calcPercent(address user, uint256 baseTokenId) public view returns(int256 resultPercent) {
+        resultPercent = 0;
+        uint256[10] memory weight = interestAdjustment;
+        uint256[] memory messageAmount = new uint256[](3);
+        uint256[] memory postAmount = new uint256[](3);
+        uint256[] memory upAmount = new uint256[](2);
+        uint256[] memory downAmount = new uint256[](2);
+
+        messageAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_MESSAGE) + 0);
+        messageAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_MESSAGE) + 1);
+        messageAmount[2] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_MESSAGE) + 2);
+
+        postAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_POST) + 0);
+        postAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_POST) + 1);
+        postAmount[2] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_POST) + 2);
+
+        upAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_UP) + 0);
+        upAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_UP) + 1);
+
+        downAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_DOWN) + 0);
+        downAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_DOWN) + 1);
+
+        resultPercent += int256(weight[0] * messageAmount[0] + weight[1] * messageAmount[1] + weight[2] * messageAmount[2]);
+        resultPercent += int256(weight[3] * postAmount[0] + weight[4] * postAmount[1] + weight[5] * postAmount[2]);
+        resultPercent += int256(weight[6] * upAmount[0] + weight[7] * upAmount[1]);
+        resultPercent -= int256(weight[8] * downAmount[0] + weight[9] * downAmount[1]);
+    }
+
+    function getUserActivity(uint256 communityId, address user) public view returns(
+        uint64 messageCount,
+        uint64 postCount,
+        uint64 upCount,
+        uint64 downCount
+    ) {
+        RateCount memory counter = activityCounter[communityId][user];
+
+        messageCount = counter.messageCount;
+        postCount = counter.postCount;
+        upCount = counter.upCount;
+        downCount = counter.downCount;
+    }
+
+    function getUserRedeemed(uint256 communityId, address user) public view returns(
+        uint64[3] memory messageCount,
+        uint64[3] memory postCount,
+        uint64[2] memory upCount,
+        uint64[2] memory downCount
+    ) {
+        RedeemedCount memory counter = redeemedCounter[communityId][user];
+
+        messageCount = counter.messageCount;
+        postCount = counter.postCount;
+        upCount = counter.upCount;
+        downCount = counter.downCount;
+    }
+
+
+    // *** --- Private area --- ***
 
     function checkMessages(uint256 tokenId, uint256 communityId, address user) private {
         uint256 realMessageCount = activityCounter[communityId][user].messageCount;
@@ -138,7 +198,13 @@ IPageCalcUserRate
         checkDownsByIndex(tokenId, communityId, user, realDownCount, 1);
     }
 
-    function checkMessagesByIndex(uint256 tokenId, uint256 communityId, address user, uint256 realMessageCount, uint256 index) private {
+    function checkMessagesByIndex(
+        uint256 tokenId,
+        uint256 communityId,
+        address user,
+        uint256 realMessageCount,
+        uint256 index
+    ) private {
         RedeemedCount storage redeemCounter = redeemedCounter[communityId][user];
 
         uint256 number = realMessageCount / (10 * 10**index);
@@ -211,33 +277,5 @@ IPageCalcUserRate
         if (activityType == ActivityType.DOWN) {
             counter.downCount++;
         }
-    }
-
-    function calcPercent(address user, uint256 baseTokenId) private view returns(int256 resultPercent) {
-        resultPercent = 0;
-        uint256[10] memory weight = interestAdjustment;
-        uint256[] memory messageAmount = new uint256[](3);
-        uint256[] memory postAmount = new uint256[](3);
-        uint256[] memory upAmount = new uint256[](2);
-        uint256[] memory downAmount = new uint256[](2);
-
-        messageAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_MESSAGE) + 0);
-        messageAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_MESSAGE) + 1);
-        messageAmount[2] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_MESSAGE) + 2);
-
-        postAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_POST) + 0);
-        postAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_POST) + 1);
-        postAmount[2] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.TEN_POST) + 2);
-
-        upAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_UP) + 0);
-        upAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_UP) + 1);
-
-        downAmount[0] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_DOWN) + 0);
-        downAmount[1] = userRateToken.balanceOf(user, baseTokenId + uint256(UserRatesType.HUNDRED_DOWN) + 1);
-
-        resultPercent += int256(weight[0] * messageAmount[0] + weight[1] * messageAmount[1] + weight[2] * messageAmount[2]);
-        resultPercent += int256(weight[3] * postAmount[0] + weight[4] * postAmount[1] + weight[5] * postAmount[2]);
-        resultPercent += int256(weight[6] * upAmount[0] + weight[7] * upAmount[1]);
-        resultPercent -= int256(weight[8] * downAmount[0] + weight[9] * downAmount[1]);
     }
 }
