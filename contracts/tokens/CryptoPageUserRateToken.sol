@@ -16,12 +16,12 @@ import "../interfaces/ICryptoPageBank.sol";
 contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRateToken {
 
     IPageBank public bank;
-    address public community;
+    address public calcUserRate;
 
     mapping(uint256 => uint256) private _totalSupply;
 
-    modifier onlyCommunity() {
-        require(_msgSender() == community, "PageNFT: not community");
+    modifier onlyCalcUserRate() {
+        require(_msgSender() == calcUserRate, "ERC1155: not calcUserRate");
         _;
     }
 
@@ -48,11 +48,11 @@ contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserR
     /**
      * @dev Sets the address of the contract that contains the logic and data for managing communities.
      *
-     * @param communityContract The address of the contract
+     * @param  calcUserRateContract address of the contract
      */
-    function setCommunity(address communityContract) external override onlyOwner {
-        require(communityContract != address(0), "Address can't be null");
-        community = communityContract;
+    function setCalcRateContract(address calcUserRateContract) external override onlyOwner {
+        require(calcUserRateContract != address(0), "ERC1155: address can't be null");
+        calcUserRate = calcUserRateContract;
     }
 
     /**
@@ -76,7 +76,7 @@ contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserR
         uint256 id,
         uint256 amount,
         bytes memory data
-    ) external override virtual onlyCommunity {
+    ) external override virtual onlyCalcUserRate {
         _mint(to, id, amount, data);
     }
 
@@ -84,7 +84,7 @@ contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserR
         address account,
         uint256 id,
         uint256 value
-    ) external override virtual onlyCommunity {
+    ) external override virtual onlyCalcUserRate {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not owner nor approved"
@@ -101,7 +101,7 @@ contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserR
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) external override virtual onlyCommunity {
+    ) external override virtual onlyCalcUserRate {
         _mintBatch(to, ids, amounts, data);
     }
 
@@ -109,7 +109,7 @@ contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserR
         address account,
         uint256[] memory ids,
         uint256[] memory values
-    ) external override virtual onlyCommunity {
+    ) external override virtual onlyCalcUserRate {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not owner nor approved"

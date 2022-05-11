@@ -27,6 +27,8 @@ IPageCalcUserRate
 
     uint256 public constant TOKEN_ID_MULTIPLYING_FACTOR = 100;
     bytes public FOR_RATE_TOKEN_DATA = "";
+
+    //for RedeemedCount
     uint256[10] public interestAdjustment = [10, 20, 30, 40, 50, 60, 20, 40, 20, 40];
 
     enum UserRatesType {

@@ -8,7 +8,7 @@ interface IPageUserRateToken is IERC1155Upgradeable {
 
     function version() external pure returns (string memory);
 
-    function setCommunity(address communityContract) external;
+    function setCalcRateContract(address calcUserRateContract) external;
 
     function totalSupply(uint256 id) external view returns (uint256);
 

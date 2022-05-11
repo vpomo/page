@@ -61,7 +61,6 @@ def pageCommunity(PageCommunity, pageNFT, pageUserRateToken, pageBank, pageToken
     assert deployer == pageNFT.owner()
 
     pageNFT.setCommunity(instanсe, {'from': deployer})
-    pageUserRateToken.setCommunity(instanсe, {'from': deployer})
 
     deployer.transfer(instanсe, Wei('10 ether'))
 
@@ -109,4 +108,5 @@ def pageCalcUserRate(PageCalcUserRate, pageBank, pageCommunity, pageUserRateToke
     instanсe = PageCalcUserRate.deploy({'from': deployer})
     instanсe.initialize(admin, pageCommunity, pageUserRateToken)
     instanсe.grantRole(instanсe.BANK_ROLE(), pageBank, {'from': admin})
+    pageUserRateToken.setCalcRateContract(instanсe)
     return instanсe
