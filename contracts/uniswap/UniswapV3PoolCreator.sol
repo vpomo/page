@@ -1,13 +1,15 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.12;
 
 /// WARNING: do not use in production ///
 
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "@uniswap/contracts/interfaces/IUniswapV3Factory.sol";
+import "@uniswap/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./interfaces/INonfungiblePositionManager.sol";
+import "../interfaces/INonfungiblePositionManager.sol";
 
-import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/contracts/libraries/TransferHelper.sol";
 
 contract UniswapV3PoolCreator is IERC721Receiver {
     /// @notice Represents the deposit of an NFT

@@ -616,7 +616,7 @@ contract ERC1967Proxy is Proxy, ERC1967Upgrade {
 /**
  * @dev An ossifiable proxy for AnchorVault contract.
  */
-contract CheckProxy is ERC1967Proxy {
+contract PageProxy is ERC1967Proxy {
     /**
      * @dev Storage slot with the admin of the contract.
      *
