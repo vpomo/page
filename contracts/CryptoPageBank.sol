@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageToken.sol";
+import "./interfaces/ICryptoPageCalcUserRate.sol";
 
 /// @title The contract calculates amount and mint / burn PAGE tokens
 /// @author Crypto.Page Team
@@ -44,6 +45,7 @@ contract PageBank is
 
     /// CryptoPageToken interface
     IPageToken public token;
+    IPageCalcUserRate calcUserRate;
 
     struct CommunityFee {
         uint64 createPostOwnerFee;
@@ -123,8 +125,9 @@ contract PageBank is
      *
      * @param _treasury Address of our treasury
      * @param _admin Address of admin
+     * @param _calcUserRate Address of calcUserRate
      */
-    function initialize(address _treasury, address _admin)
+    function initialize(address _treasury, address _admin, address _calcUserRate)
         public
         initializer
     {
@@ -132,6 +135,7 @@ contract PageBank is
 
         require(_treasury != address(0), "PageBank: wrong address");
         require(_admin != address(0), "PageBank: wrong address");
+        require(_calcUserRate != address(0), "PageBank: wrong address");
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(MINTER_ROLE, DEFAULT_ADMIN_ROLE);
@@ -141,6 +145,7 @@ contract PageBank is
         _setRoleAdmin(VOTE_FOR_EARN_ROLE, DEFAULT_ADMIN_ROLE);
 
         treasury = _treasury;
+        calcUserRate = IPageCalcUserRate(_calcUserRate);
     }
 
     /**

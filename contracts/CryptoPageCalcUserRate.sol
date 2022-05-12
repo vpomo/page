@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.12;
 
-import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/ICryptoPageCalcUserRate.sol";
@@ -15,7 +14,6 @@ import "./interfaces/ICryptoPageCommunity.sol";
 /// @dev
 contract PageCalcUserRate is
 Initializable,
-OwnableUpgradeable,
 AccessControlUpgradeable,
 IPageCalcUserRate
 {
@@ -65,8 +63,6 @@ IPageCalcUserRate
      * @param _userRateToken Address of bank
      */
     function initialize(address _admin, address _userRateToken) public initializer {
-        __Ownable_init();
-
         require(_admin != address(0), "PageCalcUserRate: wrong admin address");
         require(_userRateToken != address(0), "PageCalcUserRate: wrong bank address");
 

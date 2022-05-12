@@ -15,7 +15,6 @@ import "../interfaces/ICryptoPageBank.sol";
 /// @dev //https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/tree/master/contracts
 contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserRateToken {
 
-    IPageBank public bank;
     address public calcUserRate;
 
     mapping(uint256 => uint256) private _totalSupply;
@@ -26,15 +25,12 @@ contract PageUserRateToken is OwnableUpgradeable, ERC1155Upgradeable, IPageUserR
     }
 
     /// @notice Initial function
-    /// @param _bank Address of our PageBank contract
     /// @param _baseURL BaseURL of tokenURI, i.e. https://site.io/api/id=
     function initialize(
-        address _bank,
         string memory _baseURL
     ) public initializer {
         __Ownable_init();
         __ERC1155_init(_baseURL);
-        bank = IPageBank(_bank);
     }
 
     /**

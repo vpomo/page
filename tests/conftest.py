@@ -29,13 +29,30 @@ def someUser(accounts):
 def helpers():
     return Helpers
 
+@pytest.fixture(scope="module")
+def pageUserRateToken(PageUserRateToken, treasury, deployer):
+    instanсe = PageUserRateToken.deploy({'from': deployer})
+    instanсe.initialize('https://')
+    return instanсe
+
 
 @pytest.fixture(scope="module")
-def pageBank(PageBank, treasury, admin, deployer):
+def pageCalcUserRate(PageCalcUserRate, pageUserRateToken, deployer, admin):
+    instanсe = PageCalcUserRate.deploy({'from': deployer})
+    instanсe.initialize(admin, pageUserRateToken)
+    pageUserRateToken.setCalcRateContract(instanсe)
+    return instanсe
+
+
+@pytest.fixture(scope="module")
+def pageBank(PageBank, pageCalcUserRate, treasury, admin, deployer):
     instanсe = PageBank.deploy({'from': deployer})
-    instanсe.initialize(treasury, admin)
+    instanсe.initialize(treasury, admin, pageCalcUserRate)
     instanсe.setWETHPagePool('0x3b685307c8611afb2a9e83ebc8743dc20480716e', {'from': deployer}) #FTM/ETH
     deployer.transfer(instanсe, Wei('10 ether'))
+
+    pageCalcUserRate.grantRole(pageCalcUserRate.BANK_ROLE(), instanсe, {'from': admin})
+
     return instanсe
 
 
@@ -95,18 +112,3 @@ def pageVoteForEarn(PageVoteForEarn, deployer, pageToken, pageCommunity, pageBan
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
     return instanсe
 
-
-@pytest.fixture(scope="module")
-def pageUserRateToken(PageUserRateToken, pageBank, treasury, deployer):
-    instanсe = PageUserRateToken.deploy({'from': deployer})
-    instanсe.initialize(pageBank, 'https://')
-    return instanсe
-
-
-@pytest.fixture(scope="module")
-def pageCalcUserRate(PageCalcUserRate, pageBank, pageUserRateToken, deployer, admin):
-    instanсe = PageCalcUserRate.deploy({'from': deployer})
-    instanсe.initialize(admin, pageUserRateToken)
-    instanсe.grantRole(instanсe.BANK_ROLE(), pageBank, {'from': admin})
-    pageUserRateToken.setCalcRateContract(instanсe)
-    return instanсe
