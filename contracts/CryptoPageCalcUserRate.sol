@@ -35,8 +35,6 @@ IPageCalcUserRate
         ONE_LEVEL, TWO_LEVEL, THREE_LEVEL, FOUR_LEVEL, FIVE_LEVEL
     }
 
-    enum ActivityType { POST, MESSAGE, UP, DOWN }
-
     struct RateCount {
         uint64 messageCount;
         uint64 postCount;
@@ -91,7 +89,7 @@ IPageCalcUserRate
         //revert("PageBank: asset transfer prohibited");
     }
 
-    function checkActivity(uint256 communityId, address user, ActivityType activityType) public onlyRole(BANK_ROLE)
+    function checkActivity(uint256 communityId, address user, ActivityType activityType) external override onlyRole(BANK_ROLE)
         returns(int256 resultPercent)
     {
         addActivity(communityId, user, activityType);
@@ -133,7 +131,7 @@ IPageCalcUserRate
         resultPercent -= int256(weight[8] * downAmount[0] + weight[9] * downAmount[1]);
     }
 
-    function getUserActivity(uint256 communityId, address user) public view returns(
+    function getUserActivity(uint256 communityId, address user) external override view returns(
         uint64 messageCount,
         uint64 postCount,
         uint64 upCount,
@@ -147,7 +145,7 @@ IPageCalcUserRate
         downCount = counter.downCount;
     }
 
-    function getUserRedeemed(uint256 communityId, address user) public view returns(
+    function getUserRedeemed(uint256 communityId, address user) external override view returns(
         uint64[3] memory messageCount,
         uint64[3] memory postCount,
         uint64[2] memory upCount,
@@ -160,7 +158,8 @@ IPageCalcUserRate
         upCount = counter.upCount;
         downCount = counter.downCount;
     }
-    function setInterestAdjustment(uint256[10] calldata values) onlyRole(DEFAULT_ADMIN_ROLE) external {
+
+    function setInterestAdjustment(uint256[10] calldata values) onlyRole(DEFAULT_ADMIN_ROLE) external override {
         uint256 all;
         for (uint256 i=0; i<10; i++) {
             all += values[i];
