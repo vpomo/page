@@ -104,9 +104,9 @@ def pageUserRateToken(PageUserRateToken, pageBank, treasury, deployer):
 
 
 @pytest.fixture(scope="module")
-def pageCalcUserRate(PageCalcUserRate, pageBank, pageCommunity, pageUserRateToken, deployer, admin):
+def pageCalcUserRate(PageCalcUserRate, pageBank, pageUserRateToken, deployer, admin):
     instanсe = PageCalcUserRate.deploy({'from': deployer})
-    instanсe.initialize(admin, pageCommunity, pageUserRateToken)
+    instanсe.initialize(admin, pageUserRateToken)
     instanсe.grantRole(instanсe.BANK_ROLE(), pageBank, {'from': admin})
     pageUserRateToken.setCalcRateContract(instanсe)
     return instanсe

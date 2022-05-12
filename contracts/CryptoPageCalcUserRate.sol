@@ -21,7 +21,6 @@ IPageCalcUserRate
 {
 
     IPageUserRateToken public userRateToken;
-    IPageCommunity public community;
 
     bytes32 public constant BANK_ROLE = keccak256("BANK_ROLE");
 
@@ -29,7 +28,7 @@ IPageCalcUserRate
     bytes public FOR_RATE_TOKEN_DATA = "";
 
     //for RedeemedCount
-    uint256[10] public interestAdjustment = [10, 20, 30, 40, 50, 60, 20, 40, 20, 40];
+    uint256[10] public interestAdjustment = [5, 20, 30, 40, 50, 60, 20, 40, 20, 40];
 
     enum UserRatesType {
         RESERVE, HUNDRED_UP, THOUSAND_UP, HUNDRED_DOWN, THOUSAND_DOWN,
@@ -57,24 +56,23 @@ IPageCalcUserRate
     mapping(uint256 => mapping(address => RateCount)) private activityCounter;
     mapping(uint256 => mapping(address => RedeemedCount)) private redeemedCounter;
 
+    event SetInterestAdjustment(uint256[10] oldValue, uint256[10] newValue);
+
     /**
      * @dev Makes the initialization of the initial values for the smart contract
      *
      * @param _admin Address of admin
-     * @param _community Address of community
      * @param _userRateToken Address of bank
      */
-    function initialize(address _admin, address _community, address _userRateToken) public initializer {
+    function initialize(address _admin, address _userRateToken) public initializer {
         __Ownable_init();
 
-        require(_admin != address(0), "PageVote: wrong admin address");
-        require(_community != address(0), "PageVote: wrong community address");
-        require(_userRateToken != address(0), "PageCommunity: wrong bank address");
+        require(_admin != address(0), "PageCalcUserRate: wrong admin address");
+        require(_userRateToken != address(0), "PageCalcUserRate: wrong bank address");
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(BANK_ROLE, DEFAULT_ADMIN_ROLE);
 
-        community = IPageCommunity(_community);
         userRateToken = IPageUserRateToken(_userRateToken);
     }
 
@@ -165,6 +163,15 @@ IPageCalcUserRate
         postCount = counter.postCount;
         upCount = counter.upCount;
         downCount = counter.downCount;
+    }
+    function setInterestAdjustment(uint256[10] calldata values) onlyRole(DEFAULT_ADMIN_ROLE) external {
+        uint256 all;
+        for (uint256 i=0; i<10; i++) {
+            all += values[i];
+        }
+        require(all <= 10000, "PageCalcUserRate: wrong values");
+        emit SetInterestAdjustment(interestAdjustment, values);
+        interestAdjustment = values;
     }
 
 

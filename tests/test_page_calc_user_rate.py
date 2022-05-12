@@ -53,3 +53,11 @@ def test_check_ten_posts(pageBank, pageCalcUserRate, pageUserRateToken, someUser
     afterBalance = pageUserRateToken.balanceOf(someUser, 1*108)
     assert afterBalance == 1
 
+
+def test_setInterestAdjustment(pageCalcUserRate, admin):
+    interestAdjustment = pageCalcUserRate.interestAdjustment(0)
+    assert interestAdjustment == 5
+
+    pageCalcUserRate.setInterestAdjustment([1,1,1,1,1,1,1,1,1,1], {'from': admin})
+    interestAdjustment = pageCalcUserRate.interestAdjustment(0)
+    assert interestAdjustment == 1
