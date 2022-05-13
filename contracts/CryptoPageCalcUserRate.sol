@@ -8,6 +8,9 @@ import "./interfaces/ICryptoPageCalcUserRate.sol";
 import "./interfaces/ICryptoPageUserRateToken.sol";
 import "./interfaces/ICryptoPageCommunity.sol";
 
+import {DataTypes} from './libraries/DataTypes.sol';
+
+
 /// @title The contract calculates rates of users
 /// @author Crypto.Page Team
 /// @notice
@@ -89,7 +92,7 @@ IPageCalcUserRate
         //revert("PageBank: asset transfer prohibited");
     }
 
-    function checkActivity(uint256 communityId, address user, ActivityType activityType) external override onlyRole(BANK_ROLE)
+    function checkActivity(uint256 communityId, address user, DataTypes.ActivityType activityType) external override onlyRole(BANK_ROLE)
         returns(int256 resultPercent)
     {
         addActivity(communityId, user, activityType);
@@ -267,18 +270,18 @@ IPageCalcUserRate
      * @param user aaa
      * @param activityType aa
      */
-    function addActivity(uint256 communityId, address user, ActivityType activityType) private {
+    function addActivity(uint256 communityId, address user, DataTypes.ActivityType activityType) private {
         RateCount storage counter = activityCounter[communityId][user];
-        if (activityType == ActivityType.POST) {
+        if (activityType == DataTypes.ActivityType.POST) {
             counter.postCount++;
         }
-        if (activityType == ActivityType.MESSAGE) {
+        if (activityType == DataTypes.ActivityType.MESSAGE) {
             counter.messageCount++;
         }
-        if (activityType == ActivityType.UP) {
+        if (activityType == DataTypes.ActivityType.UP) {
             counter.upCount++;
         }
-        if (activityType == ActivityType.DOWN) {
+        if (activityType == DataTypes.ActivityType.DOWN) {
             counter.downCount++;
         }
     }

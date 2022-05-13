@@ -10,6 +10,8 @@ import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageCalcUserRate.sol";
 
+import {DataTypes} from './libraries/DataTypes.sol';
+
 /// @title The contract calculates amount and mint / burn PAGE tokens
 /// @author Crypto.Page Team
 /// @notice
@@ -45,7 +47,7 @@ contract PageBank is
 
     /// CryptoPageToken interface
     IPageToken public token;
-    IPageCalcUserRate calcUserRate;
+    IPageCalcUserRate public calcUserRate;
 
     struct CommunityFee {
         uint64 createPostOwnerFee;
@@ -304,6 +306,9 @@ contract PageBank is
         uint256 gas
     ) external override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
+        int256 creatorPercent = calcUserRate.checkActivity(communityId, creator, DataTypes.ActivityType.POST);
+        amount = correctAmount(amount, creatorPercent);
+        require(amount > 0, "PageBank: wrong amount");
 
         mintUserPageToken(owner, amount, communityFee[communityId].createPostOwnerFee);
         mintUserPageToken(creator, amount, communityFee[communityId].createPostCreatorFee);
@@ -327,12 +332,27 @@ contract PageBank is
         uint256 gas
     ) external override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
+        int256 creatorPercent = calcUserRate.checkActivity(communityId, creator, DataTypes.ActivityType.MESSAGE);
+        amount = correctAmount(amount, creatorPercent);
+        require(amount > 0, "PageBank: wrong amount");
 
         mintUserPageToken(owner, amount, communityFee[communityId].createCommentOwnerFee);
         mintUserPageToken(creator, amount, communityFee[communityId].createCommentCreatorFee);
         mintTreasuryPageToken(amount);
 
         emit MintForComment(communityId, owner, creator, amount);
+    }
+
+    function addUpDownActivity(
+        uint256 communityId,
+        address postCreator,
+        bool isUp
+    ) external override onlyRole(MINTER_ROLE) {
+        if (isUp) {
+            calcUserRate.checkActivity(communityId, postCreator, DataTypes.ActivityType.UP);
+        } else {
+            calcUserRate.checkActivity(communityId, postCreator, DataTypes.ActivityType.DOWN);
+        }
     }
 
     /**
@@ -695,6 +715,20 @@ contract PageBank is
         }
         if (currentPrice > staticWETHPagePrice) {
             isValid = (currentPrice - staticWETHPagePrice) < currentPrice * priceChangePercent / ALL_PERCENT;
+        }
+    }
+
+    function correctAmount(uint256 currentAmount, int256 percent) private view returns(uint256 newAmount) {
+        int256 creatorAmount = int256(currentAmount) * percent / int256(ALL_PERCENT);
+        if (creatorAmount > 0) {
+            newAmount = currentAmount + uint256(creatorAmount);
+        } else {
+            uint256 positiveCreatorAmount = uint256(-creatorAmount);
+            if (currentAmount >= positiveCreatorAmount) {
+                newAmount = currentAmount - positiveCreatorAmount;
+            } else {
+                newAmount = 0;
+            }
         }
     }
 }

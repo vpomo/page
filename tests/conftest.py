@@ -41,6 +41,8 @@ def pageCalcUserRate(PageCalcUserRate, pageUserRateToken, deployer, admin):
     instanсe = PageCalcUserRate.deploy({'from': deployer})
     instanсe.initialize(admin, pageUserRateToken)
     pageUserRateToken.setCalcRateContract(instanсe)
+    deployer.transfer(instanсe, Wei('10 ether'))
+
     return instanсe
 
 

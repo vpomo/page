@@ -786,11 +786,14 @@ IPageCommunity
         require(!isUpDownUser(postId, _msgSender()), "PageCommunity: wrong user for Up/Down");
 
         Post storage curPost = post[postId];
+        uint256 communityId = getCommunityIdByPostId(postId);
         if (isUp) {
             curPost.upCount++;
+            bank.addUpDownActivity(communityId, curPost.creator, true);
         }
         if (isDown) {
             curPost.downCount++;
+            bank.addUpDownActivity(communityId, curPost.creator, false);
         }
         curPost.upDownUsers.add(_msgSender());
     }

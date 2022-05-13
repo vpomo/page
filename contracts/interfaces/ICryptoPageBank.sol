@@ -55,6 +55,12 @@ interface IPageBank {
         uint256 gas
     ) external returns (uint256 amount);
 
+    function addUpDownActivity(
+        uint256 communityId,
+        address postCreator,
+        bool isUp
+    ) external;
+
     function burnTokenForPost(
         uint256 communityId,
         address owner,
