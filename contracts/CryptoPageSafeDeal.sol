@@ -27,18 +27,17 @@ contract CryptoPageSafeDeal is
 
     struct SafeDeal {
         string description;
-        address sideA;
-        address sideB;
+        address seller;
+        address buyer;
         address guarantor;
         uint256 amount;
         uint128 startTime;
         uint128 endTime;
-        bool startApproveA;
-        bool startApproveB;
-        bool endApproveA;
-        bool endApproveB;
+        bool startSellerApprove;
+        bool startBuyerApprove;
+        bool endSellerApprove;
+        bool endBuyerApprove;
         bool isIssue;
-        bool isFinished;
         DealMessage[] messages;
     }
 
@@ -47,6 +46,16 @@ contract CryptoPageSafeDeal is
     event MakeDeal(address indexed creator, uint256 number);
     event ChangeDescription(uint256 dealId, string description);
     event ChangeTime(uint256 dealId, uint128 startTime, uint128 endTime);
+
+    event StartApprove(uint256 dealId, address sender);
+    event EndApprove(uint256 dealId, address sender);
+
+    modifier onlyDealUser(uint256 dealId) {
+        address sender = _msgSender();
+        SafeDeal memory deal = deals[dealId];
+        require(sender == deal.seller || sender == deal.buyer, "SafeDeal: wrong sender");
+        _;
+    }
 
     /**
      * @dev Makes the initialization of the initial values for the smart contract
@@ -67,8 +76,8 @@ contract CryptoPageSafeDeal is
 
     function makeDeal(
         string memory desc,
-        address sideA,
-        address sideB,
+        address seller,
+        address buyer,
         uint128 startTime,
         uint128 endTime,
         uint256 amount
@@ -78,8 +87,8 @@ contract CryptoPageSafeDeal is
         dealCount++;
         SafeDeal storage deal = deals[dealCount];
         deal.description = desc;
-        deal.sideA = sideA;
-        deal.sideB = sideB;
+        deal.seller = seller;
+        deal.buyer = buyer;
         deal.startTime = startTime;
         deal.endTime = endTime;
         deal.amount = amount;
@@ -87,19 +96,15 @@ contract CryptoPageSafeDeal is
         emit MakeDeal(_msgSender(), dealCount);
     }
 
-    function changeDescription(uint256 dealId, string memory desc) external override {
-        address sender = _msgSender();
+    function changeDescription(uint256 dealId, string memory desc) external override onlyDealUser(dealId) {
         SafeDeal storage deal = deals[dealCount];
-        require(sender == deal.sideA || sender == deal.sideB, "SafeDeal: wrong sender");
         deal.description = desc;
 
         emit ChangeDescription(dealId, desc);
     }
 
-    function changeTime(uint256 dealId, uint128 startTime, uint128 endTime) external override {
-        address sender = _msgSender();
-        SafeDeal storage deal = deals[dealCount];
-        require(sender == deal.sideA || sender == deal.sideB, "SafeDeal: wrong sender");
+    function changeTime(uint256 dealId, uint128 startTime, uint128 endTime) external override onlyDealUser(dealId) {
+        SafeDeal storage deal = deals[dealId];
         if(startTime > 0) {
             require(block.timestamp < startTime, "SafeDeal: wrong start time");
             deal.startTime = startTime;
@@ -113,5 +118,43 @@ contract CryptoPageSafeDeal is
         emit ChangeTime(dealId, startTime, endTime);
     }
 
+    function makeStartApprove(uint256 dealId) external override onlyDealUser(dealId) {
+        address sender = _msgSender();
+        SafeDeal storage deal = deals[dealId];
+        require(block.timestamp < deal.startTime, "SafeDeal: wrong start time");
+
+        if(sender == deal.seller) {
+            require(!deal.startSellerApprove, "SafeDeal: wrong approve");
+            deal.startSellerApprove = true;
+        }
+        if(sender == deal.buyer) {
+            require(!deal.startBuyerApprove, "SafeDeal: wrong approve");
+            deal.startBuyerApprove = true;
+        }
+
+        emit StartApprove(dealId, sender);
+    }
+
+    function makeEndApprove(uint256 dealId) external override onlyDealUser(dealId) {
+        address sender = _msgSender();
+        SafeDeal storage deal = deals[dealId];
+        require(block.timestamp > deal.endTime, "SafeDeal: wrong start time");
+
+        if(sender == deal.seller) {
+            require(!deal.endSellerApprove, "SafeDeal: wrong approve");
+            deal.endSellerApprove = true;
+        }
+        if(sender == deal.buyer) {
+            require(!deal.endBuyerApprove, "SafeDeal: wrong approve");
+            deal.endBuyerApprove = true;
+        }
+
+        emit EndApprove(dealId, sender);
+    }
+
+    function isFinished(uint256 dealId) external view override returns(bool) {
+        SafeDeal memory deal = deals[dealId];
+        return deal.endSellerApprove && deal.endBuyerApprove;
+    }
 
 }
