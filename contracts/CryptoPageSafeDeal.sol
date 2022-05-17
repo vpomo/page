@@ -2,19 +2,23 @@
 
 pragma solidity 0.8.12;
 
+import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/ICryptoPageSafeDeal.sol";
+import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageCalcUserRate.sol";
 
 
 contract CryptoPageSafeDeal is
     Initializable,
+    OwnableUpgradeable,
     AccessControlUpgradeable,
     IPageSafeDeal
 {
 
     IPageCalcUserRate public calcUserRate;
+    IPageToken public token;
 
     uint256 public DEAL_FEE = 50;
 
@@ -43,17 +47,28 @@ contract CryptoPageSafeDeal is
 
     mapping(uint256 => SafeDeal) private deals;
 
-    event MakeDeal(address indexed creator, uint256 number);
+    event MakeDeal(address indexed creator, uint256 number, uint256 amount);
+    event MakeFinish(address indexed creator, uint256 number, uint256 amount);
     event ChangeDescription(uint256 dealId, string description);
     event ChangeTime(uint256 dealId, uint128 startTime, uint128 endTime);
+    event AddMessage(uint256 dealId, address sender, string message);
 
     event StartApprove(uint256 dealId, address sender);
     event EndApprove(uint256 dealId, address sender);
+    event SetIssue(uint256 dealId, address sender);
+    event ClearIssue(uint256 dealId, address sender);
 
     modifier onlyDealUser(uint256 dealId) {
         address sender = _msgSender();
         SafeDeal memory deal = deals[dealId];
-        require(sender == deal.seller || sender == deal.buyer, "SafeDeal: wrong sender");
+        require(sender == deal.seller || sender == deal.buyer, "SafeDeal: wrong deal user");
+        _;
+    }
+
+    modifier onlyGuarantor(uint256 dealId) {
+        address sender = _msgSender();
+        SafeDeal memory deal = deals[dealId];
+        require(sender == deal.guarantor, "SafeDeal: wrong guarantor");
         _;
     }
 
@@ -67,6 +82,7 @@ contract CryptoPageSafeDeal is
         public
         initializer
     {
+        __Ownable_init();
         require(_admin != address(0), "SafeDeal: wrong address");
         require(_calcUserRate != address(0), "SafeDeal: wrong address");
 
@@ -74,26 +90,43 @@ contract CryptoPageSafeDeal is
         calcUserRate = IPageCalcUserRate(_calcUserRate);
     }
 
+    /**
+     * @dev Changes the address of the token.
+     *
+     * @param newToken New address value
+     */
+    function setToken(address newToken) external override onlyOwner {
+        token = IPageToken(newToken);
+        emit SetToken(newToken);
+    }
+
     function makeDeal(
         string memory desc,
-        address seller,
         address buyer,
+        address guarantor,
         uint128 startTime,
         uint128 endTime,
         uint256 amount
     ) external override {
+        address seller = _msgSender();
         require(block.timestamp < startTime && startTime < endTime, "SafeDeal: wrong time");
+        require(buyer != address(0) && guarantor != address(0), "SafeDeal: wrong address");
+        require(guarantor != buyer && guarantor != seller, "SafeDeal: wrong guarantor address");
+
+        require(amount > 0, "SafeDeal: wrong amount");
+        require(token.transferFrom(seller, address(this), amount), "SafeDeal: wrong transfer of tokens");
 
         dealCount++;
         SafeDeal storage deal = deals[dealCount];
         deal.description = desc;
         deal.seller = seller;
         deal.buyer = buyer;
+        deal.guarantor = guarantor;
         deal.startTime = startTime;
         deal.endTime = endTime;
         deal.amount = amount;
 
-        emit MakeDeal(_msgSender(), dealCount);
+        emit MakeDeal(_msgSender(), dealCount, amount);
     }
 
     function changeDescription(uint256 dealId, string memory desc) external override onlyDealUser(dealId) {
@@ -122,6 +155,7 @@ contract CryptoPageSafeDeal is
         address sender = _msgSender();
         SafeDeal storage deal = deals[dealId];
         require(block.timestamp < deal.startTime, "SafeDeal: wrong start time");
+        require(!isIssue(dealId), "SafeDeal: there is an issue here");
 
         if(sender == deal.seller) {
             require(!deal.startSellerApprove, "SafeDeal: wrong approve");
@@ -139,6 +173,7 @@ contract CryptoPageSafeDeal is
         address sender = _msgSender();
         SafeDeal storage deal = deals[dealId];
         require(block.timestamp > deal.endTime, "SafeDeal: wrong start time");
+        require(!isIssue(dealId), "SafeDeal: there is an issue here");
 
         if(sender == deal.seller) {
             require(!deal.endSellerApprove, "SafeDeal: wrong approve");
@@ -152,9 +187,48 @@ contract CryptoPageSafeDeal is
         emit EndApprove(dealId, sender);
     }
 
-    function isFinished(uint256 dealId) external view override returns(bool) {
+    function addMessage(uint256 dealId, string memory message) external override onlyDealUser(dealId) {
+        address sender = _msgSender();
+        SafeDeal storage deal = deals[dealId];
+        DealMessage dealMessage = DealMessage(message, block.timestamp);
+        deal.messages.push(dealMessage);
+
+        emit AddMessage(dealId, sender, message);
+    }
+
+    function setIssue(uint256 dealId) external override onlyDealUser(dealId) {
+        address sender = _msgSender();
+        SafeDeal storage deal = deals[dealId];
+        require(!isFinished(dealId) && !isIssue(dealId), "SafeDeal: already finished");
+        deal.isIssue = true;
+
+        emit SetIssue(dealId, sender);
+    }
+
+    function clearIssue(uint256 dealId) external override onlyGuarantor(dealId) {
+        SafeDeal storage deal = deals[dealId];
+        require(isIssue(dealId), "SafeDeal: not issue");
+        deal.isIssue = false;
+
+        emit ClearIssue(dealId, deal.guarantor);
+    }
+
+    function finish(uint256 dealId) external override onlyGuarantor(dealId) {
+        SafeDeal storage deal = deals[dealId];
+        require(isFinished(dealId) && !isIssue(dealId), "SafeDeal: already finished");
+        emit MakeFinish(dealId, deal.guarantor, deal.amount);
+        deal.amount = 0;
+        require(token.transfer(deal.buyer,  deal.amount), "SafeDeal: wrong transfer of tokens");
+    }
+
+    function isFinished(uint256 dealId) public view override returns(bool) {
         SafeDeal memory deal = deals[dealId];
         return deal.endSellerApprove && deal.endBuyerApprove;
+    }
+
+    function isIssue(uint256 dealId) public view override returns(bool) {
+        SafeDeal memory deal = deals[dealId];
+        return deal.isIssue;
     }
 
 }
