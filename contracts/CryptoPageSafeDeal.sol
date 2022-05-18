@@ -43,13 +43,16 @@ contract CryptoPageSafeDeal is
         bool endBuyerApprove;
         bool isIssue;
         bool isEth;
+        bool isFinished;
         DealMessage[] messages;
     }
 
     mapping(uint256 => SafeDeal) private deals;
 
     event MakeDeal(address indexed creator, bool isEth, uint256 number, uint256 amount);
-    event MakeFinish(address indexed creator, uint256 number, uint256 amount);
+    event FinishDeal(address indexed guarantor, uint256 number, uint256 amount);
+    event CancelDeal(address indexed guarantor, uint256 number, uint256 amount);
+
     event ChangeDescription(uint256 dealId, string description);
     event ChangeTime(uint256 dealId, uint128 startTime, uint128 endTime);
     event AddMessage(uint256 dealId, address sender, string message);
@@ -162,7 +165,6 @@ contract CryptoPageSafeDeal is
     function makeStartApprove(uint256 dealId) external override onlyDealUser(dealId) {
         address sender = _msgSender();
         SafeDeal storage deal = deals[dealId];
-        require(block.timestamp < deal.startTime, "SafeDeal: wrong start time");
         require(!isIssue(dealId), "SafeDeal: there is an issue here");
 
         if(sender == deal.seller) {
@@ -195,7 +197,7 @@ contract CryptoPageSafeDeal is
         emit EndApprove(dealId, sender);
     }
 
-    function addMessage(uint256 dealId, string memory message) external override onlyDealUser(dealId) {
+    function addMessage(uint256 dealId, string memory message) public override onlyDealUser(dealId) {
         address sender = _msgSender();
         SafeDeal storage deal = deals[dealId];
         DealMessage dealMessage = DealMessage(message, block.timestamp);
@@ -204,11 +206,12 @@ contract CryptoPageSafeDeal is
         emit AddMessage(dealId, sender, message);
     }
 
-    function setIssue(uint256 dealId) external override onlyDealUser(dealId) {
+    function setIssue(uint256 dealId, string memory message) external override onlyDealUser(dealId) {
         address sender = _msgSender();
         SafeDeal storage deal = deals[dealId];
         require(!isFinished(dealId) && !isIssue(dealId), "SafeDeal: already finished");
         deal.isIssue = true;
+        addMessage(dealId, message);
 
         emit SetIssue(dealId, sender);
     }
@@ -221,23 +224,43 @@ contract CryptoPageSafeDeal is
         emit ClearIssue(dealId, deal.guarantor);
     }
 
-    function finish(uint256 dealId) external override onlyGuarantor(dealId) {
+    function cancelDeal(uint256 dealId) external override onlyGuarantor(dealId) {
         SafeDeal storage deal = deals[dealId];
-        require(isFinished(dealId) && !isIssue(dealId), "SafeDeal: already finished");
+        require(isIssue(dealId) && !isFinished(dealId), "SafeDeal: not issue");
         uint256 amount = deal.amount;
-        deal.amount = 0;
-        if (deal.isEth) {
-            require(address(this).balance >= amount, "SafeDeal: wrong ether balance");
-            require(deal.buyer.send(amount), "SafeDeal: wrong send ether");
-        } else {
-            require(token.transfer(deal.buyer,  amount), "SafeDeal: wrong transfer of tokens");
-        }
-        emit MakeFinish(dealId, deal.guarantor, amount);
+        deal.isFinished = true;
+        transferAsset(deal.isEth, deal.seller, amount);
+        emit CancelDeal(dealId, deal.guarantor, amount);
+    }
+
+    function finishDeal(uint256 dealId) external override onlyGuarantor(dealId) {
+        SafeDeal storage deal = deals[dealId];
+        require(
+            isStartApproved(dealId) &&
+            isEndApproved(dealId) &&
+            !isIssue(dealId) &&
+            !isFinished(dealId),
+            "SafeDeal: already finished"
+        );
+        uint256 amount = deal.amount;
+        deal.isFinished = true;
+        transferAsset(deal.isEth, deal.buyer, amount);
+        emit FinishDeal(dealId, deal.guarantor, amount);
+    }
+
+    function isStartApproved(uint256 dealId) public view override returns(bool) {
+        SafeDeal memory deal = deals[dealId];
+        return deal.startSellerApprove && deal.startBuyerApprove;
+    }
+
+    function isEndApproved(uint256 dealId) public view override returns(bool) {
+        SafeDeal memory deal = deals[dealId];
+        return deal.endSellerApprove && deal.endBuyerApprove;
     }
 
     function isFinished(uint256 dealId) public view override returns(bool) {
         SafeDeal memory deal = deals[dealId];
-        return deal.endSellerApprove && deal.endBuyerApprove;
+        return deal.isFinished;
     }
 
     function isIssue(uint256 dealId) public view override returns(bool) {
@@ -245,4 +268,12 @@ contract CryptoPageSafeDeal is
         return deal.isIssue;
     }
 
+    function transferAsset(bool isEth, address recipient, uint256 amount) private {
+        if (isEth) {
+            require(address(this).balance >= amount, "SafeDeal: wrong ether balance");
+            require(recipient.send(amount), "SafeDeal: wrong send ether");
+        } else {
+            require(token.transfer(recipient,  amount), "SafeDeal: wrong transfer of tokens");
+        }
+    }
 }
