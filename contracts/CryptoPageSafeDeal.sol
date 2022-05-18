@@ -9,6 +9,7 @@ import "./interfaces/ICryptoPageSafeDeal.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageCalcUserRate.sol";
 
+import {DataTypes} from './libraries/DataTypes.sol';
 
 contract CryptoPageSafeDeal is
     Initializable,
@@ -230,6 +231,7 @@ contract CryptoPageSafeDeal is
         uint256 amount = deal.amount;
         deal.isFinished = true;
         transferAsset(deal.isEth, deal.seller, amount);
+        calcUserRate.addDealActivity(deal.guarantor, DataTypes.ActivityType.DEAL_GUARANTOR);
         emit CancelDeal(dealId, deal.guarantor, amount);
     }
 
@@ -245,6 +247,11 @@ contract CryptoPageSafeDeal is
         uint256 amount = deal.amount;
         deal.isFinished = true;
         transferAsset(deal.isEth, deal.buyer, amount);
+
+        calcUserRate.addDealActivity(deal.guarantor, DataTypes.ActivityType.DEAL_GUARANTOR);
+        calcUserRate.addDealActivity(deal.seller, DataTypes.ActivityType.DEAL_SELLER);
+        calcUserRate.addDealActivity(deal.buyer, DataTypes.ActivityType.DEAL_BUYER);
+
         emit FinishDeal(dealId, deal.guarantor, amount);
     }
 

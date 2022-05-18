@@ -306,7 +306,7 @@ contract PageBank is
         uint256 gas
     ) external override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
-        int256 creatorPercent = calcUserRate.checkActivity(communityId, creator, DataTypes.ActivityType.POST);
+        int256 creatorPercent = calcUserRate.checkCommunityActivity(communityId, creator, DataTypes.ActivityType.POST);
         amount = correctAmount(amount, creatorPercent);
         require(amount > 0, "PageBank: wrong amount");
 
@@ -332,7 +332,7 @@ contract PageBank is
         uint256 gas
     ) external override onlyRole(MINTER_ROLE) returns (uint256 amount) {
         amount = convertGasToTokenAmount(gas + FOR_MINT_GAS_AMOUNT);
-        int256 creatorPercent = calcUserRate.checkActivity(communityId, creator, DataTypes.ActivityType.MESSAGE);
+        int256 creatorPercent = calcUserRate.checkCommunityActivity(communityId, creator, DataTypes.ActivityType.MESSAGE);
         amount = correctAmount(amount, creatorPercent);
         require(amount > 0, "PageBank: wrong amount");
 
@@ -349,9 +349,9 @@ contract PageBank is
         bool isUp
     ) external override onlyRole(MINTER_ROLE) {
         if (isUp) {
-            calcUserRate.checkActivity(communityId, postCreator, DataTypes.ActivityType.UP);
+            calcUserRate.checkCommunityActivity(communityId, postCreator, DataTypes.ActivityType.UP);
         } else {
-            calcUserRate.checkActivity(communityId, postCreator, DataTypes.ActivityType.DOWN);
+            calcUserRate.checkCommunityActivity(communityId, postCreator, DataTypes.ActivityType.DOWN);
         }
     }
 

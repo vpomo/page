@@ -18,19 +18,19 @@ def test_check_activity(pageBank, pageCalcUserRate, someUser):
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (0,0,0,0)
 
-    pageCalcUserRate.checkActivity(1, someUser, 0, {'from': pageBank})
+    pageCalcUserRate.checkCommunityActivity(1, someUser, 0, {'from': pageBank})
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (0,1,0,0)
 
-    pageCalcUserRate.checkActivity(1, someUser, 1, {'from': pageBank})
+    pageCalcUserRate.checkCommunityActivity(1, someUser, 1, {'from': pageBank})
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (1,1,0,0)
 
-    pageCalcUserRate.checkActivity(1, someUser, 2, {'from': pageBank})
+    pageCalcUserRate.checkCommunityActivity(1, someUser, 2, {'from': pageBank})
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (1,1,1,0)
 
-    pageCalcUserRate.checkActivity(1, someUser, 3, {'from': pageBank})
+    pageCalcUserRate.checkCommunityActivity(1, someUser, 3, {'from': pageBank})
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (1,1,1,1)
 
@@ -39,14 +39,14 @@ def test_check_ten_posts(pageBank, pageCalcUserRate, pageUserRateToken, someUser
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (0,0,0,0)
 
-    for i in range(9): pageCalcUserRate.checkActivity(1, someUser, 0, {'from': pageBank})
+    for i in range(9): pageCalcUserRate.checkCommunityActivity(1, someUser, 0, {'from': pageBank})
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (0,9,0,0)
 
     beforeBalance = pageUserRateToken.balanceOf(someUser, 108)
     assert beforeBalance == 0
 
-    pageCalcUserRate.checkActivity(1, someUser, 0, {'from': pageBank})
+    pageCalcUserRate.checkCommunityActivity(1, someUser, 0, {'from': pageBank})
     userActivity = pageCalcUserRate.getUserActivity(1, someUser)
     assert userActivity == (0,10,0,0)
 

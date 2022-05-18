@@ -8,7 +8,13 @@ interface IPageCalcUserRate {
 
     function version() external pure returns (string memory);
 
-    function checkActivity(uint256 communityId, address user, DataTypes.ActivityType activityType) external returns(int256 resultPercent);
+    function checkCommunityActivity(
+        uint256 communityId,
+        address user,
+        DataTypes.ActivityType activityType
+    ) external returns(int256 resultPercent);
+
+    function addDealActivity(address user, DataTypes.ActivityType activityType) external;
 
     function calcPercent(address user, uint256 baseTokenId) external view returns(int256 resultPercent);
 

@@ -24,18 +24,19 @@ IPageCalcUserRate
     IPageUserRateToken public userRateToken;
 
     bytes32 public constant BANK_ROLE = keccak256("BANK_ROLE");
+    bytes32 public constant DEAL_ROLE = keccak256("DEAL_ROLE");
 
-    uint256 public constant TOKEN_ID_MULTIPLYING_FACTOR = 100;
+    uint256 public constant TOKEN_ID_MULTIPLYING_FACTOR = 1000;
     bytes public FOR_RATE_TOKEN_DATA = "";
 
     //for RedeemedCount
-    uint256[10] public interestAdjustment = [5, 20, 30, 40, 50, 60, 20, 40, 20, 40];
+    uint256[10] public interestAdjustment = [1, 10, 30, 40, 50, 60, 20, 40, 20, 40];
 
     enum UserRatesType {
         RESERVE, HUNDRED_UP, THOUSAND_UP, HUNDRED_DOWN, THOUSAND_DOWN,
         TEN_MESSAGE, HUNDRED_MESSAGE, THOUSAND_MESSAGE,
         TEN_POST, HUNDRED_POST, THOUSAND_POST,
-        ONE_LEVEL, TWO_LEVEL, THREE_LEVEL, FOUR_LEVEL, FIVE_LEVEL
+        DEAL_GUARANTOR, DEAL_SELLER, DEAL_BUYER
     }
 
     struct RateCount {
@@ -56,6 +57,7 @@ IPageCalcUserRate
     mapping(uint256 => mapping(address => RedeemedCount)) private redeemedCounter;
 
     event SetInterestAdjustment(uint256[10] oldValue, uint256[10] newValue);
+    event AddedDealActivity(address user, DataTypes.ActivityType activityType);
 
     /**
      * @dev Makes the initialization of the initial values for the smart contract
@@ -69,6 +71,7 @@ IPageCalcUserRate
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(BANK_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(DEAL_ROLE, DEFAULT_ADMIN_ROLE);
 
         userRateToken = IPageUserRateToken(_userRateToken);
     }
@@ -92,8 +95,11 @@ IPageCalcUserRate
         //revert("PageBank: asset transfer prohibited");
     }
 
-    function checkActivity(uint256 communityId, address user, DataTypes.ActivityType activityType) external override onlyRole(BANK_ROLE)
-        returns(int256 resultPercent)
+    function checkCommunityActivity(
+        uint256 communityId,
+        address user,
+        DataTypes.ActivityType activityType
+    ) external override onlyRole(BANK_ROLE) returns(int256 resultPercent)
     {
         addActivity(communityId, user, activityType);
         uint256 baseTokenId = communityId * TOKEN_ID_MULTIPLYING_FACTOR;
@@ -104,6 +110,22 @@ IPageCalcUserRate
         checkDowns(baseTokenId, communityId, user);
 
         return calcPercent(user, baseTokenId);
+    }
+
+    function addDealActivity(address user, DataTypes.ActivityType activityType) external override onlyRole(DEAL_ROLE) {
+        uint256 tokenId = 0;
+        if (activityType == DataTypes.ActivityType.DEAL_GUARANTOR) {
+            tokenId = uint256(UserRatesType.DEAL_GUARANTOR);
+        }
+        if (activityType == DataTypes.ActivityType.DEAL_SELLER) {
+            tokenId = uint256(UserRatesType.DEAL_SELLER);
+        }
+        if (activityType == DataTypes.ActivityType.DEAL_BUYER) {
+            tokenId = uint256(UserRatesType.DEAL_BUYER);
+        }
+
+        userRateToken.mint(user, tokenId, 1, FOR_RATE_TOKEN_DATA);
+        emit AddedDealActivity(user, activityType);
     }
 
     function calcPercent(address user, uint256 baseTokenId) public view returns(int256 resultPercent) {

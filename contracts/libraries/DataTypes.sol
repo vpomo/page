@@ -4,6 +4,6 @@ pragma solidity 0.8.12;
 
 library DataTypes {
 
-    enum ActivityType { POST, MESSAGE, UP, DOWN }
+    enum ActivityType { POST, MESSAGE, UP, DOWN, DEAL_GUARANTOR, DEAL_SELLER, DEAL_BUYER }
 
 }
