@@ -67,6 +67,14 @@ def pageToken(PageToken, treasury, deployer, pageBank):
 
 
 @pytest.fixture(scope="module")
+def pageSafeDeal(PageSafeDeal, admin, deployer, pageCalcUserRate, pageToken):
+    instanсe = PageSafeDeal.deploy({'from': deployer})
+    instanсe.initialize(admin, pageCalcUserRate)
+    instanсe.setToken(pageToken, {'from': deployer})
+    return instanсe
+
+
+@pytest.fixture(scope="module")
 def pageNFT(PageNFT, pageBank, treasury, deployer):
     instanсe = PageNFT.deploy({'from': deployer})
     instanсe.initialize(pageBank, 'https://')

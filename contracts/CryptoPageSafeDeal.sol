@@ -11,7 +11,7 @@ import "./interfaces/ICryptoPageCalcUserRate.sol";
 
 import {DataTypes} from './libraries/DataTypes.sol';
 
-contract CryptoPageSafeDeal is
+contract PageSafeDeal is
     Initializable,
     OwnableUpgradeable,
     AccessControlUpgradeable,
