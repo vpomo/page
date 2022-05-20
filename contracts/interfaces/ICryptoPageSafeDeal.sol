@@ -73,4 +73,6 @@ interface IPageSafeDeal {
 
     function isIssue(uint256 dealId) external view returns(bool);
 
+    function currentTime() external view returns(uint256);
+
 }

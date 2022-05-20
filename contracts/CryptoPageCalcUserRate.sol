@@ -26,7 +26,7 @@ IPageCalcUserRate
     bytes32 public constant BANK_ROLE = keccak256("BANK_ROLE");
     bytes32 public constant DEAL_ROLE = keccak256("DEAL_ROLE");
 
-    uint256 public constant TOKEN_ID_MULTIPLYING_FACTOR = 1000;
+    uint256 public constant TOKEN_ID_MULTIPLYING_FACTOR = 100;
     bytes public FOR_RATE_TOKEN_DATA = "";
 
     //for RedeemedCount

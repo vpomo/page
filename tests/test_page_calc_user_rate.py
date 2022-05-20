@@ -55,9 +55,9 @@ def test_check_ten_posts(pageBank, pageCalcUserRate, pageUserRateToken, someUser
 
 
 def test_setInterestAdjustment(pageCalcUserRate, admin):
-    interestAdjustment = pageCalcUserRate.interestAdjustment(0)
-    assert interestAdjustment == 5
+    interestAdjustment = pageCalcUserRate.interestAdjustment(1)
+    assert interestAdjustment == 10
 
     pageCalcUserRate.setInterestAdjustment([1,1,1,1,1,1,1,1,1,1], {'from': admin})
-    interestAdjustment = pageCalcUserRate.interestAdjustment(0)
+    interestAdjustment = pageCalcUserRate.interestAdjustment(1)
     assert interestAdjustment == 1

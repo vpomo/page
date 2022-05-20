@@ -311,6 +311,10 @@ contract PageSafeDeal is
         return deal.isIssue;
     }
 
+    function currentTime() public view override returns(uint256) {
+        return block.timestamp;
+    }
+
     function transferAsset(bool isEth, address recipient, uint256 amount) private {
         if (isEth) {
             require(address(this).balance >= amount, "SafeDeal: wrong ether balance");
