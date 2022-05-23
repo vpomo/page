@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "./interfaces/ICryptoPageSafeDeal.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageCalcUserRate.sol";
+import "./interfaces/ICryptoPageBank.sol";
 
 import {DataTypes} from './libraries/DataTypes.sol';
 
@@ -20,8 +21,9 @@ contract PageSafeDeal is
 
     IPageCalcUserRate public calcUserRate;
     IPageToken public token;
+    IPageBank public bank;
 
-    uint256 public DEAL_FEE = 50;
+    uint256 public GUARANTOR_FEE = 0.02 ether;
 
     uint256 public dealCount;
 
@@ -62,13 +64,15 @@ contract PageSafeDeal is
      * @param _admin Address of admin
      * @param _calcUserRate Address of calcUserRate
      */
-    function initialize(address _admin, address _calcUserRate) public initializer {
+    function initialize(address _admin, address _calcUserRate, address _bank) public initializer {
         __Ownable_init();
         require(_admin != address(0), "SafeDeal: wrong address");
         require(_calcUserRate != address(0), "SafeDeal: wrong address");
+        require(_bank != address(0), "SafeDeal: wrong address");
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         calcUserRate = IPageCalcUserRate(_calcUserRate);
+        bank = IPageBank(_bank);
     }
 
     /**
@@ -112,8 +116,9 @@ contract PageSafeDeal is
             deal.isEth = true;
         } else {
             require(msg.value == 0, "SafeDeal: wrong msg.value");
-            require(token.transferFrom(seller, address(this), amount), "SafeDeal: wrong transfer of tokens");
+            require(token.transferFrom(seller, address(this), amount), "SafeDeal: wrong transfer for seller");
         }
+        require(token.transferFrom(seller, guarantor, getGuarantorBonus()), "SafeDeal: wrong transfer for guarantor");
 
         deal.description = desc;
         deal.seller = seller;
@@ -258,6 +263,10 @@ contract PageSafeDeal is
         amount = deal.amount;
         startTime = deal.startTime;
         endTime = deal.endTime;
+    }
+
+    function getGuarantorBonus() public view override returns(uint256 amount) {
+        amount = GUARANTOR_FEE * bank.getWETHPagePrice();
     }
 
     function readApproveDeal(uint256 dealId) external view override returns(

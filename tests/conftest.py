@@ -67,9 +67,9 @@ def pageToken(PageToken, treasury, deployer, pageBank):
 
 
 @pytest.fixture(scope="module")
-def pageSafeDeal(PageSafeDeal, admin, deployer, pageCalcUserRate, pageToken):
+def pageSafeDeal(PageSafeDeal, admin, deployer, pageCalcUserRate, pageToken, pageBank):
     instanсe = PageSafeDeal.deploy({'from': deployer})
-    instanсe.initialize(admin, pageCalcUserRate)
+    instanсe.initialize(admin, pageCalcUserRate, pageBank)
     instanсe.setToken(pageToken, {'from': deployer})
     return instanсe
 

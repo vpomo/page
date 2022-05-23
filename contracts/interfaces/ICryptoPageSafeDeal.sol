@@ -48,6 +48,8 @@ interface IPageSafeDeal {
         uint128 endTime
     );
 
+    function getGuarantorBonus() external view returns(uint256 amount);
+
     function readApproveDeal(uint256 dealId) external view returns(
         bool startSellerApprove,
         bool startBuyerApprove,
