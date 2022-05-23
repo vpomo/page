@@ -16,10 +16,10 @@ import "./interfaces/ICryptoPageCommunity.sol";
      *
      */
 contract PageCommunity is
-Initializable,
-OwnableUpgradeable,
-AccessControlUpgradeable,
-IPageCommunity
+    Initializable,
+    OwnableUpgradeable,
+    AccessControlUpgradeable,
+    IPageCommunity
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
@@ -45,6 +45,7 @@ IPageCommunity
         uint256 usersCount;
         bool isActive;
         bool isPrivate;
+        bool isPostOwner;
     }
 
     struct Post {
@@ -83,6 +84,7 @@ IPageCommunity
 
     event AddedModerator(address indexed admin, uint256 number, address moderator);
     event RemovedModerator(address indexed admin, uint256 number, address moderator);
+    event SetPostOwner(address indexed admin, uint256 number);
 
     event AddedBannedUser(address indexed admin, uint256 number, address user);
     event RemovedBannedUser(address indexed admin, uint256 number, address user);
@@ -175,6 +177,9 @@ IPageCommunity
         newCommunity.isActive = true;
         newCommunity.name = desc;
 
+        require(bank.definePostFeeForNewCommunity(communityCount), "PageCommunity: wrong define post fee");
+        require(bank.defineCommentFeeForNewCommunity(communityCount), "PageCommunity: wrong define comment fee");
+
         emit AddedCommunity(_msgSender(), communityCount, desc);
     }
 
@@ -192,7 +197,8 @@ IPageCommunity
         address[] memory bannedUsers,
         uint256 usersCount,
         bool isActive,
-        bool isPrivate
+        bool isPrivate,
+        bool isPostOwner
     ) {
 
         Community storage currentCommunity = community[communityId];
@@ -206,6 +212,7 @@ IPageCommunity
         usersCount = currentCommunity.usersCount;
         isActive = currentCommunity.isActive;
         isPrivate = currentCommunity.isPrivate;
+        isPostOwner = currentCommunity.isPostOwner;
     }
 
     /**
@@ -240,6 +247,19 @@ IPageCommunity
 
         currentCommunity.moderators.remove(moderator);
         emit RemovedModerator(_msgSender(), communityId, moderator);
+    }
+
+    /**
+     * @dev Sets a new status for the community.
+     * Can only be done by voting.
+     *
+     * @param communityId ID of community
+     */
+    function setPostOwner(uint256 communityId) external override validCommunityId(communityId) onlyVoterContract(0) {
+        Community storage currentCommunity = community[communityId];
+
+        currentCommunity.isPostOwner = true;
+        emit SetPostOwner(_msgSender(), communityId);
     }
 
     /**
@@ -324,11 +344,13 @@ IPageCommunity
         communityIdByPostId[postId] = communityId;
         emit WritePost(communityId, postId, _msgSender(), owner);
 
-        require(bank.definePostFeeForNewCommunity(communityId), "PageCommunity: wrong define post fee");
-        require(bank.defineCommentFeeForNewCommunity(communityId), "PageCommunity: wrong define comment fee");
-
         uint256 gas = gasBefore - gasleft();
-        uint128 price = uint128(bank.mintTokenForNewPost(communityId, owner, _msgSender(), gas));
+        uint128 price = 0;
+        if (isCommunityPostOwner(communityId)) {
+            price = uint128(bank.mintTokenForNewPost(communityId, address(0), _msgSender(), gas));
+        } else {
+            price = uint128(bank.mintTokenForNewPost(communityId, owner, _msgSender(), gas));
+        }
         setPostPrice(postId, price);
     }
 
@@ -622,6 +644,15 @@ IPageCommunity
      */
     function isCommunityActiveUser(uint256 communityId, address user) public view override returns(bool) {
         return community[communityId].users.contains(user) && !isBannedUser(communityId, user);
+    }
+
+    /**
+     * @dev Returns a boolean about checking that the community is the owner of the posts.
+     *
+     * @param communityId ID of community
+     */
+    function isCommunityPostOwner(uint256 communityId) public view override returns(bool) {
+        return community[communityId].isPostOwner;
     }
 
     /**

@@ -17,12 +17,15 @@ interface IPageCommunity {
         address[] memory bannedUsers,
         uint256 usersCount,
         bool isActive,
-        bool isPrivate
+        bool isPrivate,
+        bool isPostOwner
     );
 
     function addModerator(uint256 communityId, address moderator) external;
 
     function removeModerator(uint256 communityId, address moderator) external;
+
+    function setPostOwner(uint256 communityId) external;
 
     function addBannedUser(uint256 communityId, address user) external;
 
@@ -99,6 +102,8 @@ interface IPageCommunity {
     function isCommunityCreator(uint256 communityId, address user) external returns(bool);
 
     function isCommunityActiveUser(uint256 communityId, address user) external returns(bool);
+
+    function isCommunityPostOwner(uint256 communityId) external view returns(bool);
 
     function isBannedUser(uint256 communityId, address user) external view returns(bool);
 

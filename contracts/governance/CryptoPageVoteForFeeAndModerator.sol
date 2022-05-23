@@ -103,7 +103,7 @@ contract PageVoteForFeeAndModerator is
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
         address sender = _msgSender();
         require(community.isCommunityModerator(communityId, sender) || community.isCommunityCreator(communityId, sender), "PageVote: access denied");
-        require(0 < methodNumber && methodNumber < 5, "PageVote: wrong methodNumber");
+        require(0 < methodNumber && methodNumber < 6, "PageVote: wrong methodNumber");
 
         uint256 len = readVotesCount(communityId);
         votes[communityId].push();
@@ -256,6 +256,9 @@ contract PageVoteForFeeAndModerator is
         }
         if (vote.execMethodNumber == 4) {
             community.removeModerator(communityId, vote.user);
+        }
+        if (vote.execMethodNumber == 5) {
+            community.setPostOwner(communityId);
         }
     }
 }
