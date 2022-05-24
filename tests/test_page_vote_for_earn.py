@@ -40,7 +40,7 @@ def test_put_execute_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageB
     pageCommunity.join(1, {'from': deployer})
 
     voteDesc = 'test for vote'
-    pageVoteForEarn.createTransferVote(1, voteDesc, duration, 2, accounts[5], {'from': accounts[0]})
+    pageVoteForEarn.createTokenTransferVote(1, voteDesc, duration, 2, accounts[5], {'from': accounts[0]})
 
     pageToken.transfer(someUser, 100, {'from': treasury})
     pageToken.transfer(deployer, 100, {'from': treasury})
@@ -50,10 +50,10 @@ def test_put_execute_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageB
     pageBank.addBalance(100, {'from': treasury})
     pageBank.payForPrivacyAccess(100, 1, {'from': treasury})
 
-    pageVoteForEarn.putTransferVote(1, 0, True, {'from': someUser})
-    pageVoteForEarn.putTransferVote(1, 0, True, {'from': deployer})
+    pageVoteForEarn.putTokenTransferVote(1, 0, True, {'from': someUser})
+    pageVoteForEarn.putTokenTransferVote(1, 0, True, {'from': deployer})
 
-    readVote = pageVoteForEarn.readTransferVote(1, 0)
+    readVote = pageVoteForEarn.readTokenTransferVote(1, 0)
     assert readVote[8] == True
 
     with reverts():
@@ -62,7 +62,7 @@ def test_put_execute_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageB
     chain.sleep(duration + 10)
     pageVoteForEarn.executeTransferVote(1, 0, {'from': someUser})
 
-    readVote = pageVoteForEarn.readTransferVote(1, 0)
+    readVote = pageVoteForEarn.readTokenTransferVote(1, 0)
     assert readVote[8] == False
 
 

@@ -14,7 +14,7 @@ interface IPageVoteForEarn {
         uint128 newPrice
     ) external;
 
-    function createTransferVote (
+    function createTokenTransferVote (
         uint256 communityId,
         string memory description,
         uint128 duration,
@@ -26,7 +26,7 @@ interface IPageVoteForEarn {
 
     function putPrivacyAccessPriceVote(uint256 communityId, uint256 index, bool isYes) external;
 
-    function putTransferVote(uint256 communityId, uint256 index, bool isYes) external;
+    function putTokenTransferVote(uint256 communityId, uint256 index, bool isYes) external;
 
     function executePrivacyAccessPriceVote(uint256 communityId, uint256 index) external;
 
@@ -43,7 +43,7 @@ interface IPageVoteForEarn {
         bool active
     );
 
-    function readTransferVote(uint256 communityId, uint256 index) external view returns(
+    function readTokenTransferVote(uint256 communityId, uint256 index) external view returns(
         string memory description,
         address creator,
         uint128 finishTime,
@@ -57,5 +57,5 @@ interface IPageVoteForEarn {
 
     function readPrivacyAccessPriceVotesCount(uint256 communityId) external view returns(uint256 count);
 
-    function readTransferVotesCount(uint256 communityId) external view returns(uint256 count);
+    function readTokenTransferVotesCount(uint256 communityId) external view returns(uint256 count);
 }
