@@ -107,8 +107,6 @@ def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, 
     pageBank.grantRole(pageBank.UPDATER_FEE_ROLE(), instanсe, {'from': admin})
 
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
-    #pageCommunity.grantRole(pageCommunity.VOTER_ROLE(), instanсe, {'from': admin})
-    #pageCommunity.grantRole(pageCommunity.VOTER_ROLE(), deployer, {'from': admin})
 
     return instanсe
 

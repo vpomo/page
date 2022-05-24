@@ -22,15 +22,27 @@ interface IPageVoteForEarn {
         address wallet
     ) external;
 
+    function createNftTransferVote (
+        uint256 communityId,
+        string memory description,
+        uint128 duration,
+        uint128 amount,
+        address wallet
+    ) external;
+
     function setMinDuration(uint128 minDuration) external;
 
     function putPrivacyAccessPriceVote(uint256 communityId, uint256 index, bool isYes) external;
 
     function putTokenTransferVote(uint256 communityId, uint256 index, bool isYes) external;
 
+    function putNftTransferVote(uint256 communityId, uint256 index, bool isYes) external;
+
     function executePrivacyAccessPriceVote(uint256 communityId, uint256 index) external;
 
-    function executeTransferVote(uint256 communityId, uint256 index) external;
+    function executeTokenTransferVote(uint256 communityId, uint256 index) external;
+
+    function executeNftTransferVote(uint256 communityId, uint256 index) external;
 
     function readPrivacyAccessPriceVote(uint256 communityId, uint256 index) external view returns(
         string memory description,
@@ -55,7 +67,21 @@ interface IPageVoteForEarn {
         bool active
     );
 
+    function readNftTransferVote(uint256 communityId, uint256 index) external view returns(
+        string memory description,
+        address creator,
+        uint128 finishTime,
+        uint128 yesCount,
+        uint128 noCount,
+        uint128 amount,
+        address wallet,
+        address[] memory voteUsers,
+        bool active
+    );
+
     function readPrivacyAccessPriceVotesCount(uint256 communityId) external view returns(uint256 count);
 
     function readTokenTransferVotesCount(uint256 communityId) external view returns(uint256 count);
+
+    function readNftTransferVotesCount(uint256 communityId) external view returns(uint256 count);
 }

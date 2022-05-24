@@ -259,7 +259,28 @@ contract PageCommunity is
         Community storage currentCommunity = community[communityId];
 
         currentCommunity.isPostOwner = true;
+        currentCommunity.users.add(address(this));
+        currentCommunity.usersCount++;
         emit SetPostOwner(_msgSender(), communityId);
+    }
+
+    /**
+     * @dev Transfers post.
+     * Can only be done by voting.
+     *
+     * @param communityId ID of community
+     */
+    function transferPost(uint256 communityId, uint256 postId, address wallet)
+        external override validCommunityId(communityId) onlyVoterContract(2) returns(bool)
+    {
+        Community storage currentCommunity = community[communityId];
+        address postOwner = post[postId].owner;
+        require(wallet != address(0), "PageCommunity: wrong wallet");
+        require(postOwner == address(this), "PageCommunity: wrong owner");
+        require(community[communityId].postIds.contains(postId), "PageCommunity: wrong postId");
+
+        nft.transferFrom(postOwner, wallet, postId);
+        return true;
     }
 
     /**
@@ -333,11 +354,16 @@ contract PageCommunity is
     ) external override validCommunityId(communityId) onlyCommunityUser(communityId) {
         uint256 gasBefore = gasleft();
 
+        if (isCommunityPostOwner(communityId)) {
+            owner = address(this);
+        }
+
         require(isCommunityActiveUser(communityId, _msgSender()), "PageCommunity: wrong user");
         require(isCommunityActiveUser(communityId, owner), "PageCommunity: wrong user");
         require(isPrivacyAccess(_msgSender(), communityId), "PageCommunity: wrong time for privacy access");
 
         uint256 postId = nft.mint(owner);
+
         createPost(postId, owner, ipfsHash);
 
         community[communityId].postIds.add(postId);
@@ -345,12 +371,7 @@ contract PageCommunity is
         emit WritePost(communityId, postId, _msgSender(), owner);
 
         uint256 gas = gasBefore - gasleft();
-        uint128 price = 0;
-        if (isCommunityPostOwner(communityId)) {
-            price = uint128(bank.mintTokenForNewPost(communityId, address(0), _msgSender(), gas));
-        } else {
-            price = uint128(bank.mintTokenForNewPost(communityId, owner, _msgSender(), gas));
-        }
+        uint128 price = uint128(bank.mintTokenForNewPost(communityId, owner, _msgSender(), gas));
         setPostPrice(postId, price);
     }
 

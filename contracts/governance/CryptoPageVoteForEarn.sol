@@ -45,7 +45,7 @@ contract PageVoteForEarn is
         uint128 finishTime;
         uint128 yesCount;
         uint128 noCount;
-        uint128 amount;
+        uint128 value;
         address wallet;
         EnumerableSetUpgradeable.AddressSet voteUsers;
         bool active;
@@ -54,17 +54,21 @@ contract PageVoteForEarn is
     //communityId -> UintValueVote[]
     mapping(uint256 => UintValueVote[]) private privacyAccessPriceVotes;
     mapping(uint256 => UintAddressValueVote[]) private tokenTransferVotes;
+    mapping(uint256 => UintAddressValueVote[]) private nftTransferVotes;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
 
     event PutPrivacyAccessPriceVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
     event PutTokenTransferVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
+    event PutNftTransferVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
 
     event CreatePrivacyAccessPriceVote(address indexed sender, uint128 duration, uint128 newPrice);
     event CreateTokenTransferVote(address indexed sender, uint128 duration, uint128 amount, address wallet);
+    event CreateNftTransferVote(address indexed sender, uint128 duration, uint128 id, address wallet);
 
     event ExecutePrivacyAccessPriceVote(address sender, uint256 communityId, uint256 index);
-    event ExecuteTransferVote(address sender, uint256 communityId, uint256 index);
+    event ExecuteTokenTransferVote(address sender, uint256 communityId, uint256 index);
+    event ExecuteNftTransferVote(address sender, uint256 communityId, uint256 index);
 
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
         __Ownable_init();
@@ -160,14 +164,32 @@ contract PageVoteForEarn is
         tokenTransferVotes[communityId].push();
 
         UintAddressValueVote storage vote = tokenTransferVotes[communityId][len];
-        vote.description = description;
-        vote.creator = sender;
-        vote.finishTime = uint128(block.timestamp) + duration;
-        vote.amount = amount;
-        vote.wallet = wallet;
-        vote.active = true;
+        createTransferVote(vote, description, sender, duration, amount, wallet);
 
         emit CreateTokenTransferVote(sender, duration, amount, wallet);
+    }
+
+    function createNftTransferVote (
+        uint256 communityId,
+        string memory description,
+        uint128 duration,
+        uint128 id,
+        address wallet
+    ) external override {
+        require(duration >= MIN_DURATION, "PageVote: wrong duration");
+        address sender = _msgSender();
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
+
+        uint256 len = readNftTransferVotesCount(communityId);
+        if (len > 0) {
+            require(!nftTransferVotes[communityId][len-1].active, "PageVote: previous voting has not finished");
+        }
+        nftTransferVotes[communityId].push();
+
+        UintAddressValueVote storage vote = nftTransferVotes[communityId][len];
+        createTransferVote(vote, description, sender, duration, id, wallet);
+
+        emit CreateNftTransferVote(sender, duration, id, wallet);
     }
 
     /**
@@ -221,23 +243,26 @@ contract PageVoteForEarn is
      */
     function putTokenTransferVote(uint256 communityId, uint256 index, bool isYes) external override {
         require(tokenTransferVotes[communityId].length > index, "PageVote: wrong index");
-
-        address sender = _msgSender();
         UintAddressValueVote storage vote = tokenTransferVotes[communityId][index];
+        uint256 weight = putTransferVote(communityId, vote, isYes);
 
-        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
-        require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
-        require(vote.active, "PageVote: vote not active");
+        emit PutTokenTransferVote(_msgSender(), communityId, index, isYes, weight);
+    }
 
-        uint256 weight = bank.balanceOf(sender) + token.balanceOf(sender);
+    /**
+     * @dev Here the user votes either for the implementation of the proposal or against.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     * @param isYes For the implementation of the proposal or against the implementation
+     */
+    function putNftTransferVote(uint256 communityId, uint256 index, bool isYes) external override {
+        require(nftTransferVotes[communityId].length > index, "PageVote: wrong index");
+        UintAddressValueVote storage vote = nftTransferVotes[communityId][index];
+        uint256 weight = putTransferVote(communityId, vote, isYes);
 
-        if (isYes) {
-            vote.yesCount += uint128(weight);
-        } else {
-            vote.noCount += uint128(weight);
-        }
-        vote.voteUsers.add(sender);
-        emit PutTokenTransferVote(sender, communityId, index, isYes, weight);
+        emit PutNftTransferVote(_msgSender(), communityId, index, isYes, weight);
     }
 
     /**
@@ -274,24 +299,37 @@ contract PageVoteForEarn is
      * @param index Voting number for the current community.
      * The total number of all votes is given by the "readVotesCount()" function.
      */
-    function executeTransferVote(uint256 communityId, uint256 index) external override {
+    function executeTokenTransferVote(uint256 communityId, uint256 index) external override {
         require(tokenTransferVotes[communityId].length > index, "PageVote: wrong index");
-
-        address sender = _msgSender();
         UintAddressValueVote storage vote = tokenTransferVotes[communityId][index];
-
-        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
-        require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
-        require(vote.active, "PageVote: vote not active");
-        require(vote.finishTime < block.timestamp, "PageVote: wrong time");
+        checkTransferVote(communityId, vote);
 
         if (vote.yesCount > vote.noCount) {
-            executeTokenTransferVoteScript(communityId, uint256(vote.amount), vote.wallet);
+            executeTokenTransferVoteScript(communityId, uint256(vote.value), vote.wallet);
         }
-
         vote.active = false;
 
-        emit ExecuteTransferVote(sender, communityId, index);
+        emit ExecuteTokenTransferVote(_msgSender(), communityId, index);
+    }
+
+    /**
+     * @dev Starts the execution of a Vote.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
+    function executeNftTransferVote(uint256 communityId, uint256 index) external override {
+        require(nftTransferVotes[communityId].length > index, "PageVote: wrong index");
+        UintAddressValueVote storage vote = nftTransferVotes[communityId][index];
+        checkTransferVote(communityId, vote);
+
+        if (vote.yesCount > vote.noCount) {
+            executeNftTransferVoteScript(communityId, uint256(vote.value), vote.wallet);
+        }
+        vote.active = false;
+
+        emit ExecuteNftTransferVote(_msgSender(), communityId, index);
     }
 
     /**
@@ -333,6 +371,47 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function readTokenTransferVote(uint256 communityId, uint256 index) external override view returns(
+        string memory,
+        address,
+        uint128,
+        uint128,
+        uint128,
+        uint128,
+        address,
+        address[] memory,
+        bool
+    ) {
+        require(tokenTransferVotes[communityId].length > index, "PageVote: wrong index");
+        UintAddressValueVote storage vote = tokenTransferVotes[communityId][index];
+
+        return readTransferVote(communityId, vote);
+    }
+
+    /**
+     * @dev Reading information about a Vote.
+     *
+     * @param communityId ID of community
+     * @param index Voting number for the current community.
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
+    function readNftTransferVote(uint256 communityId, uint256 index) external override view returns(
+        string memory,
+        address,
+        uint128,
+        uint128,
+        uint128,
+        uint128,
+        address,
+        address[] memory,
+        bool
+    ) {
+        require(nftTransferVotes[communityId].length > index, "PageVote: wrong index");
+        UintAddressValueVote storage vote = nftTransferVotes[communityId][index];
+
+        return readTransferVote(communityId, vote);
+    }
+
+    function readTransferVote(uint256 communityId, UintAddressValueVote storage vote) private view returns (
         string memory description,
         address creator,
         uint128 finishTime,
@@ -343,16 +422,12 @@ contract PageVoteForEarn is
         address[] memory voteUsers,
         bool active
     ) {
-        require(tokenTransferVotes[communityId].length > index, "PageVote: wrong index");
-
-        UintAddressValueVote storage vote = tokenTransferVotes[communityId][index];
-
         description = vote.description;
         creator = vote.creator;
         finishTime = vote.finishTime;
         yesCount = vote.yesCount;
         noCount = vote.noCount;
-        amount = vote.amount;
+        amount = vote.value;
         wallet = vote.wallet;
         voteUsers = vote.voteUsers.values();
         active = vote.active;
@@ -376,6 +451,10 @@ contract PageVoteForEarn is
         return tokenTransferVotes[communityId].length;
     }
 
+    function readNftTransferVotesCount(uint256 communityId) public override view returns(uint256 count) {
+        return nftTransferVotes[communityId].length;
+    }
+
     /**
      * @dev Starts the execution for change price.
      *
@@ -388,7 +467,7 @@ contract PageVoteForEarn is
     }
 
     /**
-     * @dev Starts the execution for change price.
+     * @dev Starts the execution for transfer PAGE tokens.
      *
      * @param communityId ID of community
      * @param amount Value for amount of tokens
@@ -397,5 +476,60 @@ contract PageVoteForEarn is
      */
     function executeTokenTransferVoteScript(uint256 communityId, uint256 amount, address wallet) private {
         require(bank.transferFromCommunity(communityId, amount, wallet), "PageVote: wrong transfer");
+    }
+
+    /**
+     * @dev Starts the execution for transfer NFT-post token.
+     *
+     * @param communityId ID of community
+     * @param id Value for nft token id
+     * @param wallet Address for transferring tokens
+     * The total number of all votes is given by the "readVotesCount()" function.
+     */
+    function executeNftTransferVoteScript(uint256 communityId, uint256 id, address wallet) private {
+        require(community.transferPost(communityId, id, wallet), "PageVote: wrong transfer");
+    }
+
+    function createTransferVote(
+        UintAddressValueVote storage vote,
+        string memory description,
+        address sender,
+        uint128 duration,
+        uint128 value,
+        address wallet
+    ) private {
+        vote.description = description;
+        vote.creator = sender;
+        vote.finishTime = uint128(block.timestamp) + duration;
+        vote.value = value;
+        vote.wallet = wallet;
+        vote.active = true;
+    }
+
+    function putTransferVote(uint256 communityId, UintAddressValueVote storage vote, bool isYes) private returns(uint256) {
+        address sender = _msgSender();
+
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
+        require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
+        require(vote.active, "PageVote: vote not active");
+
+        uint256 weight = bank.balanceOf(sender) + token.balanceOf(sender);
+
+        if (isYes) {
+            vote.yesCount += uint128(weight);
+        } else {
+            vote.noCount += uint128(weight);
+        }
+        vote.voteUsers.add(sender);
+
+        return weight;
+    }
+
+    function checkTransferVote(uint256 communityId, UintAddressValueVote storage vote) private {
+        address sender = _msgSender();
+        require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
+        require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
+        require(vote.active, "PageVote: vote not active");
+        require(vote.finishTime < block.timestamp, "PageVote: wrong time");
     }
 }

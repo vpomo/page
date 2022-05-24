@@ -27,6 +27,8 @@ interface IPageCommunity {
 
     function setPostOwner(uint256 communityId) external;
 
+    function transferPost(uint256 communityId, uint256 postId, address wallet) external returns(bool);
+
     function addBannedUser(uint256 communityId, address user) external;
 
     function removeBannedUser(uint256 communityId, address user) external;
