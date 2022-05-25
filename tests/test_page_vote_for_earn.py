@@ -1,5 +1,5 @@
 import pytest
-from brownie import ZERO_ADDRESS, chain, reverts
+from brownie import ZERO_ADDRESS, chain, reverts, network
 import brownie
 
 VERSION = '1'
@@ -33,7 +33,7 @@ def test_create_read_vote(accounts, pageVoteForEarn, pageCommunity, someUser, de
     assert 1 == pageVoteForEarn.readPrivacyAccessPriceVotesCount(1)
 
 
-def test_put_execute_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageBank, pageToken, someUser, deployer, treasury):
+def test_execute_token_transfer_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageBank, pageToken, someUser, deployer, treasury):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
@@ -57,14 +57,47 @@ def test_put_execute_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageB
     assert readVote[8] == True
 
     with reverts():
-        pageVoteForEarn.executeTransferVote(1, 0, {'from': someUser})
+        pageVoteForEarn.executeTokenTransferVote(1, 0, {'from': someUser})
 
     chain.sleep(duration + 10)
-    pageVoteForEarn.executeTransferVote(1, 0, {'from': someUser})
+    pageVoteForEarn.executeTokenTransferVote(1, 0, {'from': someUser})
 
     readVote = pageVoteForEarn.readTokenTransferVote(1, 0)
     assert readVote[8] == False
 
+
+def test_execute_nft_transfer_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageVoteForFeeAndModerator, pageToken, someUser, deployer, treasury):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    pageCommunity.join(1, {'from': deployer})
+
+    pageToken.transfer(someUser, 100, {'from': treasury})
+    pageToken.transfer(deployer, 100, {'from': treasury})
+    network.gas_price("65 gwei")
+
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+    pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
+
+    pageCommunity.setPostOwner(1, {'from': pageVoteForFeeAndModerator})
+
+    voteDesc = 'test for vote'
+    pageVoteForEarn.createNftTransferVote(1, voteDesc, duration, 1, accounts[5], {'from': accounts[0]})
+
+    pageVoteForEarn.putNftTransferVote(1, 0, True, {'from': someUser})
+    pageVoteForEarn.putNftTransferVote(1, 0, True, {'from': deployer})
+
+    readVote = pageVoteForEarn.readNftTransferVote(1, 0)
+    assert readVote[8] == True
+
+    with reverts():
+        pageVoteForEarn.executeNftTransferVote(1, 0, {'from': someUser})
+
+    chain.sleep(duration + 10)
+    pageVoteForEarn.executeNftTransferVote(1, 0, {'from': someUser})
+
+    readVote = pageVoteForEarn.readNftTransferVote(1, 0)
+    assert readVote[8] == False
 
 
 
