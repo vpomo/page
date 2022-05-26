@@ -112,7 +112,7 @@ def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, 
 
 
 @pytest.fixture(scope="module")
-def pageVoteForEarn(PageVoteForEarn, deployer, pageToken, pageCommunity, pageBank, admin):
+def pageVoteForEarn(pageVoteForFeeAndModerator, PageVoteForEarn, deployer, pageToken, pageCommunity, pageBank, admin):
     instanсe = PageVoteForEarn.deploy({'from': deployer})
     instanсe.initialize(admin, pageToken, pageCommunity, pageBank)
     deployer.transfer(instanсe, Wei('10 ether'))

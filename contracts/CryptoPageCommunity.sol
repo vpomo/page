@@ -271,7 +271,7 @@ contract PageCommunity is
      * @param communityId ID of community
      */
     function transferPost(uint256 communityId, uint256 postId, address wallet)
-        external override validCommunityId(communityId) onlyVoterContract(2) returns(bool)
+        external override validCommunityId(communityId) onlyVoterContract(1) returns(bool)
     {
         Community storage currentCommunity = community[communityId];
         address postOwner = post[postId].owner;
@@ -633,7 +633,7 @@ contract PageCommunity is
      *
      * @param newUser New supervisor address
      */
-    function changeSupervisor(address newUser) external override onlyVoterContract(1) {
+    function changeSupervisor(address newUser) external override onlyVoterContract(2) {
         emit ChangeSupervisor(supervisor, newUser);
         supervisor = newUser;
     }

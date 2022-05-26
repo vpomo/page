@@ -66,7 +66,7 @@ def test_execute_token_transfer_vote(chain, accounts, pageVoteForEarn, pageCommu
     assert readVote[8] == False
 
 
-def test_execute_nft_transfer_vote(chain, accounts, pageVoteForEarn, pageCommunity, pageVoteForFeeAndModerator, pageToken, someUser, deployer, treasury):
+def test_execute_nft_transfer_vote(chain, accounts, pageCommunity, pageVoteForFeeAndModerator, pageVoteForEarn, pageToken, pageNFT, someUser, deployer, treasury):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
@@ -76,10 +76,13 @@ def test_execute_nft_transfer_vote(chain, accounts, pageVoteForEarn, pageCommuni
     pageToken.transfer(deployer, 100, {'from': treasury})
     network.gas_price("65 gwei")
 
-    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
-    pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
+    assert pageVoteForFeeAndModerator == pageCommunity.voterContracts(0)
+    assert pageVoteForEarn == pageCommunity.voterContracts(1)
 
     pageCommunity.setPostOwner(1, {'from': pageVoteForFeeAndModerator})
+
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+    pageCommunity.writePost(1, 'aaaa', deployer, {'from': someUser})
 
     voteDesc = 'test for vote'
     pageVoteForEarn.createNftTransferVote(1, voteDesc, duration, 1, accounts[5], {'from': accounts[0]})
@@ -94,6 +97,12 @@ def test_execute_nft_transfer_vote(chain, accounts, pageVoteForEarn, pageCommuni
         pageVoteForEarn.executeNftTransferVote(1, 0, {'from': someUser})
 
     chain.sleep(duration + 10)
+
+    tokens = pageNFT.tokensOfOwner(pageCommunity)
+    assert tokens == (0,1)
+
+    pageNFT.approve(accounts[5], 1, {'from': pageCommunity})
+
     pageVoteForEarn.executeNftTransferVote(1, 0, {'from': someUser})
 
     readVote = pageVoteForEarn.readNftTransferVote(1, 0)
