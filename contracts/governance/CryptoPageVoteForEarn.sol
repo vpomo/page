@@ -55,6 +55,7 @@ contract PageVoteForEarn is
     mapping(uint256 => UintValueVote[]) private privacyAccessPriceVotes;
     mapping(uint256 => UintAddressValueVote[]) private tokenTransferVotes;
     mapping(uint256 => UintAddressValueVote[]) private nftTransferVotes;
+    mapping(uint256 => uint256) private lastVoteBlock;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
 
@@ -230,6 +231,7 @@ contract PageVoteForEarn is
             vote.noCount += uint128(weight);
         }
         vote.voteUsers.add(sender);
+
         emit PutPrivacyAccessPriceVote(sender, communityId, index, isYes, weight);
     }
 
@@ -475,6 +477,7 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeTokenTransferVoteScript(uint256 communityId, uint256 amount, address wallet) private {
+        preventSameBlock(communityId);
         require(bank.transferFromCommunity(communityId, amount, wallet), "PageVote: wrong transfer");
     }
 
@@ -487,6 +490,7 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeNftTransferVoteScript(uint256 communityId, uint256 id, address wallet) private {
+        preventSameBlock(communityId);
         require(community.transferPost(communityId, id, wallet), "PageVote: wrong transfer");
     }
 
@@ -521,6 +525,7 @@ contract PageVoteForEarn is
             vote.noCount += uint128(weight);
         }
         vote.voteUsers.add(sender);
+        lastVoteBlock[communityId] = block.number;
 
         return weight;
     }
@@ -531,5 +536,9 @@ contract PageVoteForEarn is
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
         require(vote.active, "PageVote: vote not active");
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");
+    }
+
+    function preventSameBlock(uint256 communityId) private {
+        require(block.number > lastVoteBlock[communityId], "PageVote: same block");
     }
 }
