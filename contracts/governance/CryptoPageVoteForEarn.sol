@@ -139,7 +139,7 @@ contract PageVoteForEarn is
     }
 
     /**
- * @dev Creates a new community vote proposal for price of privacy access.
+     * @dev Creates a new community vote proposal for transfer PAGE token.
      *
      * @param communityId ID of community
      * @param description Brief text description for the proposal
@@ -170,6 +170,15 @@ contract PageVoteForEarn is
         emit CreateTokenTransferVote(sender, duration, amount, wallet);
     }
 
+    /**
+     * @dev Creates a new community vote proposal for transfer NFT token.
+     *
+     * @param communityId ID of community
+     * @param description Brief text description for the proposal
+     * @param duration Voting duration in seconds
+     * @param id Value for token ID
+     * @param wallet Address for transferring tokens
+     */
     function createNftTransferVote (
         uint256 communityId,
         string memory description,
@@ -413,6 +422,42 @@ contract PageVoteForEarn is
         return readTransferVote(communityId, vote);
     }
 
+    /**
+     * @dev Reading the amount of votes for the community.
+     *
+     * @param communityId ID of community
+     */
+    function readPrivacyAccessPriceVotesCount(uint256 communityId) public override view returns(uint256 count) {
+        return privacyAccessPriceVotes[communityId].length;
+    }
+
+    /**
+     * @dev Reading the amount of votes for the community.
+     *
+     * @param communityId ID of community
+     */
+    function readTokenTransferVotesCount(uint256 communityId) public override view returns(uint256 count) {
+        return tokenTransferVotes[communityId].length;
+    }
+
+    /**
+     * @dev Reading the amount of votes for the community.
+     *
+     * @param communityId ID of community
+     */
+    function readNftTransferVotesCount(uint256 communityId) public override view returns(uint256 count) {
+        return nftTransferVotes[communityId].length;
+    }
+
+
+    // *** --- Private area --- ***
+
+    /**
+     * @dev Reading information about a transfer Vote.
+     *
+     * @param communityId ID of community
+     * @param vote Storage variable for vote
+     */
     function readTransferVote(uint256 communityId, UintAddressValueVote storage vote) private view returns (
         string memory description,
         address creator,
@@ -436,28 +481,6 @@ contract PageVoteForEarn is
     }
 
     /**
-     * @dev Reading the amount of votes for the community.
-     *
-     * @param communityId ID of community
-     */
-    function readPrivacyAccessPriceVotesCount(uint256 communityId) public override view returns(uint256 count) {
-        return privacyAccessPriceVotes[communityId].length;
-    }
-
-    /**
-     * @dev Reading the amount of votes for the community.
-     *
-     * @param communityId ID of community
-     */
-    function readTokenTransferVotesCount(uint256 communityId) public override view returns(uint256 count) {
-        return tokenTransferVotes[communityId].length;
-    }
-
-    function readNftTransferVotesCount(uint256 communityId) public override view returns(uint256 count) {
-        return nftTransferVotes[communityId].length;
-    }
-
-    /**
      * @dev Starts the execution for change price.
      *
      * @param communityId ID of community
@@ -477,7 +500,6 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeTokenTransferVoteScript(uint256 communityId, uint256 amount, address wallet) private {
-        preventSameBlock(communityId);
         require(bank.transferFromCommunity(communityId, amount, wallet), "PageVote: wrong transfer");
     }
 
@@ -490,10 +512,19 @@ contract PageVoteForEarn is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeNftTransferVoteScript(uint256 communityId, uint256 id, address wallet) private {
-        preventSameBlock(communityId);
         require(community.transferPost(communityId, id, wallet), "PageVote: wrong transfer");
     }
 
+    /**
+     * @dev Creates a new community vote proposal for transfer NFT token.
+     *
+     * @param vote Storage variable for vote
+     * @param description Brief text description for the proposal
+     * @param sender Address creator
+     * @param duration Voting duration in seconds
+     * @param value Value for tokens (amount or ID)
+     * @param wallet Address for transferring tokens
+     */
     function createTransferVote(
         UintAddressValueVote storage vote,
         string memory description,
@@ -510,6 +541,13 @@ contract PageVoteForEarn is
         vote.active = true;
     }
 
+    /**
+     * @dev Here the user votes either for the implementation of the proposal or against.
+     *
+     * @param communityId ID of community
+     * @param vote Storage variable for vote
+     * @param isYes For the implementation of the proposal or against the implementation
+     */
     function putTransferVote(uint256 communityId, UintAddressValueVote storage vote, bool isYes) private returns(uint256) {
         address sender = _msgSender();
 
@@ -530,14 +568,26 @@ contract PageVoteForEarn is
         return weight;
     }
 
+    /**
+     * @dev This is a set of mandatory checks when transferring tokens.
+     *
+     * @param communityId ID of community
+     * @param vote Storage variable for vote
+     */
     function checkTransferVote(uint256 communityId, UintAddressValueVote storage vote) private {
         address sender = _msgSender();
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
         require(vote.active, "PageVote: vote not active");
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");
+        preventSameBlock(communityId);
     }
 
+    /**
+     * @dev It is flashloan protection. Makes a check that the transaction is in another block.
+     *
+     * @param communityId ID of community
+     */
     function preventSameBlock(uint256 communityId) private {
         require(block.number > lastVoteBlock[communityId], "PageVote: same block");
     }

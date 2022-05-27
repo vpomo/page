@@ -42,6 +42,9 @@ def test_execute_token_transfer_vote(chain, accounts, pageVoteForEarn, pageCommu
     voteDesc = 'test for vote'
     pageVoteForEarn.createTokenTransferVote(1, voteDesc, duration, 2, accounts[5], {'from': accounts[0]})
 
+    readVotesCount = pageVoteForEarn.readTokenTransferVotesCount(1)
+    assert readVotesCount == 1
+
     pageToken.transfer(someUser, 100, {'from': treasury})
     pageToken.transfer(deployer, 100, {'from': treasury})
 
@@ -86,6 +89,9 @@ def test_execute_nft_transfer_vote(chain, accounts, pageCommunity, pageVoteForFe
 
     voteDesc = 'test for vote'
     pageVoteForEarn.createNftTransferVote(1, voteDesc, duration, 1, accounts[5], {'from': accounts[0]})
+
+    readVotesCount = pageVoteForEarn.readNftTransferVotesCount(1)
+    assert readVotesCount == 1
 
     pageVoteForEarn.putNftTransferVote(1, 0, True, {'from': someUser})
     pageVoteForEarn.putNftTransferVote(1, 0, True, {'from': deployer})
