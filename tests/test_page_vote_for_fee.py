@@ -41,6 +41,9 @@ def test_put_execute_vote(chain, accounts, pageVoteForFeeAndModerator, pageCommu
     voteDesc = 'test for vote'
     pageVoteForFeeAndModerator.createVote(1, voteDesc, duration, 2, [10, 11, 12, 13], ZERO_ADDRESS, {'from': accounts[0]})
 
+    readVotesCount = pageVoteForFeeAndModerator.readVotesCount(1)
+    assert readVotesCount == 1
+
     pageToken.transfer(someUser, 1000, {'from': treasury})
     pageToken.transfer(deployer, 1000, {'from': treasury})
 
@@ -54,10 +57,10 @@ def test_put_execute_vote(chain, accounts, pageVoteForFeeAndModerator, pageCommu
         pageVoteForFeeAndModerator.executeVote(1, 0, {'from': someUser})
 
     readCommentFee = pageBank.readCommentFee(1)
-    assert readCommentFee[0] == 0
-    assert readCommentFee[1] == 0
+    assert readCommentFee[0] == 4500
+    assert readCommentFee[1] == 4500
     assert readCommentFee[2] == 0
-    assert readCommentFee[3] == 0
+    assert readCommentFee[3] == 9000
 
     chain.sleep(duration + 10)
     pageVoteForFeeAndModerator.executeVote(1, 0, {'from': someUser})
