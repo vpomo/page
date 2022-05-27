@@ -120,3 +120,14 @@ def pageVoteForEarn(pageVoteForFeeAndModerator, PageVoteForEarn, deployer, pageT
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
     return instanсe
 
+
+@pytest.fixture(scope="module")
+def pageVoteForSuperModerator(pageVoteForFeeAndModerator, pageVoteForEarn, PageVoteForSuperModerator, deployer, pageToken, pageCommunity, pageBank, admin):
+    instanсe = PageVoteForSuperModerator.deploy({'from': deployer})
+    instanсe.initialize(admin, pageToken, pageCommunity, pageBank)
+    pageCommunity.addVoterContract(instanсe, {'from': deployer})
+    assert pageVoteForFeeAndModerator == pageCommunity.voterContracts(0)
+    assert pageVoteForEarn == pageCommunity.voterContracts(1)
+    assert instanсe == pageCommunity.voterContracts(2)
+
+    return instanсe

@@ -22,7 +22,7 @@ contract PageVoteForSuperModerator is
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
 
     uint128 public MIN_DURATION = 1 days;
-    uint128 public MIN_MODERATOR_COUNT = 10;
+    uint128 public MIN_MODERATOR_COUNT = 2;
 
     IPageCommunity community;
     IPageBank public bank;

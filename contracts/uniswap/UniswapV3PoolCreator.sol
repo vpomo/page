@@ -120,7 +120,6 @@ contract UniswapV3PoolCreator is IERC721Receiver {
         uint256 tokenId,
         bytes calldata
     ) external override returns (bytes4) {
-        // get position information
         _createDeposit(operator, tokenId);
         return this.onERC721Received.selector;
     }
@@ -141,8 +140,6 @@ contract UniswapV3PoolCreator is IERC721Receiver {
 
         ) = nonfungiblePositionManager.positions(tokenId);
 
-        // set the owner and data for position
-        // operator is msg.sender
         deposits[tokenId] = Deposit({
             owner: owner,
             liquidity: liquidity,
