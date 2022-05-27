@@ -95,6 +95,14 @@ IPageCalcUserRate
         //revert("PageBank: asset transfer prohibited");
     }
 
+    /**
+     * @dev The main function for users who write messages.
+     * Keeps records of user activities.
+     *
+     * @param communityId ID of community
+     * @param user User wallet address
+     * @param activityType Activity type, taken from enum
+     */
     function checkCommunityActivity(
         uint256 communityId,
         address user,
@@ -112,6 +120,13 @@ IPageCalcUserRate
         return calcPercent(user, baseTokenId);
     }
 
+    /**
+     * @dev The function for users making deals.
+     * Keeps records of user activities.
+     *
+     * @param user User wallet address
+     * @param activityType Activity type, taken from enum
+     */
     function addDealActivity(address user, DataTypes.ActivityType activityType) external override onlyRole(DEAL_ROLE) {
         uint256 tokenId = 0;
         if (activityType == DataTypes.ActivityType.DEAL_GUARANTOR) {
@@ -128,6 +143,12 @@ IPageCalcUserRate
         emit AddedDealActivity(user, activityType);
     }
 
+    /**
+     * @dev Calculates the percentage for accruing tokens when creating a post or message.
+     *
+     * @param user User wallet address
+     * @param baseTokenId Token ID for rating tokens
+     */
     function calcPercent(address user, uint256 baseTokenId) public view returns(int256 resultPercent) {
         resultPercent = 0;
         uint256[10] memory weight = interestAdjustment;
@@ -156,6 +177,12 @@ IPageCalcUserRate
         resultPercent -= int256(weight[8] * downAmount[0] + weight[9] * downAmount[1]);
     }
 
+    /**
+     * @dev Shows user activity when creating posts or messages.
+     *
+     * @param communityId ID of community
+     * @param user User wallet address
+     */
     function getUserActivity(uint256 communityId, address user) external override view returns(
         uint64 messageCount,
         uint64 postCount,
@@ -170,6 +197,12 @@ IPageCalcUserRate
         downCount = counter.downCount;
     }
 
+    /**
+     * @dev Shows the activity of the user paid for by NFT tokens for rating when creating posts or messages.
+     *
+     * @param communityId ID of community
+     * @param user User wallet address
+     */
     function getUserRedeemed(uint256 communityId, address user) external override view returns(
         uint64[3] memory messageCount,
         uint64[3] memory postCount,
@@ -184,6 +217,11 @@ IPageCalcUserRate
         downCount = counter.downCount;
     }
 
+    /**
+     * @dev Allows you to change the values for interest calculation.
+     *
+     * @param values Array of new values
+     */
     function setInterestAdjustment(uint256[10] calldata values) onlyRole(DEFAULT_ADMIN_ROLE) external override {
         uint256 all;
         for (uint256 i=0; i<10; i++) {
@@ -197,6 +235,13 @@ IPageCalcUserRate
 
     // *** --- Private area --- ***
 
+    /**
+     * @dev Checking and counting user messages.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     */
     function checkMessages(uint256 tokenId, uint256 communityId, address user) private {
         uint256 realMessageCount = activityCounter[communityId][user].messageCount;
 
@@ -205,6 +250,13 @@ IPageCalcUserRate
         checkMessagesByIndex(tokenId, communityId, user, realMessageCount, 2);
     }
 
+    /**
+     * @dev Checking and counting user posts.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     */
     function checkPosts(uint256 tokenId, uint256 communityId, address user) private {
         uint256 realPostCount = activityCounter[communityId][user].postCount;
 
@@ -213,6 +265,13 @@ IPageCalcUserRate
         checkPostsByIndex(tokenId, communityId, user, realPostCount, 2);
     }
 
+    /**
+     * @dev Checking and counting user Upvotes.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     */
     function checkUps(uint256 tokenId, uint256 communityId, address user) private {
         uint256 realUpCount = activityCounter[communityId][user].upCount;
 
@@ -220,6 +279,13 @@ IPageCalcUserRate
         checkUpsByIndex(tokenId, communityId, user, realUpCount, 1);
     }
 
+    /**
+     * @dev Checking and counting user Downvotes.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     */
     function checkDowns(uint256 tokenId, uint256 communityId, address user) private {
         uint256 realDownCount = activityCounter[communityId][user].downCount;
 
@@ -227,6 +293,15 @@ IPageCalcUserRate
         checkDownsByIndex(tokenId, communityId, user, realDownCount, 1);
     }
 
+    /**
+     * @dev Checking messages for mint new tokens.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     * @param realMessageCount Total user messages
+     * @param index Decimal for count
+     */
     function checkMessagesByIndex(
         uint256 tokenId,
         uint256 communityId,
@@ -246,6 +321,15 @@ IPageCalcUserRate
         }
     }
 
+    /**
+     * @dev Checking posts for mint new tokens.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     * @param realPostCount Total user posts
+     * @param index Decimal for count
+     */
     function checkPostsByIndex(uint256 tokenId, uint256 communityId, address user, uint256 realPostCount, uint256 index) private {
         RedeemedCount storage redeemCounter = redeemedCounter[communityId][user];
 
@@ -259,6 +343,15 @@ IPageCalcUserRate
         }
     }
 
+    /**
+     * @dev Checking Upvotes for mint new tokens.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     * @param realUpCount Total user Upvotes
+     * @param index Decimal for count
+     */
     function checkUpsByIndex(uint256 tokenId, uint256 communityId, address user, uint256 realUpCount, uint256 index) private {
         RedeemedCount storage redeemCounter = redeemedCounter[communityId][user];
 
@@ -272,6 +365,15 @@ IPageCalcUserRate
         }
     }
 
+    /**
+     * @dev Checking Downvotes for mint new tokens.
+     *
+     * @param tokenId Token ID for rating tokens
+     * @param communityId ID of community
+     * @param user User wallet address
+     * @param realDownCount Total user Downvotes
+     * @param index Decimal for count
+     */
     function checkDownsByIndex(uint256 tokenId, uint256 communityId, address user, uint256 realDownCount, uint256 index) private {
         RedeemedCount storage redeemCounter = redeemedCounter[communityId][user];
 
@@ -286,11 +388,11 @@ IPageCalcUserRate
     }
 
     /**
-     * @dev .
+     * @dev Adds new user activities to counters when working in communities.
      *
      * @param communityId ID of community
-     * @param user aaa
-     * @param activityType aa
+     * @param user User wallet address
+     * @param activityType Activity type, taken from enum
      */
     function addActivity(uint256 communityId, address user, DataTypes.ActivityType activityType) private {
         RateCount storage counter = activityCounter[communityId][user];
