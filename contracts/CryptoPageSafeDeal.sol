@@ -93,6 +93,17 @@ contract PageSafeDeal is
         emit SetToken(newToken);
     }
 
+    /**
+     * @dev Creates a new deal.
+     *
+     * @param desc Description for deal
+     * @param buyer Buyer's address
+     * @param guarantor Address of the user who guarantees
+     * @param startTime Deal start time in Unix format
+     * @param endTime Deal end time in Unix format
+     * @param amount Amount of tokens or ether
+     * @param isEth Boolean value for tokens or ether
+     */
     function makeDeal(
         string memory desc,
         address buyer,
@@ -131,6 +142,12 @@ contract PageSafeDeal is
         emit MakeDeal(_msgSender(), dealCount, isEth, amount);
     }
 
+    /**
+     * @dev Changes the description of the deal.
+     *
+     * @param dealId Deal ID
+     * @param desc Description for deal
+     */
     function changeDescription(uint256 dealId, string memory desc) external override onlyDealUser(dealId) {
         DataTypes.SafeDeal storage deal = deals[dealCount];
         deal.description = desc;
@@ -138,6 +155,13 @@ contract PageSafeDeal is
         emit ChangeDescription(dealId, desc);
     }
 
+    /**
+     * @dev Changes the times of the deal.
+     *
+     * @param dealId Deal ID
+     * @param startTime Deal start time in Unix format
+     * @param endTime Deal end time in Unix format
+     */
     function changeTime(uint256 dealId, uint128 startTime, uint128 endTime) external override onlyDealUser(dealId) {
         DataTypes.SafeDeal storage deal = deals[dealId];
         if(startTime > 0) {
@@ -153,6 +177,11 @@ contract PageSafeDeal is
         emit ChangeTime(dealId, startTime, endTime);
     }
 
+    /**
+     * @dev Allows to start a deal.
+     *
+     * @param dealId Deal ID
+     */
     function makeStartApprove(uint256 dealId) external override onlyDealUser(dealId) {
         address sender = _msgSender();
         DataTypes.SafeDeal storage deal = deals[dealId];
@@ -170,6 +199,11 @@ contract PageSafeDeal is
         emit StartApprove(dealId, sender);
     }
 
+    /**
+     * @dev Allows to end a deal.
+     *
+     * @param dealId Deal ID
+     */
     function makeEndApprove(uint256 dealId) external override onlyDealUser(dealId) {
         address sender = _msgSender();
         DataTypes.SafeDeal storage deal = deals[dealId];
@@ -189,15 +223,27 @@ contract PageSafeDeal is
         emit EndApprove(dealId, sender);
     }
 
+    /**
+     * @dev Adds a message from a deal participant.
+     *
+     * @param dealId Deal ID
+     * @param message Message from user
+     */
     function addMessage(uint256 dealId, string memory message) public override onlyDealUser(dealId) {
         address sender = _msgSender();
         DataTypes.SafeDeal storage deal = deals[dealId];
-        DataTypes.DealMessage memory dealMessage = DataTypes.DealMessage(message, block.timestamp);
+        DataTypes.DealMessage memory dealMessage = DataTypes.DealMessage(message, sender, block.timestamp);
         deal.messages.push(dealMessage);
 
         emit AddMessage(dealId, sender, message);
     }
 
+    /**
+     * @dev Stops a deal because of a problem.
+     *
+     * @param dealId Deal ID
+     * @param message Message from user
+     */
     function setIssue(uint256 dealId, string memory message) external override onlyDealUser(dealId) {
         address sender = _msgSender();
         DataTypes.SafeDeal storage deal = deals[dealId];
@@ -208,6 +254,11 @@ contract PageSafeDeal is
         emit SetIssue(dealId, sender);
     }
 
+    /**
+     * @dev Stops a deal because of a problem.
+     *
+     * @param dealId Deal ID
+     */
     function clearIssue(uint256 dealId) external override onlyGuarantor(dealId) {
         DataTypes.SafeDeal storage deal = deals[dealId];
         require(isIssue(dealId), "SafeDeal: not issue");

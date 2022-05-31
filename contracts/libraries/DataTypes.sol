@@ -8,6 +8,7 @@ library DataTypes {
 
     struct DealMessage {
         string message;
+        address sender;
         uint256 writeTime;
     }
 
