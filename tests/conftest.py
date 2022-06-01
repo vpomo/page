@@ -30,7 +30,7 @@ def helpers():
     return Helpers
 
 @pytest.fixture(scope="module")
-def pageUserRateToken(PageUserRateToken, treasury, deployer):
+def pageUserRateToken(PageUserRateToken, deployer):
     instanсe = PageUserRateToken.deploy({'from': deployer})
     instanсe.initialize('https://')
     return instanсe

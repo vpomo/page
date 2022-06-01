@@ -267,6 +267,11 @@ contract PageSafeDeal is
         emit ClearIssue(dealId, deal.guarantor);
     }
 
+    /**
+     * @dev Cancellation of the deal and return of the asset.
+     *
+     * @param dealId Deal ID
+     */
     function cancelDeal(uint256 dealId) external override onlyGuarantor(dealId) {
         DataTypes.SafeDeal storage deal = deals[dealId];
         require(isIssue(dealId) && !isFinished(dealId), "SafeDeal: not issue");
@@ -277,6 +282,11 @@ contract PageSafeDeal is
         emit CancelDeal(deal.guarantor, dealId, amount);
     }
 
+    /**
+     * @dev Successful completion of the deal.
+     *
+     * @param dealId Deal ID
+     */
     function finishDeal(uint256 dealId) external override onlyGuarantor(dealId) {
         DataTypes.SafeDeal storage deal = deals[dealId];
         require(
@@ -297,6 +307,11 @@ contract PageSafeDeal is
         emit FinishDeal(deal.guarantor, dealId, amount);
     }
 
+    /**
+     * @dev Reading the basic data for a deal.
+     *
+     * @param dealId Deal ID
+     */
     function readCommonDeal(uint256 dealId) external view override returns(
         string memory description,
         address seller,
@@ -320,6 +335,11 @@ contract PageSafeDeal is
         amount = GUARANTOR_FEE * bank.getWETHPagePrice();
     }
 
+    /**
+     * @dev Reading the approval data for a deal.
+     *
+     * @param dealId Deal ID
+     */
     function readApproveDeal(uint256 dealId) external view override returns(
         bool startSellerApprove,
         bool startBuyerApprove,
@@ -333,6 +353,11 @@ contract PageSafeDeal is
         endBuyerApprove = deal.endBuyerApprove;
     }
 
+    /**
+     * @dev Reading the bool data for a deal.
+     *
+     * @param dealId Deal ID
+     */
     function readBoolDeal(uint256 dealId) external view override returns(
         bool issue,
         bool eth,
@@ -344,6 +369,11 @@ contract PageSafeDeal is
         finished = deal.isFinished;
     }
 
+    /**
+     * @dev Reading the text data for a deal.
+     *
+     * @param dealId Deal ID
+     */
     function readMessagesDeal(uint256 dealId) external view override returns(
         DataTypes.DealMessage[] memory messages
     ) {
@@ -351,30 +381,60 @@ contract PageSafeDeal is
         messages = deal.messages;
     }
 
+    /**
+     * @dev Reading start approval data from deal participants.
+     *
+     * @param dealId Deal ID
+     */
     function isStartApproved(uint256 dealId) public view override returns(bool) {
         DataTypes.SafeDeal memory deal = deals[dealId];
         return deal.startSellerApprove && deal.startBuyerApprove;
     }
 
+    /**
+     * @dev Reading end approval data from deal participants.
+     *
+     * @param dealId Deal ID
+     */
     function isEndApproved(uint256 dealId) public view override returns(bool) {
         DataTypes.SafeDeal memory deal = deals[dealId];
         return deal.endSellerApprove && deal.endBuyerApprove;
     }
 
+    /**
+     * @dev Checking that the deal is completed.
+     *
+     * @param dealId Deal ID
+     */
     function isFinished(uint256 dealId) public view override returns(bool) {
         DataTypes.SafeDeal memory deal = deals[dealId];
         return deal.isFinished;
     }
 
+    /**
+     * @dev Checking if there is an issue.
+     *
+     * @param dealId Deal ID
+     */
     function isIssue(uint256 dealId) public view override returns(bool) {
         DataTypes.SafeDeal memory deal = deals[dealId];
         return deal.isIssue;
     }
 
+    /**
+     * @dev Reading the current time.
+     *
+     * @param dealId Deal ID
+     */
     function currentTime() public view override returns(uint256) {
         return block.timestamp;
     }
 
+    /**
+     * @dev Sending assets to the user.
+     *
+     * @param dealId Deal ID
+     */
     function transferAsset(bool isEth, address recipient, uint256 amount) private {
         if (isEth) {
             require(address(this).balance >= amount, "SafeDeal: wrong ether balance");

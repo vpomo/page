@@ -92,30 +92,50 @@ https://crypto.page/white_paper.html
 
 
 #### Порядок деплоя
-1. deploy PageBank
-    initialize(address _treasury, address _admin)
-2. deploy PageToken
+1. deploy PageUserRateToken (токен ERC-1155)
+    initialize(string site_url)
+    
+2. deploy PageCalcUserRate (калькулятор рэйтинга пользователей)
+    initialize(address _admin, address _userRateToken)
+    
+3. deploy PageBank (банк для пользователей)
+    initialize(address _treasury, address _admin, address _userRateToken)
+    setWETHPagePool
+    pageCalcUserRate.grantRole для этого банка
+    
+4. deploy PageToken (токен ERC-20)
     initialize(address _treasury, address _bank)
-3. deploy PageNFT
-    initialize(address _bank)
-    
-4. deploy PageCommunity
-    initialize(address _nft, address _bank)
-    
-5. setup PageNFT.setCommunity()
+    pageBank.setToken для этого токена
 
-6. deploy PageVoteForFeeAndModerator
+5. deploy pageSafeDeal
+    initialize(address _admin, address _calcUserRate, address _bank)
+    setToken для PageToken
+    
+6. deploy PageNFT (токен ERC-721)
+    initialize(address _bank, string _baseURL)
+    
+7. deploy PageCommunity (основной контракт для всех сообществ пользователей)
+    initialize(address _nft, address _bank, address _admin)
+    pageNFT.setCommunity установка адреса комьюнити для токена с шага 6
+    pageBank.grantRole(MINTER_ROLE) - адрес этого контракта
+    pageBank.grantRole(BURNER_ROLE) - адрес этого контракта
+    
+8. deploy PageVoteForFeeAndModerator
    initialize(address _admin, address _token, address _community, address _bank)
-   setup PageVoteForFeeAndModerator.grantRole(UPDATER_FEE_ROLE, PageCommunity.address)
-7. setup PageBank.grantRole(MINTER_ROLE, PageCommunity.address)
-         PageBank.grantRole(BURNER_ROLE, PageCommunity.address)
-         PageBank.grantRole(UPDATER_FEE_ROLE, PageVoteForFeeAndModerator.address)
-8. setup PageBank.grantRole(CHANGE_PRICE_ROLE, bot.address)
+   pageBank.grantRole(UPDATER_FEE_ROLE) - адрес этого контракта
+   pageCommunity.addVoterContract - адрес этого контракта
 
+9. deploy pageVoteForEarn
+   initialize(address _admin, address _token, address _community, address _bank)
+   pageBank.grantRole(VOTE_FOR_EARN_ROLE) - адрес этого контракта
+   pageCommunity.addVoterContract - адрес этого контракта
+
+10. deploy PageVoteForSuperModerator
+   initialize(address _admin, address _token, address _community, address _bank)
+   pageCommunity.addVoterContract - адрес этого контракта
+   
 =======================================================================================================
 
 Необходимо сделать:
-1. Добавить описание функций для PageCalcUserRate
-2. Нарисовать схемы взаимодействия контрактов
-3. Поправить порядок деплоя
-4. Добавить раздел в доку по безопасным сделкам
+1. Добавить раздел в доку по безопасным сделкам
+2. Сделать получение прайса токена через TWAP
