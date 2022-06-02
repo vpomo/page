@@ -18,7 +18,6 @@ contract PageSafeDeal is
     AccessControlUpgradeable,
     IPageSafeDeal
 {
-
     IPageCalcUserRate public calcUserRate;
     IPageToken public token;
     IPageBank public bank;
@@ -31,7 +30,7 @@ contract PageSafeDeal is
 
     event SetToken(address indexed token);
 
-    event MakeDeal(address indexed creator, uint256 number, bool isEth, uint256 amount);
+    event MakeDeal(address indexed creator, uint256 dealId, bool isEth, uint256 amount);
     event FinishDeal(address indexed guarantor, uint256 number, uint256 amount);
     event CancelDeal(address indexed guarantor, uint256 number, uint256 amount);
 
@@ -55,6 +54,13 @@ contract PageSafeDeal is
         address sender = _msgSender();
         DataTypes.SafeDeal memory deal = deals[dealId];
         require(sender == deal.guarantor, "SafeDeal: wrong guarantor");
+        _;
+    }
+
+    modifier onlyGuarantorOrBuyer(uint256 dealId) {
+        address sender = _msgSender();
+        DataTypes.SafeDeal memory deal = deals[dealId];
+        require(sender == deal.buyer || sender == deal.guarantor, "SafeDeal: wrong deal user");
         _;
     }
 
@@ -97,7 +103,7 @@ contract PageSafeDeal is
      * @dev Creates a new deal.
      *
      * @param desc Description for deal
-     * @param buyer Buyer's address
+     * @param seller Seller's address
      * @param guarantor Address of the user who guarantees
      * @param startTime Deal start time in Unix format
      * @param endTime Deal end time in Unix format
@@ -106,17 +112,17 @@ contract PageSafeDeal is
      */
     function makeDeal(
         string memory desc,
-        address buyer,
+        address seller,
         address guarantor,
         uint128 startTime,
         uint128 endTime,
         uint256 amount,
         bool isEth
     ) external payable override {
-        address seller = _msgSender();
+        address buyer = _msgSender();
         require(block.timestamp < startTime && startTime < endTime, "SafeDeal: wrong time");
-        require(buyer != address(0) && guarantor != address(0), "SafeDeal: wrong address");
-        require(guarantor != buyer && guarantor != seller, "SafeDeal: wrong guarantor address");
+        require(seller != address(0) && guarantor != address(0), "SafeDeal: wrong address");
+        require(guarantor != seller && guarantor != buyer, "SafeDeal: wrong guarantor address");
 
         dealCount++;
         DataTypes.SafeDeal storage deal = deals[dealCount];
@@ -127,9 +133,9 @@ contract PageSafeDeal is
             deal.isEth = true;
         } else {
             require(msg.value == 0, "SafeDeal: wrong msg.value");
-            require(token.transferFrom(seller, address(this), amount), "SafeDeal: wrong transfer for seller");
+            require(token.transferFrom(buyer, address(this), amount), "SafeDeal: wrong transfer for seller");
         }
-        require(token.transferFrom(seller, guarantor, getGuarantorBonus()), "SafeDeal: wrong transfer for guarantor");
+        require(token.transferFrom(buyer, guarantor, getGuarantorBonus()), "SafeDeal: wrong transfer for guarantor");
 
         deal.description = desc;
         deal.seller = seller;
@@ -287,7 +293,7 @@ contract PageSafeDeal is
      *
      * @param dealId Deal ID
      */
-    function finishDeal(uint256 dealId) external override onlyGuarantor(dealId) {
+    function finishDeal(uint256 dealId) external override onlyGuarantorOrBuyer(dealId) {
         DataTypes.SafeDeal storage deal = deals[dealId];
         require(
             isStartApproved(dealId) &&
@@ -424,7 +430,6 @@ contract PageSafeDeal is
     /**
      * @dev Reading the current time.
      *
-     * @param dealId Deal ID
      */
     function currentTime() public view override returns(uint256) {
         return block.timestamp;
@@ -433,7 +438,9 @@ contract PageSafeDeal is
     /**
      * @dev Sending assets to the user.
      *
-     * @param dealId Deal ID
+     * @param isEth Boolean value for tokens or ether
+     * @param recipient Address of the recipient
+     * @param amount Amount of asset in tokens or ether
      */
     function transferAsset(bool isEth, address recipient, uint256 amount) private {
         if (isEth) {

@@ -12,7 +12,7 @@ interface IPageSafeDeal {
 
     function makeDeal(
         string memory desc,
-        address buyer,
+        address seller,
         address guarantor,
         uint128 startTime,
         uint128 endTime,

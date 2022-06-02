@@ -30,16 +30,18 @@ def test_make_deal(pageSafeDeal, pageToken, pageBank, deployer, someUser, admin)
     currentTime = pageSafeDeal.currentTime()
 
     mintAmount = pageSafeDeal.GUARANTOR_FEE() * pageBank.getWETHPagePrice()
-    pageToken.mint(deployer, mintAmount, {'from': pageBank})
-    beforeBalanceDeployer = pageToken.balanceOf(deployer)
-    pageToken.approve(pageSafeDeal, mintAmount, {'from': deployer})
-    afterBalanceDeployer = pageToken.balanceOf(deployer)
-    diff = afterBalanceDeployer - beforeBalanceDeployer
-    print('diff', diff)
-    assert beforeBalanceDeployer > 0
-    assert diff == 0
 
-    pageSafeDeal.makeDeal(desc, someUser, admin, currentTime + 10, currentTime + 100, value, True, {'from': deployer, 'value': value})
+    beforeBalanceBuyer = pageToken.balanceOf(someUser)
+    pageToken.mint(someUser, mintAmount, {'from': pageBank})
+    pageToken.approve(pageSafeDeal, mintAmount, {'from': someUser})
+    afterBalanceBuyer = pageToken.balanceOf(someUser)
+
+    diff = afterBalanceBuyer - beforeBalanceBuyer
+    print('diff', diff)
+    assert afterBalanceBuyer > 0
+    assert diff == mintAmount
+
+    pageSafeDeal.makeDeal(desc, deployer, admin, currentTime + 10, currentTime + 100, value, True, {'from': someUser, 'value': value})
 
     firstDeal = pageSafeDeal.readCommonDeal(1)
     print('firstDeal', firstDeal)
