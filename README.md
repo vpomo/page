@@ -45,3 +45,10 @@ The value of these percentages can be changed by community members by voting thr
 When you create a new community, default values ​​are automatically assigned.
 
 When contracts are deployed, an initial emission of 50,000,000 `PAGE` tokens is made on the `Treasury Wallet`.
+
+
+#### Interaction scheme.
+
+<p align="center">
+  <img src="https://github.com/page-token/page/blob/develop/docs/page-token.jpg" width="800" alt="Page token" />
+</p>
