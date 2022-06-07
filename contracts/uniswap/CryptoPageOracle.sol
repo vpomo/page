@@ -18,11 +18,12 @@ contract PageOracle is Initializable, OwnableUpgradeable {
     address public PAGE_TOKEN; // The PAGE token address.
 
     IUniswapV3Pool public pool;
+    bool public isStablePrice;
+    uint256 public stablePrice;
 
-    event TwapIntervalsSet(uint32 oldTwapInterval, uint32 newTwapInterval);
-
-    /// @notice Thrown when a TWAP interval is too short.
-    error TwapTooShort();
+    event SetTwapIntervals(uint32 oldTwapInterval, uint32 newTwapInterval);
+    event ChangeStablePriceStatus(bool newStatus);
+    event SetStablePrice(uint256 oldPrice, uint256 newPrice);
 
     /**
      * @dev Makes the initialization of the initial values for the smart contract
@@ -54,27 +55,45 @@ contract PageOracle is Initializable, OwnableUpgradeable {
      * @param newTwapInterval The new `pageTwapInterval`.
      */
     function setTwapIntervals(uint32 newTwapInterval) external onlyOwner {
-        if (newTwapInterval < 15 minutes)
-            revert TwapTooShort();
-        emit TwapIntervalsSet(pageTwapInterval, newTwapInterval);
+        require(newTwapInterval >= 15 minutes, "PageOracle: TWAP too short");
+        emit SetTwapIntervals(pageTwapInterval, newTwapInterval);
         pageTwapInterval = newTwapInterval;
+    }
+
+    /**
+    * @dev Changes status for the stable price
+     *
+     */
+    function changeStablePriceStatus() external onlyOwner {
+        isStablePrice = !isStablePrice;
+        emit ChangeStablePriceStatus(isStablePrice);
+    }
+
+    /**
+     * @dev Setting a new stable price value
+     *
+     * @param newPrice The new value of the stable price.
+     */
+    function setStablePrice(uint256 newPrice) external onlyOwner {
+        require(newPrice > 0 && newPrice != stablePrice, "PageOracle: wrong new price");
+        emit SetStablePrice(stablePrice, newPrice);
+        stablePrice = newPrice;
     }
 
     /**
      * @dev Returns PAGE / WETH price from UniswapV3
      */
     function getFromPageToWethPrice() public view returns (uint256 price) {
-        price = getAmountWETHFromPage(1e18);
+        price = isStablePrice ? stablePrice : getAmountWETHFromPage(1e18);
     }
 
     /**
      * @dev Returns WETH / Page amount
      */
-    function getFromWethToPageAmount(uint256 _wethAmountIn) public view returns (uint256 pageAmountOut) {
-        uint256 price = getAmountWETHFromPage(1e18);
-        if (price == 0)
-            revert TwapTooShort();
-        pageAmountOut = _wethAmountIn * 1e18 / price;
+    function getFromWethToPageAmount(uint256 wethAmountIn) public view returns (uint256 pageAmountOut) {
+        uint256 price = getFromPageToWethPrice();
+        require(price > 0, "PageOracle: wrong price");
+        pageAmountOut = wethAmountIn * 1e18 / price;
     }
 
     function getAmountWETHFromPage(uint256 _pageAmountIn) internal view returns (uint256 wethAmountOut) {
