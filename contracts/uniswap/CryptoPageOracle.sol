@@ -13,9 +13,6 @@ contract PageOracle is Initializable, OwnableUpgradeable {
 
     using FullMath for uint256;
 
-    uint256 public constant ONE_PERCENT = 100; // 1% in basis points.
-    uint256 public constant MAX_BASIS_POINTS = 10_000; // 100% in basis points.
-
     uint32 public pageTwapInterval; // The interval for the Time-Weighted Average Price for PAGE_TOKEN/WETH9 pool.
 
     address public PAGE_TOKEN; // The PAGE token address.
@@ -63,16 +60,29 @@ contract PageOracle is Initializable, OwnableUpgradeable {
         pageTwapInterval = newTwapInterval;
     }
 
-    function getAmountOutMinimum(uint256 _amountIn) internal view returns (uint256 expectedAmountOutMinimum)
-    {
+    /**
+     * @dev Returns PAGE / WETH price from UniswapV3
+     */
+    function getFromPageToWethPrice() public view returns (uint256 price) {
+        price = getAmountWETHFromPage(1e18);
+    }
+
+    /**
+     * @dev Returns WETH / Page amount
+     */
+    function getFromWethToPageAmount(uint256 _wethAmountIn) public view returns (uint256 pageAmountOut) {
+        uint256 price = getAmountWETHFromPage(1e18);
+        if (price == 0)
+            revert TwapTooShort();
+        pageAmountOut = _wethAmountIn * 1e18 / price;
+    }
+
+    function getAmountWETHFromPage(uint256 _pageAmountIn) internal view returns (uint256 wethAmountOut) {
         uint32[] memory pageSecondsAgo = new uint32[](2);
         pageSecondsAgo[0] = pageTwapInterval;
         pageSecondsAgo[1] = 0;
 
         (int56[] memory tickCumulatives1, ) = pool.observe(pageSecondsAgo);
-
-        // For the pair token0/token1 -> 1.0001 * readingTick = price = token1 / token0
-        // So token1 = price * token0
 
         // Ticks (imprecise as it's an integer) to price.
         uint160 sqrtPriceX961 = TickMath.getSqrtRatioAtTick(
@@ -81,19 +91,16 @@ contract PageOracle is Initializable, OwnableUpgradeable {
 
         // Computation depends on the position of token in pool.
         if (pool.token0() == PAGE_TOKEN) {
-            expectedAmountOutMinimum = _amountIn.mulDiv(
+            wethAmountOut = _pageAmountIn.mulDiv(
                 _getPriceX96FromSqrtPriceX96(sqrtPriceX961),
                 FixedPoint96.Q96
             );
         } else {
-            expectedAmountOutMinimum = _amountIn.mulDiv(
+            wethAmountOut = _pageAmountIn.mulDiv(
                 FixedPoint96.Q96,
                 _getPriceX96FromSqrtPriceX96(sqrtPriceX961)
             );
         }
-
-        // Max slippage of 1% for the trade.
-        expectedAmountOutMinimum = (expectedAmountOutMinimum * (MAX_BASIS_POINTS - ONE_PERCENT)) / MAX_BASIS_POINTS;
     }
 
     /**

@@ -1,6 +1,9 @@
 import pytest
 from brownie import Wei, ZERO_ADDRESS
 
+FTM_TOKEN = '0x4e15361fd6b4bb609fa63c81a2be19d873717870';
+FTM_ETH_POOL = '0x3b685307c8611afb2a9e83ebc8743dc20480716e' #FTM/ETH
+
 @pytest.fixture(scope='function', autouse=True)
 def shared_setup(fn_isolation):
     pass
@@ -63,6 +66,13 @@ def pageToken(PageToken, treasury, deployer, pageBank):
     instanсe = PageToken.deploy({'from': deployer})
     instanсe.initialize(treasury, pageBank)
     pageBank.setToken(instanсe, {'from': deployer})
+    return instanсe
+
+
+@pytest.fixture(scope="module")
+def pageOracle(PageOracle, deployer, pageToken):
+    instanсe = PageOracle.deploy({'from': deployer})
+    instanсe.initialize(FTM_TOKEN, FTM_ETH_POOL)
     return instanсe
 
 
