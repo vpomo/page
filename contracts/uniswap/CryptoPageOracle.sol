@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@uniswap/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/contracts/libraries/FixedPoint96.sol";
 
+import "../interfaces/ICryptoPageOracle.sol";
 import "../libraries/FullMath.sol";
 import "../libraries/TickMath.sol";
 
-contract PageOracle is Initializable, OwnableUpgradeable {
+contract PageOracle is Initializable, OwnableUpgradeable, IPageOracle {
 
     using FullMath for uint256;
 
@@ -45,7 +46,7 @@ contract PageOracle is Initializable, OwnableUpgradeable {
      * @dev Returns the smart contract version
      *
      */
-    function version() external pure returns (string memory) {
+    function version() external pure override returns (string memory) {
         return "1";
     }
 
@@ -54,7 +55,7 @@ contract PageOracle is Initializable, OwnableUpgradeable {
      *
      * @param newTwapInterval The new `pageTwapInterval`.
      */
-    function setTwapIntervals(uint32 newTwapInterval) external onlyOwner {
+    function setTwapIntervals(uint32 newTwapInterval) external override onlyOwner {
         require(newTwapInterval >= 15 minutes, "PageOracle: TWAP too short");
         emit SetTwapIntervals(pageTwapInterval, newTwapInterval);
         pageTwapInterval = newTwapInterval;
@@ -64,7 +65,7 @@ contract PageOracle is Initializable, OwnableUpgradeable {
     * @dev Changes status for the stable price
      *
      */
-    function changeStablePriceStatus() external onlyOwner {
+    function changeStablePriceStatus() external override onlyOwner {
         isStablePrice = !isStablePrice;
         emit ChangeStablePriceStatus(isStablePrice);
     }
@@ -74,7 +75,7 @@ contract PageOracle is Initializable, OwnableUpgradeable {
      *
      * @param newPrice The new value of the stable price.
      */
-    function setStablePrice(uint256 newPrice) external onlyOwner {
+    function setStablePrice(uint256 newPrice) external override onlyOwner {
         require(newPrice > 0 && newPrice != stablePrice, "PageOracle: wrong new price");
         emit SetStablePrice(stablePrice, newPrice);
         stablePrice = newPrice;
@@ -83,20 +84,26 @@ contract PageOracle is Initializable, OwnableUpgradeable {
     /**
      * @dev Returns PAGE / WETH price from UniswapV3
      */
-    function getFromPageToWethPrice() public view returns (uint256 price) {
+    function getFromPageToWethPrice() public view override returns (uint256 price) {
         price = isStablePrice ? stablePrice : getAmountWETHFromPage(1e18);
     }
 
     /**
      * @dev Returns WETH / Page amount
      */
-    function getFromWethToPageAmount(uint256 wethAmountIn) public view returns (uint256 pageAmountOut) {
+    function getFromWethToPageAmount(uint256 wethAmountIn) external view override returns (uint256 pageAmountOut) {
         uint256 price = getFromPageToWethPrice();
         require(price > 0, "PageOracle: wrong price");
         pageAmountOut = wethAmountIn * 1e18 / price;
     }
 
-    function getAmountWETHFromPage(uint256 _pageAmountIn) internal view returns (uint256 wethAmountOut) {
+    /**
+     * @dev Makes TWAP a request to the pool and calculates the amount of ether
+     *
+     * @param pageAmountIn Amount of Page tokens
+     * @return wethAmountOut Amount of WETH tokens
+     */
+    function getAmountWETHFromPage(uint256 pageAmountIn) internal view returns (uint256 wethAmountOut) {
         uint32[] memory pageSecondsAgo = new uint32[](2);
         pageSecondsAgo[0] = pageTwapInterval;
         pageSecondsAgo[1] = 0;
@@ -110,12 +117,12 @@ contract PageOracle is Initializable, OwnableUpgradeable {
 
         // Computation depends on the position of token in pool.
         if (pool.token0() == PAGE_TOKEN) {
-            wethAmountOut = _pageAmountIn.mulDiv(
+            wethAmountOut = pageAmountIn.mulDiv(
                 _getPriceX96FromSqrtPriceX96(sqrtPriceX961),
                 FixedPoint96.Q96
             );
         } else {
-            wethAmountOut = _pageAmountIn.mulDiv(
+            wethAmountOut = pageAmountIn.mulDiv(
                 FixedPoint96.Q96,
                 _getPriceX96FromSqrtPriceX96(sqrtPriceX961)
             );

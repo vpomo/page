@@ -18,7 +18,6 @@ def test_get_price_from_pool(pageOracle):
 
     price = pageOracle.getFromPageToWethPrice()
     print('price', price / 1e18) # 0.000197085401415945
-    print('price', price / 1e18) # 0.000197085401415945
     assert price > 0
 
     wethAmount = Wei('1 ether')/10
