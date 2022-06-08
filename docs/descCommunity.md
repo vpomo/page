@@ -134,7 +134,7 @@ https://crypto.page/white_paper.html
     
 3. deploy PageBank (банк для пользователей)
     initialize(address _treasury, address _admin, address _userRateToken)
-    setWETHPagePool
+    setOracle
     pageCalcUserRate.grantRole для этого банка
     
 4. deploy PageToken (токен ERC-20)

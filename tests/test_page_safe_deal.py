@@ -23,13 +23,13 @@ def test_set_token(pageSafeDeal, pageToken, deployer, someUser):
     assert afterToken == someUser
 
 
-def test_make_deal(pageSafeDeal, pageToken, pageBank, deployer, someUser, admin):
+def test_make_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, someUser, admin):
     desc = 'first deal'
     value = Wei('1 ether')/5
 
     currentTime = pageSafeDeal.currentTime()
 
-    mintAmount = pageSafeDeal.GUARANTOR_FEE() * pageBank.getWETHPagePrice()
+    mintAmount = pageOracle.getFromWethToPageAmount(pageSafeDeal.GUARANTOR_FEE())
 
     beforeBalanceBuyer = pageToken.balanceOf(someUser)
     pageToken.mint(someUser, mintAmount, {'from': pageBank})

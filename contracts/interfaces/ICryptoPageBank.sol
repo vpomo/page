@@ -89,21 +89,13 @@ interface IPageBank {
 
     function balanceOfCommunity(uint256 communityId) external view returns (uint256);
 
-    function getWETHPagePriceFromPool() external view returns (uint256 price);
-
-    function getWETHPagePrice() external view returns (uint256 price);
-
     function setDefaultFee(uint256 index, uint64 newValue) external;
 
     function setMintGasAmount(uint256 newValue) external;
 
     function setBurnGasAmount(uint256 newValue) external;
 
-    function setWETHPagePool(address newWethPagePool) external;
-
-    function setStaticWETHPagePrice(uint256 price) external;
-
-    function setPriceChangePercent(uint256 percent) external;
+    function setOracle(address newOracle) external;
 
     function setToken(address newToken) external;
 

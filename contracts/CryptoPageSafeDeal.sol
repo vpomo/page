@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "./interfaces/ICryptoPageSafeDeal.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageCalcUserRate.sol";
-import "./interfaces/ICryptoPageBank.sol";
+import "./interfaces/ICryptoPageOracle.sol";
 
 import {DataTypes} from './libraries/DataTypes.sol';
 
@@ -20,7 +20,7 @@ contract PageSafeDeal is
 {
     IPageCalcUserRate public calcUserRate;
     IPageToken public token;
-    IPageBank public bank;
+    IPageOracle public oracle;
 
     uint256 public GUARANTOR_FEE = 0.02 ether;
 
@@ -70,15 +70,15 @@ contract PageSafeDeal is
      * @param _admin Address of admin
      * @param _calcUserRate Address of calcUserRate
      */
-    function initialize(address _admin, address _calcUserRate, address _bank) public initializer {
+    function initialize(address _admin, address _calcUserRate, address _oracle) public initializer {
         __Ownable_init();
         require(_admin != address(0), "SafeDeal: wrong address");
         require(_calcUserRate != address(0), "SafeDeal: wrong address");
-        require(_bank != address(0), "SafeDeal: wrong address");
+        require(_oracle != address(0), "SafeDeal: wrong address");
 
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         calcUserRate = IPageCalcUserRate(_calcUserRate);
-        bank = IPageBank(_bank);
+        oracle = IPageOracle(_oracle);
     }
 
     /**
@@ -338,7 +338,7 @@ contract PageSafeDeal is
     }
 
     function getGuarantorBonus() public view override returns(uint256 amount) {
-        amount = GUARANTOR_FEE * bank.getWETHPagePrice();
+        amount = oracle.getFromWethToPageAmount(GUARANTOR_FEE);
     }
 
     /**

@@ -53,7 +53,6 @@ def pageCalcUserRate(PageCalcUserRate, pageUserRateToken, deployer, admin):
 def pageBank(PageBank, pageCalcUserRate, treasury, admin, deployer):
     instanсe = PageBank.deploy({'from': deployer})
     instanсe.initialize(treasury, admin, pageCalcUserRate)
-    instanсe.setWETHPagePool('0x3b685307c8611afb2a9e83ebc8743dc20480716e', {'from': deployer}) #FTM/ETH
     deployer.transfer(instanсe, Wei('10 ether'))
 
     pageCalcUserRate.grantRole(pageCalcUserRate.BANK_ROLE(), instanсe, {'from': admin})
@@ -70,16 +69,17 @@ def pageToken(PageToken, treasury, deployer, pageBank):
 
 
 @pytest.fixture(scope="module")
-def pageOracle(PageOracle, deployer, pageToken):
+def pageOracle(PageOracle, deployer, pageToken, pageBank):
     instanсe = PageOracle.deploy({'from': deployer})
     instanсe.initialize(FTM_TOKEN, FTM_ETH_POOL)
+    pageBank.setOracle(instanсe, {'from': deployer})
     return instanсe
 
 
 @pytest.fixture(scope="module")
-def pageSafeDeal(PageSafeDeal, admin, deployer, pageCalcUserRate, pageToken, pageBank):
+def pageSafeDeal(PageSafeDeal, admin, deployer, pageCalcUserRate, pageToken, pageOracle):
     instanсe = PageSafeDeal.deploy({'from': deployer})
-    instanсe.initialize(admin, pageCalcUserRate, pageBank)
+    instanсe.initialize(admin, pageCalcUserRate, pageOracle)
     instanсe.setToken(pageToken, {'from': deployer})
     return instanсe
 
@@ -92,7 +92,7 @@ def pageNFT(PageNFT, pageBank, treasury, deployer):
 
 
 @pytest.fixture(scope="module")
-def pageCommunity(PageCommunity, pageNFT, pageUserRateToken, pageBank, pageToken, deployer, admin):
+def pageCommunity(PageCommunity, pageNFT, pageUserRateToken, pageBank, pageToken, pageOracle, deployer, admin):
     instanсe = PageCommunity.deploy({'from': deployer})
     instanсe.initialize(pageNFT, pageBank, admin)
     assert deployer == pageNFT.owner()
@@ -104,17 +104,19 @@ def pageCommunity(PageCommunity, pageNFT, pageUserRateToken, pageBank, pageToken
     pageBank.grantRole(pageBank.MINTER_ROLE(), instanсe, {'from': admin})
     pageBank.grantRole(pageBank.BURNER_ROLE(), instanсe, {'from': admin})
     pageBank.setToken(pageToken, {'from': deployer})
+    pageBank.setOracle(pageOracle, {'from': deployer})
 
     return instanсe
 
 
 @pytest.fixture(scope="module")
-def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, pageCommunity, pageBank, admin):
+def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
     instanсe = PageVoteForFeeAndModerator.deploy({'from': deployer})
     instanсe.initialize(deployer, pageToken, pageCommunity, pageBank)
     deployer.transfer(instanсe, Wei('10 ether'))
 
     pageBank.grantRole(pageBank.UPDATER_FEE_ROLE(), instanсe, {'from': admin})
+    pageBank.setOracle(pageOracle, {'from': deployer})
 
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
 
@@ -122,20 +124,23 @@ def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, 
 
 
 @pytest.fixture(scope="module")
-def pageVoteForEarn(pageVoteForFeeAndModerator, PageVoteForEarn, deployer, pageToken, pageCommunity, pageBank, admin):
+def pageVoteForEarn(pageVoteForFeeAndModerator, PageVoteForEarn, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
     instanсe = PageVoteForEarn.deploy({'from': deployer})
     instanсe.initialize(admin, pageToken, pageCommunity, pageBank)
     deployer.transfer(instanсe, Wei('10 ether'))
     pageBank.grantRole(pageBank.VOTE_FOR_EARN_ROLE(), instanсe, {'from': admin})
+    pageBank.setOracle(pageOracle, {'from': deployer})
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
     return instanсe
 
 
 @pytest.fixture(scope="module")
-def pageVoteForSuperModerator(pageVoteForFeeAndModerator, pageVoteForEarn, PageVoteForSuperModerator, deployer, pageToken, pageCommunity, pageBank, admin):
+def pageVoteForSuperModerator(pageVoteForFeeAndModerator, pageVoteForEarn, PageVoteForSuperModerator, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
     instanсe = PageVoteForSuperModerator.deploy({'from': deployer})
     instanсe.initialize(admin, pageToken, pageCommunity, pageBank)
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
+    pageBank.setOracle(pageOracle, {'from': deployer})
+
     assert pageVoteForFeeAndModerator == pageCommunity.voterContracts(0)
     assert pageVoteForEarn == pageCommunity.voterContracts(1)
     assert instanсe == pageCommunity.voterContracts(2)

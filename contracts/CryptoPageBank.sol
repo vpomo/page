@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "./interfaces/ICryptoPageBank.sol";
 import "./interfaces/ICryptoPageToken.sol";
 import "./interfaces/ICryptoPageCalcUserRate.sol";
+import "./interfaces/ICryptoPageOracle.sol";
 
 import {DataTypes} from './libraries/DataTypes.sol';
 
@@ -33,8 +34,8 @@ contract PageBank is
     uint256 public FOR_BURN_GAS_AMOUNT = 95000;
 
     IUniswapV3Pool private wethPagePool;
+    IPageOracle public oracle;
     uint256 public staticWETHPagePrice = 600;
-    uint256 public priceChangePercent = 700;
 
     /// Address of Crypto.Page treasury
     address public treasury;
@@ -112,9 +113,7 @@ contract PageBank is
     );
     event SetDefaultFee(uint256 index, uint256 oldFee, uint256 newFee);
 
-    event SetWETHUSDTPool(address indexed pool);
-    event SetStaticWETHPagePrice(uint256 oldPrice, uint256 newPrice);
-    event SetPriceChangePercent(uint256 oldPercent, uint256 newPercent);
+    event SetOracle(address indexed newOracle);
 
     event SetForMintGasAmount(uint256 oldValue, uint256 newValue);
     event SetForBurnGasAmount(uint256 oldValue, uint256 newValue);
@@ -499,34 +498,6 @@ contract PageBank is
     }
 
     /**
-     * @dev Returns WETH / PAGE price from UniswapV3
-     * https://docs.uniswap.org/sdk/guides/fetching-prices
-     */
-    function getWETHPagePriceFromPool() public view override returns (uint256 price) {
-        // for test
-        // uncomment for production
-        //(uint160 sqrtPriceX96, , , , , , ) = wethPagePool.slot0();
-        uint160 sqrtPriceX96 = 200000000;
-        price = 2**192 / (uint256(sqrtPriceX96**2));
-    }
-
-    /**
-     * @dev Page token price from contract.
-     */
-    function getWETHPagePrice() public view override returns (uint256 price) {
-        try this.getWETHPagePriceFromPool() returns (
-            uint256 _price
-        ) {
-            price = validChangePrice(_price) ? _price : staticWETHPagePrice;
-        } catch {
-            price = staticWETHPagePrice;
-        }
-        if (price == 0) {
-            price = staticWETHPagePrice;
-        }
-    }
-
-    /**
      * @dev Changes default commission values for all new communities.
      *
      * @param index Order number of the commission
@@ -590,35 +561,15 @@ contract PageBank is
     }
 
     /**
-     * @dev Changes the address of the pool.
+     * @dev Changes the address of the oracle.
      *
-     * @param newWethPagePool New pool address value
+     * @param newOracle New oracle address value
      */
-    function setWETHPagePool(address newWethPagePool) external override onlyOwner {
-        wethPagePool = IUniswapV3Pool(newWethPagePool);
-        emit SetWETHUSDTPool(newWethPagePool);
-    }
+    function setOracle(address newOracle) external override onlyOwner {
+        require(newOracle != address(0), "PageBank: wrong address");
 
-    /**
-     * @dev Changes the value of the price.
-     *
-     * @param price New price value
-     */
-    function setStaticWETHPagePrice(uint256 price) external override onlyOwner {
-        require(price != staticWETHPagePrice, "PageBank: wrong price");
-        emit SetStaticWETHPagePrice(staticWETHPagePrice, price);
-        staticWETHPagePrice = price;
-    }
-
-    /**
-     * @dev Changes the value of the percent.
-     *
-     * @param percent New percent value
-     */
-    function setPriceChangePercent(uint256 percent) external override onlyOwner {
-        require(percent <= ALL_PERCENT && percent != priceChangePercent, "PageBank: wrong percent");
-        emit SetPriceChangePercent(priceChangePercent, percent);
-        priceChangePercent = percent;
+        oracle = IPageOracle(newOracle);
+        emit SetOracle(newOracle);
     }
 
     /**
@@ -661,7 +612,7 @@ contract PageBank is
      * @return PAGE token's count
      */
     function convertGasToTokenAmount(uint256 gas) private view returns (uint256) {
-        return gas * tx.gasprice * getWETHPagePrice();
+        return oracle.getFromWethToPageAmount(gas * tx.gasprice);
     }
 
     /**
@@ -702,20 +653,6 @@ contract PageBank is
         uint256 userAmount = amount * userFee / ALL_PERCENT;
         token.burn(address(this), userAmount);
         _balances[user] -= userAmount;
-    }
-
-    /**
-     * @dev Checks the correctness of the price change for the token.
-     *
-     * @param currentPrice Checked price value for the token
-     */
-    function validChangePrice(uint256 currentPrice) private view returns(bool isValid) {
-        if (currentPrice <= staticWETHPagePrice) {
-            isValid = (staticWETHPagePrice - currentPrice) <= staticWETHPagePrice * priceChangePercent / ALL_PERCENT;
-        }
-        if (currentPrice > staticWETHPagePrice) {
-            isValid = (currentPrice - staticWETHPagePrice) < currentPrice * priceChangePercent / ALL_PERCENT;
-        }
     }
 
     function correctAmount(uint256 currentAmount, int256 percent) private view returns(uint256 newAmount) {

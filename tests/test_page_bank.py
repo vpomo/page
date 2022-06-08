@@ -50,10 +50,10 @@ def test_update_post_fee_for_new_community(pageBank, pageVoteForFeeAndModerator)
     assert readPostFee[3] == 5
 
 
-def test_mint_burn_token_for_new_post(pageBank, pageCommunity, pageToken, admin, someUser):
+def test_mint_burn_token_for_new_post(pageBank, pageCommunity, pageToken, pageOracle, admin, someUser):
     pageBank.definePostFeeForNewCommunity(1, {'from': pageCommunity})
     pageBank.defineCommentFeeForNewCommunity(1, {'from': pageCommunity})
-    price = pageBank.getWETHPagePrice()
+    price = pageOracle.getFromPageToWethPrice()
     assert price > 0
     network.gas_price("65 gwei")
     gas = 200000
@@ -87,10 +87,10 @@ def test_mint_burn_token_for_new_post(pageBank, pageCommunity, pageToken, admin,
     assert beforePageBankBalance > afterPageBankBalance
 
 
-def test_mint_burn_token_for_new_comment(pageBank, pageCommunity, pageToken, admin, someUser):
+def test_mint_burn_token_for_new_comment(pageBank, pageCommunity, pageToken, pageOracle, admin, someUser):
     pageBank.definePostFeeForNewCommunity(1, {'from': pageCommunity})
     pageBank.defineCommentFeeForNewCommunity(1, {'from': pageCommunity})
-    price = pageBank.getWETHPagePrice()
+    price = pageOracle.getFromPageToWethPrice()
     assert price > 0
     network.gas_price("65 gwei")
     gas = 200000
@@ -155,24 +155,6 @@ def test_set_comment_default_fee(pageBank, deployer):
     pageBank.setDefaultFee(6, 99, {'from': deployer} )
     defaultRemoveCommentOwnerFee = pageBank.defaultRemoveCommentOwnerFee()
     assert defaultRemoveCommentOwnerFee == 99
-
-
-def test_set_staticWETHPagePrice(pageBank, deployer):
-    oldPrice = pageBank.staticWETHPagePrice()
-    newPrice = 999
-    assert oldPrice != newPrice
-
-    pageBank.setStaticWETHPagePrice(newPrice, {'from': deployer} )
-    assert newPrice == pageBank.staticWETHPagePrice()
-
-
-def test_set_PriceChangePercent(pageBank, deployer):
-    oldPercent = pageBank.priceChangePercent()
-    newPercent = 999
-    assert oldPercent != newPercent
-
-    pageBank.setPriceChangePercent(newPercent, {'from': deployer} )
-    assert newPercent == pageBank.priceChangePercent()
 
 
 def test_set_TreasuryFee(pageBank, deployer):

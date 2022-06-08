@@ -81,7 +81,6 @@ def test_write_read_Post(pageBank, pageCommunity, someUser, deployer):
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
     network.gas_price("65 gwei")
-    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
 
     with reverts():
         pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
@@ -107,7 +106,6 @@ def test_write_read_Comment(pageBank, pageCommunity, someUser, deployer):
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
     network.gas_price("65 gwei")
-    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
 
     with reverts():
         pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
@@ -136,7 +134,6 @@ def test_write_burn_Post(pageBank, pageCommunity, someUser, deployer):
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
     network.gas_price("65 gwei")
-    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
 
     with reverts():
         pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
@@ -170,7 +167,6 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, pageVo
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
     network.gas_price("65 gwei")
-    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
 
     with reverts():
         pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
@@ -225,7 +221,6 @@ def test_visibility(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerato
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
     network.gas_price("65 gwei")
-    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
 
     pageCommunity.join(1, {'from': deployer})
     pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
@@ -265,7 +260,6 @@ def test_banned_user(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerat
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
     network.gas_price("65 gwei")
-    pageBank.setWETHPagePool('0x64a078926ad9f9e88016c199017aea196e3899e1', {'from': deployer})
 
     with reverts():
         pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
