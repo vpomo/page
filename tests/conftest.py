@@ -81,6 +81,8 @@ def pageSafeDeal(PageSafeDeal, admin, deployer, pageCalcUserRate, pageToken, pag
     instanсe = PageSafeDeal.deploy({'from': deployer})
     instanсe.initialize(admin, pageCalcUserRate, pageOracle)
     instanсe.setToken(pageToken, {'from': deployer})
+    pageCalcUserRate.grantRole(pageCalcUserRate.DEAL_ROLE(), instanсe, {'from': admin})
+
     return instanсe
 
 

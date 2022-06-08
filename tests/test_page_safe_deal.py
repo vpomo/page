@@ -59,3 +59,115 @@ def test_make_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, some
     assert firstDeal[6] == currentTime + 100
 
 
+
+def test_cancel_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, someUser, admin):
+    #deployer - seller
+    #admin - guarantor
+    #someuser - buyer
+
+    desc = 'first deal'
+    value = Wei('1 ether')/5
+
+    currentTime = pageSafeDeal.currentTime()
+
+    mintAmount = pageOracle.getFromWethToPageAmount(pageSafeDeal.GUARANTOR_FEE())
+
+    beforeBalanceBuyer = pageToken.balanceOf(someUser)
+    pageToken.mint(someUser, mintAmount, {'from': pageBank})
+    pageToken.approve(pageSafeDeal, mintAmount, {'from': someUser})
+    afterBalanceBuyer = pageToken.balanceOf(someUser)
+
+    diff = afterBalanceBuyer - beforeBalanceBuyer
+    print('diff', diff)
+    assert afterBalanceBuyer > 0
+    assert diff == mintAmount
+
+    pageSafeDeal.makeDeal(desc, deployer, admin, currentTime + 10, currentTime + 1000, value, True, {'from': someUser, 'value': value})
+    dealId = 1
+
+    pageSafeDeal.setIssue(dealId, '', {'from': deployer})
+
+    isIssue = pageSafeDeal.isIssue(dealId)
+    assert isIssue == True
+
+    firstDeal = pageSafeDeal.readBoolDeal(1)
+    assert firstDeal[0] == True
+    assert firstDeal[1] == True
+    assert firstDeal[2] == False
+
+    pageSafeDeal.cancelDeal(dealId, {'from': admin})
+
+    firstDeal = pageSafeDeal.readBoolDeal(1)
+    assert firstDeal[0] == True
+    assert firstDeal[1] == True
+    assert firstDeal[2] == True
+
+
+def test_finish_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, someUser, admin):
+    #deployer - seller
+    #admin - guarantor
+    #someuser - buyer
+
+    desc = 'first deal'
+    value = Wei('1 ether')/5
+
+    currentTime = pageSafeDeal.currentTime()
+
+    mintAmount = pageOracle.getFromWethToPageAmount(pageSafeDeal.GUARANTOR_FEE())
+
+    beforeBalanceBuyer = pageToken.balanceOf(someUser)
+    pageToken.mint(someUser, mintAmount, {'from': pageBank})
+    pageToken.approve(pageSafeDeal, mintAmount, {'from': someUser})
+    afterBalanceBuyer = pageToken.balanceOf(someUser)
+
+    diff = afterBalanceBuyer - beforeBalanceBuyer
+    print('diff', diff)
+    assert afterBalanceBuyer > 0
+    assert diff == mintAmount
+
+    pageSafeDeal.makeDeal(desc, deployer, admin, currentTime + 10, currentTime + 1000, value, True, {'from': someUser, 'value': value})
+    dealId = 1
+
+    firstDeal = pageSafeDeal.readApproveDeal(1)
+    assert firstDeal[0] == False
+    assert firstDeal[1] == False
+
+    pageSafeDeal.makeStartApprove(dealId, {'from': deployer})
+    pageSafeDeal.makeStartApprove(dealId, {'from': someUser})
+
+    firstDeal = pageSafeDeal.readApproveDeal(1)
+    assert firstDeal[0] == True
+    assert firstDeal[1] == True
+    assert firstDeal[2] == False
+    assert firstDeal[3] == False
+
+    firstDeal = pageSafeDeal.readBoolDeal(1)
+    assert firstDeal[0] == False
+    assert firstDeal[1] == True
+    assert firstDeal[2] == False
+
+    with reverts("SafeDeal: wrong start time"):
+        pageSafeDeal.makeEndApprove(dealId, {'from': deployer})
+
+    chain.sleep(currentTime + 2000)
+
+    with reverts("SafeDeal: wrong deal user"):
+        pageSafeDeal.makeEndApprove(dealId, {'from': admin})
+
+    pageSafeDeal.makeEndApprove(dealId, {'from': deployer})
+    pageSafeDeal.makeEndApprove(dealId, {'from': someUser})
+
+    firstDeal = pageSafeDeal.readApproveDeal(1)
+    assert firstDeal[2] == True
+    assert firstDeal[3] == True
+
+
+    pageSafeDeal.finishDeal(dealId, {'from': admin})
+
+    firstDeal = pageSafeDeal.readBoolDeal(1)
+    assert firstDeal[0] == False
+    assert firstDeal[1] == True
+    assert firstDeal[2] == True
+
+
+
