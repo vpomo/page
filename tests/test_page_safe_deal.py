@@ -60,7 +60,7 @@ def test_make_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, some
 
 
 
-def test_cancel_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, someUser, admin):
+def test_cancel_deal(pageSafeDeal, pageToken, pageBank, pageOracle, pageUserRateToken, deployer, someUser, admin):
     #deployer - seller
     #admin - guarantor
     #someuser - buyer
@@ -95,7 +95,14 @@ def test_cancel_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, so
     assert firstDeal[1] == True
     assert firstDeal[2] == False
 
+    beforeBalance = pageUserRateToken.balanceOf(admin, 11)
+    assert beforeBalance == 0
+
+
     pageSafeDeal.cancelDeal(dealId, {'from': admin})
+
+    afterBalance = pageUserRateToken.balanceOf(admin, 11)
+    assert afterBalance == 1
 
     firstDeal = pageSafeDeal.readBoolDeal(1)
     assert firstDeal[0] == True
@@ -103,7 +110,7 @@ def test_cancel_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, so
     assert firstDeal[2] == True
 
 
-def test_finish_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, someUser, admin):
+def test_finish_deal(pageSafeDeal, pageToken, pageBank, pageOracle, pageUserRateToken, deployer, someUser, admin):
     #deployer - seller
     #admin - guarantor
     #someuser - buyer
@@ -161,13 +168,19 @@ def test_finish_deal(pageSafeDeal, pageToken, pageBank, pageOracle, deployer, so
     assert firstDeal[2] == True
     assert firstDeal[3] == True
 
-
     pageSafeDeal.finishDeal(dealId, {'from': admin})
 
     firstDeal = pageSafeDeal.readBoolDeal(1)
     assert firstDeal[0] == False
     assert firstDeal[1] == True
     assert firstDeal[2] == True
+
+    guarantorNftBalance = pageUserRateToken.balanceOf(admin, 11)
+    sellerNftBalance = pageUserRateToken.balanceOf(deployer, 12)
+    buyerNftBalance = pageUserRateToken.balanceOf(someUser, 13)
+    assert guarantorNftBalance == 1
+    assert sellerNftBalance == 1
+    assert buyerNftBalance == 1
 
 
 
