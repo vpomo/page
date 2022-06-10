@@ -145,6 +145,8 @@ contract PageBank is
         _setRoleAdmin(CHANGE_PRICE_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(VOTE_FOR_EARN_ROLE, DEFAULT_ADMIN_ROLE);
 
+        initDefaultFee();
+
         treasury = _treasury;
         calcUserRate = IPageCalcUserRate(_calcUserRate);
     }
@@ -667,5 +669,17 @@ contract PageBank is
                 newAmount = 0;
             }
         }
+    }
+
+    function initDefaultFee() private {
+        defaultCreatePostOwnerFee = 4500;
+        defaultCreatePostCreatorFee = 4500;
+        defaultRemovePostOwnerFee = 0;
+        defaultRemovePostCreatorFee = 9000;
+
+        defaultCreateCommentOwnerFee = 4500;
+        defaultCreateCommentCreatorFee = 4500;
+        defaultRemoveCommentOwnerFee = 0;
+        defaultRemoveCommentCreatorFee = 9000;
     }
 }
