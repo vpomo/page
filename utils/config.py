@@ -7,10 +7,12 @@ from brownie import network, accounts
 def get_is_live():
     return network.show_active() != "rinkeby" #mainnet
 
+def get_admin():
+    return accounts.at('0x661a3b8a02E70e3b4E0623C3673e78F0C6A202DD')
 
 def get_deployer_account(is_live):
     if not is_live:
-        deployer = accounts.add('0x...5e5283ba') #private key
+        deployer = accounts.add('0x9 ... ba') #private key
         return deployer
 
 

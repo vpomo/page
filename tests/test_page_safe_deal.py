@@ -82,7 +82,7 @@ def test_cancel_deal(pageSafeDeal, pageToken, pageBank, pageOracle, pageUserRate
     assert afterBalanceBuyer > 0
     assert diff == mintAmount
 
-    pageSafeDeal.makeDeal(desc, deployer, admin, currentTime + 10, currentTime + 1000, value, True, {'from': someUser, 'value': value})
+    pageSafeDeal.makeDeal(desc, deployer, admin, currentTime + 100, currentTime + 1000, value, True, {'from': someUser, 'value': value})
     dealId = 1
 
     pageSafeDeal.setIssue(dealId, '', {'from': deployer})
