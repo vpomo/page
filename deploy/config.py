@@ -1,6 +1,6 @@
 import os
 import sys
-from brownie import network, accounts
+from brownie import network, accounts, Contract, PageCalcUserRate
 #before <export ETHERSCAN_TOKEN=AKTI...4HZ>
 
 
@@ -12,8 +12,14 @@ def get_admin():
 
 def get_deployer_account(is_live):
     if not is_live:
-        deployer = accounts.add('0x9 ... ba') #private key
+        deployer = accounts.add('0x9...ba') #private key
         return deployer
+
+def get_proxy_bank():
+    return Contract.from_explorer('0x87fc6fb07b8fc018b34126bdf390f7d0a711e2f5', as_proxy_for='0xec95a659153634c87417a2d95f0b561221288649')
+
+def get_calc_user_rate():
+    return Contract.from_explorer('0x7e47dd1b1689b9ab3ce3c54e2ccb9a97054c52ac')
 
 
 def prompt_bool():

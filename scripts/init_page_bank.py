@@ -6,7 +6,8 @@ def main():
     deployer = config.get_deployer_account(config.get_is_live())
     admin = config.get_admin()
     treasury = deployer
-    calcUserRate = PageCalcUserRate.at("0x7e47dd1b1689b9ab3ce3c54e2ccb9a97054c52ac")
+    calcUserRate = config.get_calc_user_rate()
+    proxyPageBank = config.get_proxy_bank()
 
     print("Deployer:", deployer)
 
@@ -15,7 +16,6 @@ def main():
         print("Aborting")
         return
 
-    pageBank = PageBank.deploy({'from': deployer}, publish_source=True)
-    pageProxy = PageProxy.deploy(pageBank, admin, {'from': deployer}, publish_source=True)
+    proxyPageBank.initialize(treasury, admin, calcUserRate, {'from': deployer})
 
 
