@@ -5,6 +5,7 @@ from brownie import network, accounts, Contract, PageCalcUserRate
 
 #========= main addreses ============
 rate_token_url = 'https://'
+nft_url = 'https://'
 deployer_private_key = '0x9...ba'
 admin_private_key = '0x9...ba'
 
@@ -23,6 +24,12 @@ proxy_bank = '0x0000000000000000000000000000000000000000'
 
 token = '0x0000000000000000000000000000000000000000'
 proxy_token = '0x0000000000000000000000000000000000000000'
+
+oracle = '0x0000000000000000000000000000000000000000'
+proxy_oracle = '0x0000000000000000000000000000000000000000'
+
+nft = '0x0000000000000000000000000000000000000000'
+proxy_nft = '0x0000000000000000000000000000000000000000'
 
 #========= proxy contracts ============
 
@@ -43,6 +50,9 @@ def get_pool():
 def get_rate_token_url():
     return rate_token_url
 
+def get_nft_url():
+    return nft_url
+
 def get_proxy_user_rate_token():
     return Contract.from_explorer(proxy_user_rate_token, as_proxy_for=user_rate_token)
 
@@ -54,6 +64,12 @@ def get_proxy_bank():
 
 def get_proxy_token():
     return Contract.from_explorer(proxy_token, as_proxy_for=token)
+
+def get_proxy_oracle():
+    return Contract.from_explorer(proxy_oracle, as_proxy_for=oracle)
+
+def get_proxy_nft():
+    return Contract.from_explorer(proxy_nft, as_proxy_for=nft)
 
 
 def get_deployer_account(is_live):
