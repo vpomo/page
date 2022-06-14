@@ -10,6 +10,7 @@ def main():
 
     print("deployer:", deployer)
     print("admin:", admin)
+    print("treasury:", treasury)
     print("calcUserRate:", calcUserRate)
 
     sys.stdout.write("Proceed? [y/n]: ")
