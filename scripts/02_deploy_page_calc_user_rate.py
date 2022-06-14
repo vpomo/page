@@ -21,3 +21,4 @@ def main():
     proxyCalcUserRate = Contract.from_explorer(pageProxy, as_proxy_for=pageCalcUserRate)
     proxyCalcUserRate.initialize(admin, userRateToken, {'from': deployer})
 
+    userRateToken.setCalcRateContract(proxyCalcUserRate, {'from': deployer})

@@ -6,12 +6,16 @@ from brownie import network, accounts, Contract, PageCalcUserRate
 #========= main addreses ============
 rate_token_url = 'https://'
 deployer_private_key = '0x9...ba'
+admin_private_key = '0x9...ba'
 
-admin = '0x0000000000000000000000000000000000000001'
+admin = '0x0000000000000000000000000000000000000000'
+treasury = '0x0000000000000000000000000000000000000000'
 
-user_rate_token = '0x0000000000000000000000000000000000000001' #It will be known after the installation of the PageUserRateToken
-proxy_user_rate_token = '0x0000000000000000000000000000000000000001' #It will be known after the installation of the PageUserRateToken
+user_rate_token = '0x0000000000000000000000000000000000000000' #It will be known after the installation of the PageUserRateToken
+proxy_user_rate_token = '0x0000000000000000000000000000000000000000' #It will be known after the installation of the PageUserRateToken
 
+calc_user_rate = '0x0000000000000000000000000000000000000000'
+proxy_calc_user_rate = '0x0000000000000000000000000000000000000000'
 
 #========= proxy contracts ============
 
@@ -21,13 +25,19 @@ def get_is_live():
     return network.show_active() != "rinkeby" #mainnet
 
 def get_admin():
-    return accounts.at(admin)
+    return accounts.add(admin_private_key)
+
+def get_treasury():
+    return accounts.at(treasury)
 
 def get_rate_token_url():
     return rate_token_url
 
 def get_proxy_user_rate_token():
     return Contract.from_explorer(proxy_user_rate_token, as_proxy_for=user_rate_token)
+
+def get_proxy_calc_user_rate():
+    return Contract.from_explorer(proxy_calc_user_rate, as_proxy_for=calc_user_rate)
 
 def get_deployer_account(is_live):
     if not is_live:
