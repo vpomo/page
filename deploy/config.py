@@ -3,19 +3,35 @@ import sys
 from brownie import network, accounts, Contract, PageCalcUserRate
 #before <export ETHERSCAN_TOKEN=AKTI...4HZ>
 
+#========= main addreses ============
+rate_token_url = 'https://'
+deployer_private_key = '0x9...ba'
+
+admin = '0x0000000000000000000000000000000000000001'
+
+user_rate_token = '0x0000000000000000000000000000000000000001' #It will be known after the installation of the PageUserRateToken
+proxy_user_rate_token = '0x0000000000000000000000000000000000000001' #It will be known after the installation of the PageUserRateToken
+
+
+#========= proxy contracts ============
+
+
 
 def get_is_live():
     return network.show_active() != "rinkeby" #mainnet
 
 def get_admin():
-    return accounts.at('0x661a3b8a02E70e3b4E0623C3673e78F0C6A202DD')
+    return accounts.at(admin)
 
 def get_rate_token_url():
-    return 'https://'
+    return rate_token_url
+
+def get_proxy_user_rate_token():
+    return Contract.from_explorer(proxy_user_rate_token, as_proxy_for=user_rate_token)
 
 def get_deployer_account(is_live):
     if not is_live:
-        deployer = accounts.add('0x9...ba') #private key
+        deployer = accounts.add(deployer_private_key)
         return deployer
 
 def get_proxy_bank():
