@@ -15,7 +15,7 @@ def test_version(pageVoteForSuperModerator):
     assert VERSION == version
 
 
-def test_execute_vote(chain, pageVoteForSuperModerator, pageCommunity, pageVoteForFeeAndModerator, pageToken, someUser, deployer, treasury):
+def test_execute_vote(chain, pageVoteForSuperModerator, pageCommunity, pageVoteForCommon, pageToken, someUser, deployer, treasury):
     supervisor = pageCommunity.supervisor()
     assert supervisor == ZERO_ADDRESS
 
@@ -28,8 +28,8 @@ def test_execute_vote(chain, pageVoteForSuperModerator, pageCommunity, pageVoteF
     pageCommunity.join(1, {'from': someUser})
     pageCommunity.join(2, {'from': deployer})
 
-    pageCommunity.addModerator(1, someUser, {'from': pageVoteForFeeAndModerator})
-    pageCommunity.addModerator(2, deployer, {'from': pageVoteForFeeAndModerator})
+    pageCommunity.addModerator(1, someUser, {'from': pageVoteForCommon})
+    pageCommunity.addModerator(2, deployer, {'from': pageVoteForCommon})
 
     pageToken.transfer(someUser, 100, {'from': treasury})
     pageToken.transfer(deployer, 100, {'from': treasury})

@@ -20,7 +20,7 @@ def test_add_read_community(pageCommunity):
     assert community[0] == communityName
 
 
-def test_add_remove_moderator(pageCommunity, pageVoteForFeeAndModerator, accounts, deployer):
+def test_add_remove_moderator(pageCommunity, pageVoteForCommon, accounts, deployer):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     assert pageCommunity.communityCount() == 1
@@ -28,18 +28,18 @@ def test_add_remove_moderator(pageCommunity, pageVoteForFeeAndModerator, account
     pageCommunity.join(1, {'from': accounts[2]})
     pageCommunity.join(1, {'from': accounts[3]})
 
-    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForFeeAndModerator})
-    pageCommunity.addModerator(1, accounts[3], {'from': pageVoteForFeeAndModerator})
+    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForCommon})
+    pageCommunity.addModerator(1, accounts[3], {'from': pageVoteForCommon})
     community = pageCommunity.readCommunity(1)
     assert community[2][0] == accounts[2]
     assert community[2][1] == accounts[3]
 
-    pageCommunity.removeModerator(1, accounts[2], {'from': pageVoteForFeeAndModerator})
+    pageCommunity.removeModerator(1, accounts[2], {'from': pageVoteForCommon})
     community = pageCommunity.readCommunity(1)
     assert community[2][0] == accounts[3]
 
 
-def test_find_moderator(pageCommunity, pageVoteForFeeAndModerator, accounts, deployer):
+def test_find_moderator(pageCommunity, pageVoteForCommon, accounts, deployer):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     assert pageCommunity.communityCount() == 1
@@ -47,8 +47,8 @@ def test_find_moderator(pageCommunity, pageVoteForFeeAndModerator, accounts, dep
     pageCommunity.join(1, {'from': accounts[2]})
     pageCommunity.join(1, {'from': accounts[3]})
 
-    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForFeeAndModerator})
-    pageCommunity.addModerator(1, accounts[3], {'from': pageVoteForFeeAndModerator})
+    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForCommon})
+    pageCommunity.addModerator(1, accounts[3], {'from': pageVoteForCommon})
     community = pageCommunity.readCommunity(1)
     assert community[2][0] == accounts[2]
     assert community[2][1] == accounts[3]
@@ -162,7 +162,7 @@ def test_write_burn_Post(pageBank, pageCommunity, someUser, deployer):
     assert readPost[2] == ZERO_ADDRESS
 
 
-def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, pageVoteForFeeAndModerator, someUser, deployer, treasury):
+def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, pageVoteForCommon, someUser, deployer, treasury):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
@@ -194,7 +194,7 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, pageVo
 
     pageCommunity.join(1, {'from': accounts[2]})
 
-    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForFeeAndModerator})
+    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForCommon})
 
     amount = 10000000000000000000000;
     pageToken.transfer(someUser, amount, {'from': treasury})
@@ -216,7 +216,7 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, pageVo
     assert readComment[0] == ''
 
 
-def test_visibility(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerator, someUser, deployer):
+def test_visibility(accounts, pageBank, pageCommunity, pageVoteForCommon, someUser, deployer):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
@@ -236,7 +236,7 @@ def test_visibility(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerato
 
     pageCommunity.join(1, {'from': accounts[2]})
 
-    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForFeeAndModerator})
+    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForCommon})
 
     with reverts():
         pageCommunity.setVisibilityComment(0, 0, False, {'from': someUser})
@@ -255,7 +255,7 @@ def test_visibility(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerato
     assert postVisible == False
 
 
-def test_banned_user(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerator, someUser, deployer, treasury):
+def test_banned_user(accounts, pageBank, pageCommunity, pageVoteForCommon, someUser, deployer, treasury):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
@@ -270,8 +270,8 @@ def test_banned_user(accounts, pageBank, pageCommunity, pageVoteForFeeAndModerat
     pageCommunity.join(1, {'from': accounts[2]})
     pageCommunity.join(1, {'from': accounts[3]})
 
-    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForFeeAndModerator})
-    pageCommunity.addModerator(1, accounts[3], {'from': pageVoteForFeeAndModerator})
+    pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForCommon})
+    pageCommunity.addModerator(1, accounts[3], {'from': pageVoteForCommon})
 
     pageCommunity.addBannedUser(1, someUser, {'from': accounts[2]})
 

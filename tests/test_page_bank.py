@@ -32,8 +32,8 @@ def test_define_post_fee_for_new_community(pageBank, pageCommunity):
     assert readPostFee[3] == 9000
 
 
-def test_update_comment_fee_for_new_community(pageBank, pageVoteForFeeAndModerator):
-    pageBank.updateCommentFee(1, 2, 3, 4, 5, {'from': pageVoteForFeeAndModerator})
+def test_update_comment_fee_for_new_community(pageBank, pageVoteForCommon):
+    pageBank.updateCommentFee(1, 2, 3, 4, 5, {'from': pageVoteForCommon})
     readCommentFee = pageBank.readCommentFee(1)
     assert readCommentFee[0] == 2
     assert readCommentFee[1] == 3
@@ -41,8 +41,8 @@ def test_update_comment_fee_for_new_community(pageBank, pageVoteForFeeAndModerat
     assert readCommentFee[3] == 5
 
 
-def test_update_post_fee_for_new_community(pageBank, pageVoteForFeeAndModerator):
-    pageBank.updatePostFee(1, 2, 3, 4, 5, {'from': pageVoteForFeeAndModerator})
+def test_update_post_fee_for_new_community(pageBank, pageVoteForCommon):
+    pageBank.updatePostFee(1, 2, 3, 4, 5, {'from': pageVoteForCommon})
     readPostFee = pageBank.readPostFee(1)
     assert readPostFee[0] == 2
     assert readPostFee[1] == 3

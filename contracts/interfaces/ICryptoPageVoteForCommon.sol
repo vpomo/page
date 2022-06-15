@@ -3,7 +3,7 @@
 pragma solidity 0.8.12;
 
 
-interface IPageVoteForFeeAndModerator {
+interface IPageVoteForCommon {
 
     function version() external pure returns (string memory);
 

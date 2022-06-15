@@ -32,18 +32,6 @@ library DataTypes {
         DealMessage[] messages;
     }
 
-    struct BoolVote {
-        string description;
-        address creator;
-        uint128 finishTime;
-        uint128 yesCount;
-        uint128 noCount;
-        bool newValue;
-        EnumerableSetUpgradeable.AddressSet voteUsers;
-        EnumerableSetUpgradeable.UintSet voteCommunities;
-        bool active;
-    }
-
     struct AddressUintsVote {
         string description;
         address creator;
@@ -64,7 +52,7 @@ library DataTypes {
         uint128 yesCount;
         uint128 noCount;
         uint128 value;
-        address wallet;
+        address user;
         EnumerableSetUpgradeable.AddressSet voteUsers;
         bool active;
     }
@@ -77,6 +65,29 @@ library DataTypes {
         uint128 noCount;
         uint128 newValue;
         EnumerableSetUpgradeable.AddressSet voteUsers;
+        bool active;
+    }
+
+    struct BoolVote {
+        string description;
+        address creator;
+        uint128 finishTime;
+        uint128 yesCount;
+        uint128 noCount;
+        bool newValue;
+        EnumerableSetUpgradeable.AddressSet voteUsers;
+        bool active;
+    }
+
+    struct AddressVote {
+        string description;
+        address creator;
+        uint128 finishTime;
+        uint128 yesCount;
+        uint128 noCount;
+        address user;
+        EnumerableSetUpgradeable.AddressSet voteUsers;
+        EnumerableSetUpgradeable.UintSet voteCommunities;
         bool active;
     }
 }

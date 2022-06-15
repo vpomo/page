@@ -294,7 +294,7 @@ contract PageVoteForEarn is
         checkTransferVote(communityId, vote);
 
         if (vote.yesCount > vote.noCount) {
-            executeTokenTransferVoteScript(communityId, uint256(vote.value), vote.wallet);
+            executeTokenTransferVoteScript(communityId, uint256(vote.value), vote.user);
         }
         vote.active = false;
 
@@ -314,7 +314,7 @@ contract PageVoteForEarn is
         checkTransferVote(communityId, vote);
 
         if (vote.yesCount > vote.noCount) {
-            executeNftTransferVoteScript(communityId, uint256(vote.value), vote.wallet);
+            executeNftTransferVoteScript(communityId, uint256(vote.value), vote.user);
         }
         vote.active = false;
 
@@ -453,7 +453,7 @@ contract PageVoteForEarn is
         yesCount = vote.yesCount;
         noCount = vote.noCount;
         amount = vote.value;
-        wallet = vote.wallet;
+        wallet = vote.user;
         voteUsers = vote.voteUsers.values();
         active = vote.active;
     }
@@ -515,7 +515,7 @@ contract PageVoteForEarn is
         vote.creator = sender;
         vote.finishTime = uint128(block.timestamp) + duration;
         vote.value = value;
-        vote.wallet = wallet;
+        vote.user = wallet;
         vote.active = true;
     }
 

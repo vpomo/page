@@ -10,13 +10,13 @@ import {DataTypes} from '../libraries/DataTypes.sol';
 import "../interfaces/ICryptoPageBank.sol";
 import "../interfaces/ICryptoPageCommunity.sol";
 import "../interfaces/ICryptoPageToken.sol";
-import "../interfaces/ICryptoPageVoteForFeeAndModerator.sol";
+import "../interfaces/ICryptoPageVoteForCommon.sol";
 
-contract PageVoteForFeeAndModerator is
+contract PageVoteForCommon is
     Initializable,
     OwnableUpgradeable,
     AccessControlUpgradeable,
-    IPageVoteForFeeAndModerator
+    IPageVoteForCommon
 {
 
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
+import {DataTypes} from '../libraries/DataTypes.sol';
 import "../interfaces/ICryptoPageBank.sol";
 import "../interfaces/ICryptoPageCommunity.sol";
 import "../interfaces/ICryptoPageToken.sol";
@@ -28,19 +29,7 @@ contract PageVoteForSuperModerator is
     IPageBank public bank;
     IPageToken public token;
 
-    struct Vote {
-        string description;
-        address creator;
-        uint128 finishTime;
-        uint128 yesCount;
-        uint128 noCount;
-        address user;
-        EnumerableSetUpgradeable.AddressSet voteUsers;
-        EnumerableSetUpgradeable.UintSet voteCommunities;
-        bool active;
-    }
-
-    Vote[] private votes;
+    DataTypes.AddressVote[] private votes;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
     event PutVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
@@ -104,7 +93,7 @@ contract PageVoteForSuperModerator is
         }
         votes.push();
 
-        Vote storage vote = votes[len];
+        DataTypes.AddressVote storage vote = votes[len];
         vote.description = description;
         vote.creator = sender;
         vote.finishTime = uint128(block.timestamp) + duration;
@@ -141,7 +130,7 @@ contract PageVoteForSuperModerator is
         require(votes.length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[index];
+        DataTypes.AddressVote storage vote = votes[index];
 
         require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
@@ -171,7 +160,7 @@ contract PageVoteForSuperModerator is
         require(votes.length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[index];
+        DataTypes.AddressVote storage vote = votes[index];
 
         require(community.isCommunityModerator(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
@@ -207,7 +196,7 @@ contract PageVoteForSuperModerator is
     ) {
         require(votes.length > index, "PageVote: wrong index");
 
-        Vote storage vote = votes[index];
+        DataTypes.AddressVote storage vote = votes[index];
 
         description = vote.description;
         creator = vote.creator;

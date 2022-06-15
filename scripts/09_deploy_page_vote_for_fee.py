@@ -1,4 +1,4 @@
-from brownie import Contract, PageProxy, PageVoteForFeeAndModerator
+from brownie import Contract, PageProxy, PageVoteForCommon
 from deploy import config
 
 
@@ -20,7 +20,7 @@ def main():
         print("Aborting")
         return
 
-    pageVote = PageVoteForFeeAndModerator.deploy({'from': deployer}, publish_source=True)
+    pageVote = PageVoteForCommon.deploy({'from': deployer}, publish_source=True)
     pageProxy = PageProxy.deploy(pageVote, admin, {'from': deployer}, publish_source=True)
 
     proxyPageVote = Contract.from_explorer(pageProxy, as_proxy_for=pageVote)

@@ -112,8 +112,8 @@ def pageCommunity(PageCommunity, pageNFT, pageUserRateToken, pageBank, pageToken
 
 
 @pytest.fixture(scope="module")
-def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
-    instanсe = PageVoteForFeeAndModerator.deploy({'from': deployer})
+def pageVoteForCommon(PageVoteForCommon, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
+    instanсe = PageVoteForCommon.deploy({'from': deployer})
     instanсe.initialize(deployer, pageToken, pageCommunity, pageBank)
     deployer.transfer(instanсe, Wei('10 ether'))
 
@@ -126,7 +126,7 @@ def pageVoteForFeeAndModerator(PageVoteForFeeAndModerator, deployer, pageToken, 
 
 
 @pytest.fixture(scope="module")
-def pageVoteForEarn(pageVoteForFeeAndModerator, PageVoteForEarn, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
+def pageVoteForEarn(pageVoteForCommon, PageVoteForEarn, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
     instanсe = PageVoteForEarn.deploy({'from': deployer})
     instanсe.initialize(admin, pageToken, pageCommunity, pageBank)
     deployer.transfer(instanсe, Wei('10 ether'))
@@ -137,13 +137,13 @@ def pageVoteForEarn(pageVoteForFeeAndModerator, PageVoteForEarn, deployer, pageT
 
 
 @pytest.fixture(scope="module")
-def pageVoteForSuperModerator(pageVoteForFeeAndModerator, pageVoteForEarn, PageVoteForSuperModerator, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
+def pageVoteForSuperModerator(pageVoteForCommon, pageVoteForEarn, PageVoteForSuperModerator, deployer, pageToken, pageCommunity, pageBank, pageOracle, admin):
     instanсe = PageVoteForSuperModerator.deploy({'from': deployer})
     instanсe.initialize(admin, pageToken, pageCommunity, pageBank)
     pageCommunity.addVoterContract(instanсe, {'from': deployer})
     pageBank.setOracle(pageOracle, {'from': deployer})
 
-    assert pageVoteForFeeAndModerator == pageCommunity.voterContracts(0)
+    assert pageVoteForCommon == pageCommunity.voterContracts(0)
     assert pageVoteForEarn == pageCommunity.voterContracts(1)
     assert instanсe == pageCommunity.voterContracts(2)
 

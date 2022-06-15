@@ -16,7 +16,7 @@ For one comment there can be only one thing: either upvotes or downvotes.
 Community members choose and appoint their own moderators.
 Only a moderator can delete comments created in the Community.
 The procedure for appointing a moderator or removing him is carried out through the voting procedure of the members of this
-community using the `PageVoteForFeeAndModerator` contract.
+community using the `PageVoteForCommon` contract.
 When voting, the number of `PAGE` tokens on the wallet of this user and on his balance is taken into account
 account in the `PageBank` contract.
 These values ​​are summed up and give weight to the voice. So `PAGE` tokens are also management tokens.
@@ -41,7 +41,7 @@ Creating a comment also triggers a mint of `PAGE` tokens to offset gas costs. Bu
 To delete a post or comment, you need to spend a certain number of `PAGE` tokens.
 During these operations, the distribution of `PAGE` tokens concerns 3 wallets: `Treasury Wallet`, `owner` and `creator`.
 Tokens are distributed to these wallets not evenly, but as a percentage.
-The value of these percentages can be changed by community members by voting through the `PageVoteForFeeAndModerator` contract.
+The value of these percentages can be changed by community members by voting through the `PageVoteForCommon` contract.
 When you create a new community, default values ​​are automatically assigned.
 
 When contracts are deployed, an initial emission of 50,000,000 `PAGE` tokens is made on the `Treasury Wallet`.
