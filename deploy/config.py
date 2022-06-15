@@ -31,6 +31,9 @@ proxy_oracle = '0x0000000000000000000000000000000000000000'
 nft = '0x0000000000000000000000000000000000000000'
 proxy_nft = '0x0000000000000000000000000000000000000000'
 
+community = '0x0000000000000000000000000000000000000000'
+proxy_community = '0x0000000000000000000000000000000000000000'
+
 #========= proxy contracts ============
 
 
@@ -70,6 +73,9 @@ def get_proxy_oracle():
 
 def get_proxy_nft():
     return Contract.from_explorer(proxy_nft, as_proxy_for=nft)
+
+def get_proxy_community():
+    return Contract.from_explorer(proxy_community, as_proxy_for=community)
 
 
 def get_deployer_account(is_live):
