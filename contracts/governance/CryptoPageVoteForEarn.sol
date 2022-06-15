@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
+import {DataTypes} from '../libraries/DataTypes.sol';
 import "../interfaces/ICryptoPageBank.sol";
 import "../interfaces/ICryptoPageCommunity.sol";
 import "../interfaces/ICryptoPageToken.sol";
@@ -28,33 +29,10 @@ contract PageVoteForEarn is
     IPageBank public bank;
     IPageToken public token;
 
-    struct UintValueVote {
-        string description;
-        address creator;
-        uint128 finishTime;
-        uint128 yesCount;
-        uint128 noCount;
-        uint128 newPrice;
-        EnumerableSetUpgradeable.AddressSet voteUsers;
-        bool active;
-    }
-
-    struct UintAddressValueVote {
-        string description;
-        address creator;
-        uint128 finishTime;
-        uint128 yesCount;
-        uint128 noCount;
-        uint128 value;
-        address wallet;
-        EnumerableSetUpgradeable.AddressSet voteUsers;
-        bool active;
-    }
-
-    //communityId -> UintValueVote[]
-    mapping(uint256 => UintValueVote[]) private privacyAccessPriceVotes;
-    mapping(uint256 => UintAddressValueVote[]) private tokenTransferVotes;
-    mapping(uint256 => UintAddressValueVote[]) private nftTransferVotes;
+    //communityId -> UintVote[]
+    mapping(uint256 => DataTypes.UintVote[]) private privacyAccessPriceVotes;
+    mapping(uint256 => DataTypes.AddressUintVote[]) private tokenTransferVotes;
+    mapping(uint256 => DataTypes.AddressUintVote[]) private nftTransferVotes;
     mapping(uint256 => uint256) private lastVoteBlock;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
@@ -128,11 +106,11 @@ contract PageVoteForEarn is
         }
         privacyAccessPriceVotes[communityId].push();
 
-        UintValueVote storage vote = privacyAccessPriceVotes[communityId][len];
+        DataTypes.UintVote storage vote = privacyAccessPriceVotes[communityId][len];
         vote.description = description;
         vote.creator = sender;
         vote.finishTime = uint128(block.timestamp) + duration;
-        vote.newPrice = newPrice;
+        vote.newValue = newPrice;
         vote.active = true;
 
         emit CreatePrivacyAccessPriceVote(sender, duration, newPrice);
@@ -164,7 +142,7 @@ contract PageVoteForEarn is
         }
         tokenTransferVotes[communityId].push();
 
-        UintAddressValueVote storage vote = tokenTransferVotes[communityId][len];
+        DataTypes.AddressUintVote storage vote = tokenTransferVotes[communityId][len];
         createTransferVote(vote, description, sender, duration, amount, wallet);
 
         emit CreateTokenTransferVote(sender, duration, amount, wallet);
@@ -196,7 +174,7 @@ contract PageVoteForEarn is
         }
         nftTransferVotes[communityId].push();
 
-        UintAddressValueVote storage vote = nftTransferVotes[communityId][len];
+        DataTypes.AddressUintVote storage vote = nftTransferVotes[communityId][len];
         createTransferVote(vote, description, sender, duration, id, wallet);
 
         emit CreateNftTransferVote(sender, duration, id, wallet);
@@ -226,7 +204,7 @@ contract PageVoteForEarn is
         require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
+        DataTypes.UintVote storage vote = privacyAccessPriceVotes[communityId][index];
 
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
@@ -254,7 +232,7 @@ contract PageVoteForEarn is
      */
     function putTokenTransferVote(uint256 communityId, uint256 index, bool isYes) external override {
         require(tokenTransferVotes[communityId].length > index, "PageVote: wrong index");
-        UintAddressValueVote storage vote = tokenTransferVotes[communityId][index];
+        DataTypes.AddressUintVote storage vote = tokenTransferVotes[communityId][index];
         uint256 weight = putTransferVote(communityId, vote, isYes);
 
         emit PutTokenTransferVote(_msgSender(), communityId, index, isYes, weight);
@@ -270,7 +248,7 @@ contract PageVoteForEarn is
      */
     function putNftTransferVote(uint256 communityId, uint256 index, bool isYes) external override {
         require(nftTransferVotes[communityId].length > index, "PageVote: wrong index");
-        UintAddressValueVote storage vote = nftTransferVotes[communityId][index];
+        DataTypes.AddressUintVote storage vote = nftTransferVotes[communityId][index];
         uint256 weight = putTransferVote(communityId, vote, isYes);
 
         emit PutNftTransferVote(_msgSender(), communityId, index, isYes, weight);
@@ -287,7 +265,7 @@ contract PageVoteForEarn is
         require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
+        DataTypes.UintVote storage vote = privacyAccessPriceVotes[communityId][index];
 
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
@@ -295,7 +273,7 @@ contract PageVoteForEarn is
         require(vote.finishTime < block.timestamp, "PageVote: wrong time");
 
         if (vote.yesCount > vote.noCount) {
-            executePrivacyAccessPriceVoteScript(communityId, uint256(vote.newPrice));
+            executePrivacyAccessPriceVoteScript(communityId, uint256(vote.newValue));
         }
 
         vote.active = false;
@@ -312,7 +290,7 @@ contract PageVoteForEarn is
      */
     function executeTokenTransferVote(uint256 communityId, uint256 index) external override {
         require(tokenTransferVotes[communityId].length > index, "PageVote: wrong index");
-        UintAddressValueVote storage vote = tokenTransferVotes[communityId][index];
+        DataTypes.AddressUintVote storage vote = tokenTransferVotes[communityId][index];
         checkTransferVote(communityId, vote);
 
         if (vote.yesCount > vote.noCount) {
@@ -332,7 +310,7 @@ contract PageVoteForEarn is
      */
     function executeNftTransferVote(uint256 communityId, uint256 index) external override {
         require(nftTransferVotes[communityId].length > index, "PageVote: wrong index");
-        UintAddressValueVote storage vote = nftTransferVotes[communityId][index];
+        DataTypes.AddressUintVote storage vote = nftTransferVotes[communityId][index];
         checkTransferVote(communityId, vote);
 
         if (vote.yesCount > vote.noCount) {
@@ -362,14 +340,14 @@ contract PageVoteForEarn is
     ) {
         require(privacyAccessPriceVotes[communityId].length > index, "PageVote: wrong index");
 
-        UintValueVote storage vote = privacyAccessPriceVotes[communityId][index];
+        DataTypes.UintVote storage vote = privacyAccessPriceVotes[communityId][index];
 
         description = vote.description;
         creator = vote.creator;
         finishTime = vote.finishTime;
         yesCount = vote.yesCount;
         noCount = vote.noCount;
-        newPrice = vote.newPrice;
+        newPrice = vote.newValue;
         voteUsers = vote.voteUsers.values();
         active = vote.active;
     }
@@ -393,7 +371,7 @@ contract PageVoteForEarn is
         bool
     ) {
         require(tokenTransferVotes[communityId].length > index, "PageVote: wrong index");
-        UintAddressValueVote storage vote = tokenTransferVotes[communityId][index];
+        DataTypes.AddressUintVote storage vote = tokenTransferVotes[communityId][index];
 
         return readTransferVote(communityId, vote);
     }
@@ -417,7 +395,7 @@ contract PageVoteForEarn is
         bool
     ) {
         require(nftTransferVotes[communityId].length > index, "PageVote: wrong index");
-        UintAddressValueVote storage vote = nftTransferVotes[communityId][index];
+        DataTypes.AddressUintVote storage vote = nftTransferVotes[communityId][index];
 
         return readTransferVote(communityId, vote);
     }
@@ -458,7 +436,7 @@ contract PageVoteForEarn is
      * @param communityId ID of community
      * @param vote Storage variable for vote
      */
-    function readTransferVote(uint256 communityId, UintAddressValueVote storage vote) private view returns (
+    function readTransferVote(uint256 communityId, DataTypes.AddressUintVote storage vote) private view returns (
         string memory description,
         address creator,
         uint128 finishTime,
@@ -526,7 +504,7 @@ contract PageVoteForEarn is
      * @param wallet Address for transferring tokens
      */
     function createTransferVote(
-        UintAddressValueVote storage vote,
+        DataTypes.AddressUintVote storage vote,
         string memory description,
         address sender,
         uint128 duration,
@@ -548,7 +526,7 @@ contract PageVoteForEarn is
      * @param vote Storage variable for vote
      * @param isYes For the implementation of the proposal or against the implementation
      */
-    function putTransferVote(uint256 communityId, UintAddressValueVote storage vote, bool isYes) private returns(uint256) {
+    function putTransferVote(uint256 communityId, DataTypes.AddressUintVote storage vote, bool isYes) private returns(uint256) {
         address sender = _msgSender();
 
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
@@ -574,7 +552,7 @@ contract PageVoteForEarn is
      * @param communityId ID of community
      * @param vote Storage variable for vote
      */
-    function checkTransferVote(uint256 communityId, UintAddressValueVote storage vote) private {
+    function checkTransferVote(uint256 communityId, DataTypes.AddressUintVote storage vote) private {
         address sender = _msgSender();
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");

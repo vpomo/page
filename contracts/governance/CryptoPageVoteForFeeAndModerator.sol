@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
 
+import {DataTypes} from '../libraries/DataTypes.sol';
 import "../interfaces/ICryptoPageBank.sol";
 import "../interfaces/ICryptoPageCommunity.sol";
 import "../interfaces/ICryptoPageToken.sol";
@@ -27,21 +28,8 @@ contract PageVoteForFeeAndModerator is
     IPageBank public bank;
     IPageToken public token;
 
-    struct Vote {
-        string description;
-        address creator;
-        uint128 execMethodNumber;
-        uint128 finishTime;
-        uint128 yesCount;
-        uint128 noCount;
-        uint64[4] newValues;
-        address user;
-        EnumerableSetUpgradeable.AddressSet voteUsers;
-        bool active;
-    }
-
     //communityId -> Vote[]
-    mapping(uint256 => Vote[]) private votes;
+    mapping(uint256 => DataTypes.AddressUintsVote[]) private votes;
 
     event SetMinDuration(uint256 oldValue, uint256 newValue);
     event PutVote(address indexed sender, uint256 communityId, uint256 index, bool isYes, uint256 weight);
@@ -108,7 +96,7 @@ contract PageVoteForFeeAndModerator is
         uint256 len = readVotesCount(communityId);
         votes[communityId].push();
 
-        Vote storage vote = votes[communityId][len];
+        DataTypes.AddressUintsVote storage vote = votes[communityId][len];
         vote.description = description;
         vote.creator = sender;
         vote.execMethodNumber = methodNumber;
@@ -147,7 +135,7 @@ contract PageVoteForFeeAndModerator is
         require(votes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[communityId][index];
+        DataTypes.AddressUintsVote storage vote = votes[communityId][index];
 
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(!vote.voteUsers.contains(sender), "PageVote: the user has already voted");
@@ -175,7 +163,7 @@ contract PageVoteForFeeAndModerator is
         require(votes[communityId].length > index, "PageVote: wrong index");
 
         address sender = _msgSender();
-        Vote storage vote = votes[communityId][index];
+        DataTypes.AddressUintsVote storage vote = votes[communityId][index];
 
         require(community.isCommunityActiveUser(communityId, sender), "PageVote: access denied");
         require(vote.voteUsers.contains(sender), "PageVote: the user did not vote");
@@ -212,7 +200,7 @@ contract PageVoteForFeeAndModerator is
     ) {
         require(votes[communityId].length > index, "PageVote: wrong index");
 
-        Vote storage vote = votes[communityId][index];
+        DataTypes.AddressUintsVote storage vote = votes[communityId][index];
 
         description = vote.description;
         creator = vote.creator;
@@ -243,7 +231,7 @@ contract PageVoteForFeeAndModerator is
      * The total number of all votes is given by the "readVotesCount()" function.
      */
     function executeScript(uint256 communityId, uint256 index) private {
-        Vote storage vote = votes[communityId][index];
+        DataTypes.AddressUintsVote storage vote = votes[communityId][index];
         uint64[4] storage values = vote.newValues;
         if (vote.execMethodNumber == 1) {
             bank.updatePostFee(communityId, values[0], values[1], values[2], values[3]);

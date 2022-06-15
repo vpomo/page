@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.12;
 
+import "@openzeppelin/contracts/utils/structs/EnumerableSetUpgradeable.sol";
+
 library DataTypes {
 
     enum ActivityType { POST, MESSAGE, UP, DOWN, DEAL_GUARANTOR, DEAL_SELLER, DEAL_BUYER }
@@ -28,5 +30,53 @@ library DataTypes {
         bool isEth;
         bool isFinished;
         DealMessage[] messages;
+    }
+
+    struct BoolVote {
+        string description;
+        address creator;
+        uint128 finishTime;
+        uint128 yesCount;
+        uint128 noCount;
+        bool newValue;
+        EnumerableSetUpgradeable.AddressSet voteUsers;
+        EnumerableSetUpgradeable.UintSet voteCommunities;
+        bool active;
+    }
+
+    struct AddressUintsVote {
+        string description;
+        address creator;
+        uint128 execMethodNumber;
+        uint128 finishTime;
+        uint128 yesCount;
+        uint128 noCount;
+        uint64[4] newValues;
+        address user;
+        EnumerableSetUpgradeable.AddressSet voteUsers;
+        bool active;
+    }
+
+    struct AddressUintVote {
+        string description;
+        address creator;
+        uint128 finishTime;
+        uint128 yesCount;
+        uint128 noCount;
+        uint128 value;
+        address wallet;
+        EnumerableSetUpgradeable.AddressSet voteUsers;
+        bool active;
+    }
+
+    struct UintVote {
+        string description;
+        address creator;
+        uint128 finishTime;
+        uint128 yesCount;
+        uint128 noCount;
+        uint128 newValue;
+        EnumerableSetUpgradeable.AddressSet voteUsers;
+        bool active;
     }
 }
