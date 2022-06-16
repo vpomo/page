@@ -84,7 +84,7 @@ contract PageCommunity is
 
     event AddedModerator(address indexed admin, uint256 number, address moderator);
     event RemovedModerator(address indexed admin, uint256 number, address moderator);
-    event SetPostOwner(address indexed admin, uint256 number);
+    event SetPostOwner(address indexed admin, uint256 communityId, bool isCommunity);
 
     event AddedBannedUser(address indexed admin, uint256 number, address user);
     event RemovedBannedUser(address indexed admin, uint256 number, address user);
@@ -257,11 +257,11 @@ contract PageCommunity is
      */
     function setPostOwner(uint256 communityId) external override validCommunityId(communityId) onlyVoterContract(0) {
         Community storage currentCommunity = community[communityId];
-
-        currentCommunity.isPostOwner = true;
+        bool newValue = !currentCommunity.isPostOwner;
+        currentCommunity.isPostOwner = newValue;
         currentCommunity.users.add(address(this));
         currentCommunity.usersCount++;
-        emit SetPostOwner(_msgSender(), communityId);
+        emit SetPostOwner(_msgSender(), communityId, newValue);
     }
 
     /**
@@ -452,13 +452,13 @@ contract PageCommunity is
      * @dev Change community active.
      *
      * @param communityId ID of community
-     * @param newActive Boolean value for community active
      */
-    function setCommunityActive(uint256 communityId, bool newActive) external override validCommunityId(communityId) {
-        require(supervisor == _msgSender(), "PageCommunity: wrong supervisor");
+    function changeCommunityActive(uint256 communityId) external override validCommunityId(communityId)
+    {
+        require(supervisor == _msgSender() || voterContracts[0] == _msgSender(), "PageCommunity: wrong super user");
 
         bool oldActive = community[communityId].isActive;
-        require(oldActive != newActive, "PageCommunity: wrong new active status");
+        bool newActive = !oldActive;
         community[communityId].isActive = newActive;
 
         emit ChangeCommunityActive(communityId, newActive);

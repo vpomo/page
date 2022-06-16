@@ -78,5 +78,32 @@ def test_put_execute_vote(chain, accounts, pageVoteForCommon, pageCommunity, pag
     assert readCommentFee[3] == 13
 
 
+def test_execute_community_active_vote(chain, accounts, pageVoteForCommon, pageCommunity, pageBank, pageToken, someUser, deployer, treasury):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    pageCommunity.join(1, {'from': deployer})
+
+    voteDesc = 'test for vote'
+    pageVoteForCommon.createVote(1, voteDesc, duration, 6, [0, 0, 0, 0], ZERO_ADDRESS, {'from': accounts[0]})
+
+    readVotesCount = pageVoteForCommon.readVotesCount(1)
+    assert readVotesCount == 1
+
+    pageToken.transfer(someUser, 1000, {'from': treasury})
+    pageToken.transfer(deployer, 1000, {'from': treasury})
+
+    pageVoteForCommon.putVote(1, 0, True, {'from': someUser})
+    pageVoteForCommon.putVote(1, 0, True, {'from': deployer})
+
+    isActiveCommunity = pageCommunity.isActiveCommunity(1)
+    assert isActiveCommunity == True
+
+    chain.sleep(duration + 10)
+    pageVoteForCommon.executeVote(1, 0, {'from': someUser})
+
+    isActiveCommunity = pageCommunity.isActiveCommunity(1)
+    assert isActiveCommunity == False
+
 
 

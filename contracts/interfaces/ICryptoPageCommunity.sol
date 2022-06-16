@@ -59,7 +59,7 @@ interface IPageCommunity {
 
     function setPostVisibility(uint256 postId, bool newVisible) external;
 
-    function setCommunityActive(uint256 communityId, bool newActive) external;
+    function changeCommunityActive(uint256 communityId) external;
 
     function setCommunityPrivate(uint256 communityId, bool newPrivate) external;
 

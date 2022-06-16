@@ -36,6 +36,11 @@ contract PageVoteForCommon is
     event CreateVote(address indexed sender, uint128 duration, uint128 methodNumber, uint64[4] values, address user);
     event ExecuteVote(address sender, uint256 communityId, uint256 index);
 
+    modifier validMethodId(uint256 id) {
+        require(0 < id && id < 7, "PageVote: wrong methodNumber");
+        _;
+    }
+
     function initialize(address _admin, address _token, address _community, address _bank) public initializer {
         __Ownable_init();
         require(_admin != address(0), "PageVote: wrong admin address");
@@ -87,11 +92,10 @@ contract PageVoteForCommon is
         uint128 methodNumber,
         uint64[4] memory values,
         address user
-    ) external override {
+    ) external override validMethodId(methodNumber) {
         require(duration >= MIN_DURATION, "PageVote: wrong duration");
         address sender = _msgSender();
         require(community.isCommunityModerator(communityId, sender) || community.isCommunityCreator(communityId, sender), "PageVote: access denied");
-        require(0 < methodNumber && methodNumber < 6, "PageVote: wrong methodNumber");
 
         uint256 len = readVotesCount(communityId);
         votes[communityId].push();
@@ -247,6 +251,9 @@ contract PageVoteForCommon is
         }
         if (vote.execMethodNumber == 5) {
             community.setPostOwner(communityId);
+        }
+        if (vote.execMethodNumber == 6) {
+            community.changeCommunityActive(communityId);
         }
     }
 }
