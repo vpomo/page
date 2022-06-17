@@ -328,3 +328,47 @@ def test_community_activity(accounts, pageCommunity, pageVoteForCommon, someUser
     postVisible = readPost[8]
     assert postVisible == False
 
+
+def test_user_rate(pageCommunity, pageCalcUserRate, pageUserRateToken, someUser, deployer):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
+
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', someUser, {'from': someUser})
+
+    userActivity = pageCalcUserRate.getUserActivity(1, deployer)
+    assert userActivity == (0,0,0,0)
+
+    beforeBalance = pageUserRateToken.balanceOf(deployer, 105)
+    assert beforeBalance == 0
+
+    for i in range(12): pageCommunity.writeComment(0, 'dddd-dddd', False, False, deployer, {'from': deployer})
+    userActivity = pageCalcUserRate.getUserActivity(1, deployer)
+    assert userActivity == (12,0,0,0)
+
+    afterBalance = pageUserRateToken.balanceOf(deployer, 105)
+    assert afterBalance == 1
+
+    """
+    for i in range(100): pageCommunity.writeComment(0, 'dddd-dddd', False, False, deployer, {'from': deployer})
+    userActivity = pageCalcUserRate.getUserActivity(1, deployer)
+    assert userActivity == (112,0,0,0)
+
+    after105Balance = pageUserRateToken.balanceOf(deployer, 105)
+    assert after105Balance == 11
+    after106Balance = pageUserRateToken.balanceOf(deployer, 106)
+    assert after106Balance = 1
+
+    for i in range(900): pageCommunity.writeComment(0, 'dddd-dddd', False, False, deployer, {'from': deployer})
+    userActivity = pageCalcUserRate.getUserActivity(1, deployer)
+    assert userActivity == (1012,0,0,0)
+
+    after105Balance = pageUserRateToken.balanceOf(deployer, 105)
+    assert after105Balance == 101
+    after106Balance = pageUserRateToken.balanceOf(deployer, 106)
+    assert after106Balance == 10
+    after107Balance = pageUserRateToken.balanceOf(deployer, 107)
+    assert after107Balance == 1
+    """
