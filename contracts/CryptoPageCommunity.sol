@@ -453,8 +453,7 @@ contract PageCommunity is
      *
      * @param communityId ID of community
      */
-    function changeCommunityActive(uint256 communityId) external override validCommunityId(communityId)
-    {
+    function changeCommunityActive(uint256 communityId) external override {
         require(supervisor == _msgSender() || voterContracts[0] == _msgSender(), "PageCommunity: wrong super user");
 
         bool oldActive = community[communityId].isActive;

@@ -216,7 +216,7 @@ def test_write_burn_Comment(accounts, pageBank, pageCommunity, pageToken, pageVo
     assert readComment[0] == ''
 
 
-def test_visibility(accounts, pageBank, pageCommunity, pageVoteForCommon, someUser, deployer):
+def test_visibility(accounts, pageCommunity, pageVoteForCommon, someUser, deployer):
     communityName = 'First users'
     pageCommunity.addCommunity(communityName)
     pageCommunity.join(1, {'from': someUser})
@@ -282,5 +282,49 @@ def test_banned_user(accounts, pageBank, pageCommunity, pageVoteForCommon, someU
     pageCommunity.writePost(1, 'dddd-ssss', deployer, {'from': someUser})
 
 
+def test_community_activity(accounts, pageCommunity, pageVoteForCommon, someUser, deployer):
+    communityName = 'First users'
+    pageCommunity.addCommunity(communityName)
+    pageCommunity.join(1, {'from': someUser})
+    network.gas_price("65 gwei")
 
+    pageCommunity.join(1, {'from': deployer})
+    pageCommunity.writePost(1, 'dddd', deployer, {'from': someUser})
+    readPost = pageCommunity.readPost(0)
+    postVisible = readPost[8]
+    assert postVisible == True
+
+    isActiveCommunity = pageCommunity.isActiveCommunity(1)
+    assert isActiveCommunity == True
+
+    pageCommunity.changeCommunityActive(1,{'from': pageVoteForCommon})
+
+    isActiveCommunity = pageCommunity.isActiveCommunity(1)
+    assert isActiveCommunity == False
+
+    with reverts():
+        pageCommunity.writeComment(0, 'dddd-dddd', True, False, deployer, {'from': someUser})
+
+    with reverts():
+        pageCommunity.join(1, {'from': accounts[2]})
+
+    with reverts():
+        pageCommunity.addModerator(1, accounts[2], {'from': pageVoteForCommon})
+
+    with reverts():
+        pageCommunity.setVisibilityComment(0, 0, False, {'from': someUser})
+
+    with reverts():
+        pageCommunity.setPostVisibility(0, False, {'from': someUser})
+
+    pageCommunity.changeCommunityActive(1,{'from': pageVoteForCommon})
+
+    isActiveCommunity = pageCommunity.isActiveCommunity(1)
+    assert isActiveCommunity == True
+
+    pageCommunity.addModerator(1, deployer, {'from': pageVoteForCommon})
+    pageCommunity.setPostVisibility(0, False, {'from': deployer})
+    readPost = pageCommunity.readPost(0)
+    postVisible = readPost[8]
+    assert postVisible == False
 
